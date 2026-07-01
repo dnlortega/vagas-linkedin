@@ -89,6 +89,16 @@ Agregador de vagas de tecnologia para Bauru (SP) e região. Busca automaticament
 - **Vagas visitadas** — opacidade reduzida nos cards já abertos
 - **Vagas ocultadas** — botão para restaurar todas
 
+### Certificados (`/perfil`)
+- **Gerenciador de certificados** com logos automáticos de 25+ emissores conhecidos (Udemy, Coursera, AWS, Alura, DIO, Google, Microsoft…)
+- **Adicionar manualmente**: nome, emissor, data de emissão/expiração, código de credencial, URL do certificado, logo personalizada
+- **Importar do LinkedIn**: suporte ao CSV oficial (`Certifications.csv`) do export de dados do LinkedIn — cole o conteúdo ou carregue o arquivo
+- **Exportar para Gupy**: botão "Copiar" por certificado ou "Copiar todos" — gera texto formatado com todos os campos prontos para colar nos formulários do Gupy
+- **Preview ao vivo** mostrando exatamente como ficará o texto exportado
+- **Busca** por nome ou emissor
+- **Exportar JSON** para backup
+- **Persistência** em localStorage (`vagas_certificados`)
+
 ### Plataformas Externas (botões de acesso rápido)
 LinkedIn · VagasBauru · Gupy · Solides · TalentBrand · Indeed · Vagas.com · CIEE · Catho · Empregos.com.br
 
@@ -133,6 +143,8 @@ app/
 ├── page.js                  # Página principal — lista de vagas
 ├── candidaturas/
 │   └── page.js              # Kanban de candidaturas
+├── perfil/
+│   └── page.js              # Gerenciador de certificados + export Gupy
 ├── api/
 │   ├── vagas/route.js       # API de scraping (7 fontes)
 │   └── vaga/[id]/route.js   # Detalhe da vaga LinkedIn
@@ -162,6 +174,7 @@ Tudo é salvo no `localStorage` do navegador — nenhum dado é enviado para ser
 | `silencioso`              | Modo silencioso                   |
 | `ultima_visita`           | Timestamp da última visita        |
 | `onboarding_done`         | Flag do onboarding inicial        |
+| `vagas_certificados`      | Certificados salvos (perfil)      |
 
 ---
 

@@ -8,7 +8,7 @@ import {
   BellOffIcon, XIcon, ClockIcon, SparklesIcon, ChevronRightIcon,
   ChevronLeftIcon, FilterXIcon, MonitorIcon, WifiIcon, CarIcon,
   HistoryIcon, TrophyIcon, ChevronUpIcon, PrinterIcon, Share2Icon,
-  BookmarkIcon, LayersIcon, Building2Icon, CheckIcon,
+  BookmarkIcon, LayersIcon, Building2Icon, CheckIcon, AwardIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
@@ -1375,6 +1375,11 @@ export default function Home() {
                     {kanban.size > 9 ? '9+' : kanban.size}
                   </span>
                 )}
+              </Link>
+              <Link href="/perfil"
+                className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold border bg-white text-gray-500 border-gray-200 hover:border-indigo-300 hover:text-indigo-600 transition-all">
+                <AwardIcon className="h-3.5 w-3.5" />
+                Certificados
               </Link>
             </div>
           </div>
