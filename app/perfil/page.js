@@ -149,7 +149,7 @@ const BOOKMARKLET_FN = `(function(){
     if(lk)c.url=lk.href.split('?')[0];
     if(c.nome)certs.push(c);
   });
-  if(!certs.length){alert('Nenhum certificado encontrado.\\nCertifique-se de estar em:\\nlinkedin.com/in/SEU-PERFIL/details/certifications/');return;}
+  if(!certs.length){alert('Nenhum certificado encontrado.\\nAbra: linkedin.com/in/daniel-op/details/certifications/');return;}
   fetch('http://localhost:3000/api/import-certs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({certs:certs})})
     .then(function(r){if(r.ok)alert('✓ '+certs.length+' certificado(s) enviado(s)!\\nVolte para a aba do app.');else fallback();})
     .catch(fallback);
@@ -574,10 +574,10 @@ export default function PerfilPage() {
                     <p className="font-semibold text-sm text-gray-900 dark:text-white">Abra o LinkedIn e vá para seus certificados</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       Acesse seu perfil → role até &quot;Licenças e certificados&quot; → clique em &quot;Mostrar todos os certificados&quot;.<br />
-                      Ou acesse diretamente: <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded text-[11px]">linkedin.com/in/SEU-PERFIL/details/certifications/</code>
+                      Ou acesse diretamente: <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded text-[11px]">linkedin.com/in/daniel-op/details/certifications/</code>
                     </p>
                     <a
-                      href="https://www.linkedin.com/in/me/details/certifications/"
+                      href="https://www.linkedin.com/in/daniel-op/details/certifications/"
                       target="_blank" rel="noreferrer"
                       className="inline-flex items-center gap-1.5 mt-2 text-xs text-blue-600 hover:text-blue-800 border border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 rounded-lg transition-colors"
                     >
