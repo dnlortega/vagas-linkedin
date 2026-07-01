@@ -232,3 +232,12 @@ body {
 .job-description h3  { font-size: 0.9375rem; }
 .job-description a   { color: #2563eb; text-decoration: underline; }
 .job-description br  { display: block; margin-bottom: 0.25rem; }
+
+@media print {
+  header, nav, button, [role="banner"], .no-print { display: none !important; }
+  body { background: white !important; color: black !important; }
+  .bg-white { background: white !important; }
+  .shadow-sm, .shadow-md { box-shadow: none !important; }
+  .rounded-2xl { border-radius: 8px !important; }
+  main { max-width: 100% !important; padding: 0 !important; }
+}

@@ -7,6 +7,7 @@ import {
   CheckIcon, UploadIcon, DownloadIcon, SearchIcon, XIcon, Award,
   ExternalLinkIcon, ChevronDownIcon, ChevronUpIcon, InfoIcon,
   FileTextIcon, EyeIcon, ZapIcon, RefreshCwIcon, Loader2Icon,
+  PrinterIcon, Trash2Icon,
 } from 'lucide-react';
 
 const LS_CERTS = 'vagas_certificados';
@@ -114,44 +115,43 @@ const BOOKMARKLET_FN = `(function(){
   if(!location.hostname.includes('linkedin.com')){alert('Abra no LinkedIn!');return;}
   if(!location.pathname.includes('certif')){
     var p=location.pathname.match(/\\/in\\/[^/?]+/)?.[0];
-    if(p&&confirm('Ir para a p\\u00e1gina de certificados?')){location.href='https://www.linkedin.com'+p+'/details/certifications/';}
+    if(p&&confirm('Ir para certificados?')){location.href='https://www.linkedin.com'+p+'/details/certifications/';}
     return;
   }
-  // Auto-clica em todos os bot\\u00f5es "Ver mais" antes de extrair
-  var btns=Array.from(document.querySelectorAll('button,a')).filter(function(b){return /ver mais|show more|carregar mais/i.test(b.innerText||'');});
-  btns.forEach(function(b){try{b.click();}catch(e){}});
+  Array.from(document.querySelectorAll('button')).filter(function(b){return /ver mais|show more/i.test(b.innerText||'');}).forEach(function(b){try{b.click();}catch(e){}});
   setTimeout(function(){
     var main=document.querySelector('main,[role="main"],.scaffold-layout__main')||document.body;
-    var texto=(main.innerText||main.textContent||'').replace(/\\r/g,'');
-    // Separa por blocos de linha em branco
-    var blocos=texto.split(/\\n{2,}/);
-    var certs=[];
-    var SKIP=/^(emitida?\\s+em|expedido|licen[\\u00e7c]|certifica[\\u00e7c]|ver (mais|tudo|todos)|mostrar|adicionar|editar|salvar|compartilhar|seguir|conectar|mensagem|·|•|\\d{1,3}\\s*(conex|seguid|curtida)|endossos|habilidades|experi|forma[\\u00e7c]|idiomas|premia|publica|interesses|\\+)/i;
-    blocos.forEach(function(bloco){
-      var linhas=bloco.split('\\n').map(function(l){return l.trim();}).filter(function(l){return l.length>1;});
-      if(!linhas.length)return;
-      var nome=linhas[0];
-      if(SKIP.test(nome)||nome.length<3||nome.length>200)return;
-      var c={nome:nome,emissor:'',data:'',dataExpiracao:'',credencial:'',url:'',logoUrl:''};
-      for(var i=1;i<linhas.length;i++){
-        var l=linhas[i],ll=l.toLowerCase();
-        if(/id da credencial|credential id|n[\\u00b0\\u00ba]? da licen[\\u00e7c]/i.test(ll)){c.credencial=l.replace(/^[^:]+:\\s*/,'').trim();}
-        else if(/sem data|no expiration/i.test(ll)){/* nenhuma expira\\u00e7\\u00e3o */}
-        else if(/expira/i.test(ll)&&!/emitida/.test(ll)){var m=l.match(/[a-zA-Z\\u00C0-\\u024F]+\\.?\\s+de\\s+\\d{4}/);if(m&&!c.dataExpiracao)c.dataExpiracao=m[0];}
-        else if(/emitida?\\s+em|expedido|emitido|issued/i.test(ll)){var m=l.match(/[a-zA-Z\\u00C0-\\u024F]+\\.?\\s+de\\s+\\d{4}/);if(m&&!c.data)c.data=m[0];}
-        else if(i===1&&l.length>1&&l.length<150&&!/^\\d/.test(l)&&!SKIP.test(l))c.emissor=l;
-      }
-      if(c.nome.length>2)certs.push(c);
-    });
-    var nomes=new Set();
-    certs=certs.filter(function(c){var k=c.nome.toLowerCase();if(nomes.has(k))return false;nomes.add(k);return true;});
-    if(!certs.length){alert('Nenhum certificado encontrado.\\nBlocos de texto analisados: '+blocos.length+'\\n\\nCertifique-se de estar em:\\nlinkedin.com/in/daniel-op/details/certifications/');return;}
+    var linhas=(main.innerText||'').split('\\n').map(function(l){return l.trim();}).filter(function(l){return l.length>2;});
+    var certs=[],cert=null,state='WAIT';
+    function isEnd(l){return /^competências:/i.test(l);}
+    function isCred(l){return /^código da credencial/i.test(l);}
+    function isDate(l){return /^(emitida?\\s*em|expedido|emitido|issued)/i.test(l);}
+    function isExpiry(l){return /^expira\\s/i.test(l);}
+    function isSkip(l){return /^(certificado$|certficado$|exibir credencial|ver credencial|·|•)/i.test(l);}
+    function isFooter(l){return /^(sobre$|acessibilidade$|soluções de talentos|carreiras$|publicidade$|dispositivo móvel|linkedin corp|dúvidas\\?|acesse a nossa|gerencie sua|visibilidade da|selecionar idioma)/i.test(l);}
+    function push(){if(cert&&cert.nome.length>2)certs.push(cert);cert=null;}
+    for(var i=0;i<linhas.length;i++){
+      var l=linhas[i];
+      if(isFooter(l))break;
+      if(isEnd(l)){push();state='WAIT';continue;}
+      if(isCred(l)){if(cert)cert.credencial=l.replace(/^[^:]+:\\s*/,'').trim();continue;}
+      if(isDate(l)){if(cert){var m=l.match(/[a-zA-Z\\u00C0-\\u024F]+\\.?\\s+de\\s+\\d{4}/);if(m&&!cert.data)cert.data=m[0];var mx=l.match(/expira[^d]+([a-zA-Z\\u00C0-\\u024F]+\\.?\\s+de\\s+\\d{4})/i);if(mx&&!cert.dataExpiracao)cert.dataExpiracao=mx[1];}continue;}
+      if(isExpiry(l)){if(cert){var m=l.match(/[a-zA-Z\\u00C0-\\u024F]+\\.?\\s+de\\s+\\d{4}/);if(m&&!cert.dataExpiracao)cert.dataExpiracao=m[0];}continue;}
+      if(isSkip(l))continue;
+      if(state==='WAIT'){cert={nome:l,emissor:'',data:'',dataExpiracao:'',credencial:'',url:'',logoUrl:''};state='NAME';}
+      else if(state==='NAME'){cert.emissor=l;state='ISSUER';}
+      else{push();cert={nome:l,emissor:'',data:'',dataExpiracao:'',credencial:'',url:'',logoUrl:''};state='NAME';}
+    }
+    push();
+    var seen=new Set();
+    certs=certs.filter(function(c){var k=c.nome.toLowerCase();if(seen.has(k))return false;seen.add(k);return true;});
+    if(!certs.length){alert('Nenhum certificado encontrado. Role a página até o fim e tente novamente.');return;}
     fetch('http://localhost:3000/api/import-certs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({certs:certs})})
       .then(function(r){if(r.ok)alert('\\u2713 '+certs.length+' certificado(s) enviado(s)! Volte para o app.');else fb();})
       .catch(fb);
-    function fb(){navigator.clipboard.writeText(JSON.stringify(certs)).then(function(){alert(certs.length+' cert(s) copiado(s)! Cole no campo JSON do app.');}).catch(function(){prompt('Copie e cole no app:',JSON.stringify(certs));});}
+    function fb(){navigator.clipboard.writeText(JSON.stringify(certs)).then(function(){alert(certs.length+' cert(s) copiado(s)! Cole no campo JSON do app.');}).catch(function(){prompt('Copie:',JSON.stringify(certs));});}
   },1200);
-})();`;
+})()`;
 
 const BOOKMARKLET_CODE = 'javascript:' + encodeURIComponent(BOOKMARKLET_FN);
 
@@ -417,6 +417,17 @@ export default function PerfilPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url; a.download = 'certificados.json'; a.click();
     URL.revokeObjectURL(url);
+  }
+
+  function onLimparTudo() {
+    if (confirm(`Excluir todos os ${certs.length} certificados? Esta ação não pode ser desfeita.`)) {
+      salvar([]);
+      mostrarMsg('ok', 'Todos os certificados foram removidos.');
+    }
+  }
+
+  function onImprimirPDF() {
+    window.print();
   }
 
   function onImportarCSV() {
@@ -729,6 +740,16 @@ export default function PerfilPage() {
                   <button onClick={onExportarJSON}
                     className="flex items-center gap-1.5 text-xs border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 px-3 py-2 rounded-xl transition-colors">
                     <DownloadIcon className="h-3.5 w-3.5" /> JSON
+                  </button>
+                  <button onClick={onImprimirPDF}
+                    title="Exportar como PDF / Imprimir"
+                    className="flex items-center gap-1.5 text-xs border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 px-3 py-2 rounded-xl transition-colors">
+                    <PrinterIcon className="h-3.5 w-3.5" /> PDF
+                  </button>
+                  <button onClick={onLimparTudo}
+                    title="Limpar todos os certificados"
+                    className="flex items-center gap-1.5 text-xs border border-rose-200 dark:border-rose-800 text-rose-500 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/30 px-3 py-2 rounded-xl transition-colors">
+                    <Trash2Icon className="h-3.5 w-3.5" /> Limpar
                   </button>
                 </div>
               </div>
