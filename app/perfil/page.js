@@ -158,9 +158,7 @@ const BOOKMARKLET_FN = `(function(){
   }
 })();`;
 
-function gerarBookmarkletHref() {
-  return 'javascript:' + encodeURIComponent(BOOKMARKLET_FN);
-}
+const BOOKMARKLET_CODE = 'javascript:' + encodeURIComponent(BOOKMARKLET_FN);
 
 function CertCard({ cert, onEdit, onDelete, onCopySingle, copiado }) {
   const emissor = emissoresMatch(cert.emissor || '');
@@ -459,7 +457,15 @@ export default function PerfilPage() {
     return c.nome?.toLowerCase().includes(q) || c.emissor?.toLowerCase().includes(q);
   });
 
-  const bookmarkletHref = gerarBookmarkletHref();
+  const bookmarkRef = useRef(null);
+  const [copiouBookmarklet, setCopiouBookmarklet] = useState(false);
+
+  // Injeta o href via DOM para contornar a restrição de segurança do React com javascript:
+  useEffect(() => {
+    if (bookmarkRef.current) {
+      bookmarkRef.current.setAttribute('href', BOOKMARKLET_CODE);
+    }
+  }, [abaImport]);
 
   return (
     <div className={dark ? 'dark' : ''}>
@@ -528,9 +534,11 @@ export default function PerfilPage() {
                       No Chrome/Edge: clique e arraste para a barra de favoritos (Ctrl+Shift+B para mostrar).<br />
                       No Firefox: clique com o botão direito → &quot;Adicionar aos favoritos&quot;.
                     </p>
-                    <div className="mt-3">
+                    <div className="mt-3 flex flex-wrap gap-2 items-center">
+                      {/* href injetado via DOM no useEffect para contornar bloqueio do React */}
                       <a
-                        href={bookmarkletHref}
+                        ref={bookmarkRef}
+                        href="#"
                         onClick={e => e.preventDefault()}
                         draggable="true"
                         className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2 rounded-xl cursor-grab active:cursor-grabbing select-none shadow-md"
@@ -539,10 +547,22 @@ export default function PerfilPage() {
                         <Award className="h-4 w-4" />
                         📥 Importar Certificados LinkedIn
                       </a>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(BOOKMARKLET_CODE).then(() => {
+                            setCopiouBookmarklet(true);
+                            setTimeout(() => setCopiouBookmarklet(false), 2500);
+                          });
+                        }}
+                        className="inline-flex items-center gap-1.5 text-xs border border-indigo-200 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400 px-3 py-2 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors"
+                      >
+                        {copiouBookmarklet ? <CheckIcon className="h-3.5 w-3.5" /> : <ClipboardCopyIcon className="h-3.5 w-3.5" />}
+                        {copiouBookmarklet ? 'Copiado!' : 'Copiar código'}
+                      </button>
                     </div>
                     <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-2 flex items-start gap-1">
                       <InfoIcon className="h-3 w-3 flex-shrink-0 mt-0.5" />
-                      Não clique aqui — <strong>arraste</strong> para os favoritos
+                      <span><strong>Arraste</strong> o botão roxo para os favoritos. Ou copie o código → crie um favorito manualmente → cole o código como URL.</span>
                     </p>
                   </div>
                 </div>
