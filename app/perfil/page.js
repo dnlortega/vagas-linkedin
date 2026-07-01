@@ -111,37 +111,42 @@ function gerarTextoGupyTodos(certs) {
 
 // Script que roda no navegador do usuário enquanto está no LinkedIn
 const BOOKMARKLET_FN = `(function(){
-  if(!location.hostname.includes('linkedin.com')){alert('Abra no LinkedIn primeiro!');return;}
-  if(!location.pathname.includes('certif')){
-    var p=location.pathname.match(/\\/in\\/[^/?]+/)?.[0];
-    if(p&&confirm('Ir para a página de certificados?')){location.href='https://www.linkedin.com'+p+'/details/certifications/';}
-    return;
-  }
+  if(!location.hostname.includes('linkedin.com')){alert('Abra no LinkedIn!');return;}
   setTimeout(function(){
     var certs=[];
-    // Coleta todos os li que tenham ao menos 2 spans aria-hidden (estratégia mais genérica)
-    var todos=Array.from(document.querySelectorAll('li'));
-    var items=todos.filter(function(li){return li.querySelectorAll('span[aria-hidden="true"]').length>=2;});
-    // fallback: qualquer li com texto
-    if(!items.length)items=todos.filter(function(li){return li.querySelectorAll('span[aria-hidden="true"]').length>=1;});
+    // Acha o <ul> principal: o que tiver li com mais spans aria-hidden
+    var uls=Array.from(document.querySelectorAll('ul'));
+    var melhorUl=null,melhorScore=0;
+    uls.forEach(function(ul){
+      var score=0;
+      Array.from(ul.children).forEach(function(li){if(li.tagName==='LI')score+=li.querySelectorAll('span[aria-hidden="true"]').length;});
+      if(score>melhorScore){melhorScore=score;melhorUl=ul;}
+    });
+    var items=melhorUl?Array.from(melhorUl.children).filter(function(c){return c.tagName==='LI';}):[];
+    if(!items.length){alert('Nenhum item encontrado. Role a página até o fim e tente novamente.');return;}
     items.forEach(function(item){
-      var spans=item.querySelectorAll('span[aria-hidden="true"]');
-      var vistos=new Set();
-      var texts=[];
-      spans.forEach(function(s){
+      // Pega spans do item MAS ignora os que estão dentro de sub-li (ex: miniatura do certificado)
+      var subLiSpans=new Set();
+      item.querySelectorAll('li span[aria-hidden="true"]').forEach(function(s){subLiSpans.add(s);});
+      var subLiImgs=new Set();
+      item.querySelectorAll('li img').forEach(function(i){subLiImgs.add(i);});
+      var vistos=new Set(),texts=[];
+      item.querySelectorAll('span[aria-hidden="true"]').forEach(function(s){
+        if(subLiSpans.has(s))return;
         var t=s.textContent.trim();
         if(t&&t!=='·'&&t!=='•'&&t.length>1&&!vistos.has(t)){vistos.add(t);texts.push(t);}
       });
       if(!texts.length||!texts[0]||texts[0].length<3)return;
       var c={nome:texts[0],emissor:'',data:'',dataExpiracao:'',credencial:'',url:'',logoUrl:''};
-      var img=item.querySelector('img');
-      if(img&&img.src&&img.src.startsWith('http')&&!img.src.includes('data:'))c.logoUrl=img.src;
+      item.querySelectorAll('img').forEach(function(img){
+        if(!subLiImgs.has(img)&&img.src&&img.src.startsWith('http')&&!img.src.includes('data:')&&!c.logoUrl)c.logoUrl=img.src;
+      });
       for(var i=1;i<texts.length;i++){
         var t=texts[i],tl=t.toLowerCase();
-        if(/id da credencial|credential id|license number/i.test(tl)){c.credencial=t.replace(/^[^:]+:\\s*/,'').trim();}
-        else if(/sem data de expira|no expiration/i.test(tl)){/* skip */}
-        else if(/expira|expires/i.test(tl)){var m=t.match(/[\\w\\u00C0-\\u017E]{3,}\\.?\\s+(?:de\\s+)?\\d{4}|\\d{4}/);if(m&&!c.dataExpiracao)c.dataExpiracao=m[0];}
-        else if(/expedido|emitido|issued/i.test(tl)||(t.match(/\\d{4}/)&&i<=3&&!c.data)){var m=t.match(/[\\w\\u00C0-\\u017E]{3,}\\.?\\s+(?:de\\s+)?\\d{4}|\\d{4}/);if(m&&!c.data)c.data=m[0];}
+        if(/id da credencial|credential id|license/i.test(tl)){c.credencial=t.replace(/^[^:]+:\\s*/,'').trim();}
+        else if(/sem data|no expiration/i.test(tl)){/* skip */}
+        else if(/expira[^d]|expires/i.test(tl)){var m=t.match(/[a-zA-Z\\u00C0-\\u024F]{3,}\\.?\\s*(?:de\\s*)?\\d{4}|\\d{4}/);if(m&&!c.dataExpiracao)c.dataExpiracao=m[0];}
+        else if(/emitida?|expedido|emitido|issued/i.test(tl)||(t.match(/\\d{4}/)&&i<=3)){var m=t.match(/[a-zA-Z\\u00C0-\\u024F]{3,}\\.?\\s*(?:de\\s*)?\\d{4}|\\d{4}/);if(m&&!c.data)c.data=m[0];}
         else if(i===1&&t.length>1&&!/^\\d/.test(t))c.emissor=t;
       }
       var a=item.querySelector('a[href]');
@@ -150,11 +155,7 @@ const BOOKMARKLET_FN = `(function(){
     });
     var nomes=new Set();
     certs=certs.filter(function(c){var k=c.nome.toLowerCase();if(nomes.has(k))return false;nomes.add(k);return true;});
-    if(!certs.length){
-      var dbg='li total: '+todos.length+' | li com spans: '+items.length;
-      alert('Nenhum certificado encontrado.\\n'+dbg+'\\n\\nRole a página até o fim e tente novamente.');
-      return;
-    }
+    if(!certs.length){alert('Nenhum certificado extraído dos '+items.length+' itens encontrados.\\nRole a página até o fim e tente novamente.');return;}
     fetch('http://localhost:3000/api/import-certs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({certs:certs})})
       .then(function(r){if(r.ok)alert('\\u2713 '+certs.length+' certificado(s) enviado(s)! Volte para o app.');else fb();})
       .catch(fb);
