@@ -111,51 +111,57 @@ function gerarTextoGupyTodos(certs) {
 
 // Script que roda no navegador do usuário enquanto está no LinkedIn
 const BOOKMARKLET_FN = `(function(){
-  'use strict';
   if(!location.hostname.includes('linkedin.com')){alert('Abra no LinkedIn primeiro!');return;}
   if(!location.pathname.includes('certif')){
-    var base=location.pathname.match(/\\/in\\/[^/]+/)?.[0];
-    if(base&&confirm('Ir para sua página de certificados?')){location.href='https://www.linkedin.com'+base+'/details/certifications/';}
+    var p=location.pathname.match(/\\/in\\/[^/?]+/)?.[0];
+    if(p&&confirm('Ir para a página de certificados?')){location.href='https://www.linkedin.com'+p+'/details/certifications/';}
     return;
   }
-  var certs=[];
-  var items=document.querySelectorAll('li.artdeco-list__item');
-  if(!items.length)items=document.querySelectorAll('.pvs-list__item--line-separated,.pvs-list__item--no-padding-in-columns');
-  if(!items.length)items=document.querySelectorAll('[data-view-name="profile-component-entity"]');
-  items.forEach(function(item){
-    var spans=item.querySelectorAll('span[aria-hidden="true"]');
-    var texts=Array.from(spans).map(function(s){return s.textContent.trim();}).filter(function(t){return t&&t!=='·'&&t!=='•';});
-    if(!texts.length||!texts[0])return;
-    var c={nome:texts[0],emissor:'',data:'',dataExpiracao:'',credencial:'',url:'',logoUrl:''};
-    var img=item.querySelector('img[src*="media.licdn"],img[src*="logo"],.ivm-image-view-model img,img');
-    if(img&&img.src&&!img.src.includes('data:'))c.logoUrl=img.src;
-    for(var i=1;i<texts.length;i++){
-      var t=texts[i],tl=t.toLowerCase();
-      if(i===1&&!tl.includes('expedido')&&!tl.includes('issued')&&!tl.match(/\d{4}/)&&!tl.includes('id da cred')&&!tl.includes('sem data')){
-        c.emissor=t;
-      }else if(tl.includes('id da credencial')||tl.includes('credential id')||tl.includes('license number')){
-        c.credencial=t.replace(/^[^:]+:\s*/,'').trim();
-      }else if(tl.includes('sem data de expira')||tl.includes('no expiration')){
-        // nenhuma expiração
-      }else if(tl.includes('expira')||tl.includes('expires')){
-        var m=t.match(/([a-záéíóúãõ]+\\.?\\s+de\\s+\\d{4}|\\d{4}-\\d{2})/i);
-        if(m)c.dataExpiracao=m[1];
-      }else if(tl.includes('expedido')||tl.includes('issued')||t.match(/[a-z]{3}\\.?\\s+de\\s+\\d{4}/i)){
-        var m=t.match(/([a-záéíóúãõ]+\\.?\\s+de\\s+\\d{4}|\\d{4}-\\d{2})/i);
-        if(m)c.data=m[1];
+  setTimeout(function(){
+    var certs=[];
+    // Coleta todos os li que tenham ao menos 2 spans aria-hidden (estratégia mais genérica)
+    var todos=Array.from(document.querySelectorAll('li'));
+    var items=todos.filter(function(li){return li.querySelectorAll('span[aria-hidden="true"]').length>=2;});
+    // fallback: qualquer li com texto
+    if(!items.length)items=todos.filter(function(li){return li.querySelectorAll('span[aria-hidden="true"]').length>=1;});
+    items.forEach(function(item){
+      var spans=item.querySelectorAll('span[aria-hidden="true"]');
+      var vistos=new Set();
+      var texts=[];
+      spans.forEach(function(s){
+        var t=s.textContent.trim();
+        if(t&&t!=='·'&&t!=='•'&&t.length>1&&!vistos.has(t)){vistos.add(t);texts.push(t);}
+      });
+      if(!texts.length||!texts[0]||texts[0].length<3)return;
+      var c={nome:texts[0],emissor:'',data:'',dataExpiracao:'',credencial:'',url:'',logoUrl:''};
+      var img=item.querySelector('img');
+      if(img&&img.src&&img.src.startsWith('http')&&!img.src.includes('data:'))c.logoUrl=img.src;
+      for(var i=1;i<texts.length;i++){
+        var t=texts[i],tl=t.toLowerCase();
+        if(/id da credencial|credential id|license number/i.test(tl)){c.credencial=t.replace(/^[^:]+:\\s*/,'').trim();}
+        else if(/sem data de expira|no expiration/i.test(tl)){/* skip */}
+        else if(/expira|expires/i.test(tl)){var m=t.match(/[\\w\\u00C0-\\u017E]{3,}\\.?\\s+(?:de\\s+)?\\d{4}|\\d{4}/);if(m&&!c.dataExpiracao)c.dataExpiracao=m[0];}
+        else if(/expedido|emitido|issued/i.test(tl)||(t.match(/\\d{4}/)&&i<=3&&!c.data)){var m=t.match(/[\\w\\u00C0-\\u017E]{3,}\\.?\\s+(?:de\\s+)?\\d{4}|\\d{4}/);if(m&&!c.data)c.data=m[0];}
+        else if(i===1&&t.length>1&&!/^\\d/.test(t))c.emissor=t;
       }
+      var a=item.querySelector('a[href]');
+      if(a&&a.href&&!a.href.includes('javascript:'))c.url=a.href.split('?')[0];
+      if(c.nome.length>2)certs.push(c);
+    });
+    var nomes=new Set();
+    certs=certs.filter(function(c){var k=c.nome.toLowerCase();if(nomes.has(k))return false;nomes.add(k);return true;});
+    if(!certs.length){
+      var dbg='li total: '+todos.length+' | li com spans: '+items.length;
+      alert('Nenhum certificado encontrado.\\n'+dbg+'\\n\\nRole a página até o fim e tente novamente.');
+      return;
     }
-    var lk=item.querySelector('a[href*="certif"],a[href*="credential"],a[href*="fsd_certification"]')||item.querySelector('a');
-    if(lk)c.url=lk.href.split('?')[0];
-    if(c.nome)certs.push(c);
-  });
-  if(!certs.length){alert('Nenhum certificado encontrado.\\nAbra: linkedin.com/in/daniel-op/details/certifications/');return;}
-  fetch('http://localhost:3000/api/import-certs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({certs:certs})})
-    .then(function(r){if(r.ok)alert('✓ '+certs.length+' certificado(s) enviado(s)!\\nVolte para a aba do app.');else fallback();})
-    .catch(fallback);
-  function fallback(){
-    navigator.clipboard&&navigator.clipboard.writeText(JSON.stringify(certs)).then(function(){alert(certs.length+' cert(s) copiado(s) como JSON. Cole no campo de importação do app.');});
-  }
+    fetch('http://localhost:3000/api/import-certs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({certs:certs})})
+      .then(function(r){if(r.ok)alert('\\u2713 '+certs.length+' certificado(s) enviado(s)! Volte para o app.');else fb();})
+      .catch(fb);
+    function fb(){
+      navigator.clipboard.writeText(JSON.stringify(certs)).then(function(){alert(certs.length+' cert(s) copiado(s)! Cole no campo JSON do app.');}).catch(function(){prompt('Copie e cole no app:',JSON.stringify(certs));});
+    }
+  },800);
 })();`;
 
 const BOOKMARKLET_CODE = 'javascript:' + encodeURIComponent(BOOKMARKLET_FN);
