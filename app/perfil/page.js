@@ -112,57 +112,45 @@ function gerarTextoGupyTodos(certs) {
 // Script que roda no navegador do usuário enquanto está no LinkedIn
 const BOOKMARKLET_FN = `(function(){
   if(!location.hostname.includes('linkedin.com')){alert('Abra no LinkedIn!');return;}
+  if(!location.pathname.includes('certif')){
+    var p=location.pathname.match(/\\/in\\/[^/?]+/)?.[0];
+    if(p&&confirm('Ir para a p\\u00e1gina de certificados?')){location.href='https://www.linkedin.com'+p+'/details/certifications/';}
+    return;
+  }
+  // Auto-clica em todos os bot\\u00f5es "Ver mais" antes de extrair
+  var btns=Array.from(document.querySelectorAll('button,a')).filter(function(b){return /ver mais|show more|carregar mais/i.test(b.innerText||'');});
+  btns.forEach(function(b){try{b.click();}catch(e){}});
   setTimeout(function(){
+    var main=document.querySelector('main,[role="main"],.scaffold-layout__main')||document.body;
+    var texto=(main.innerText||main.textContent||'').replace(/\\r/g,'');
+    // Separa por blocos de linha em branco
+    var blocos=texto.split(/\\n{2,}/);
     var certs=[];
-    // Acha o <ul> principal: o que tiver li com mais spans aria-hidden
-    var uls=Array.from(document.querySelectorAll('ul'));
-    var melhorUl=null,melhorScore=0;
-    uls.forEach(function(ul){
-      var score=0;
-      Array.from(ul.children).forEach(function(li){if(li.tagName==='LI')score+=li.querySelectorAll('span[aria-hidden="true"]').length;});
-      if(score>melhorScore){melhorScore=score;melhorUl=ul;}
-    });
-    var items=melhorUl?Array.from(melhorUl.children).filter(function(c){return c.tagName==='LI';}):[];
-    if(!items.length){alert('Nenhum item encontrado. Role a página até o fim e tente novamente.');return;}
-    items.forEach(function(item){
-      // Pega spans do item MAS ignora os que estão dentro de sub-li (ex: miniatura do certificado)
-      var subLiSpans=new Set();
-      item.querySelectorAll('li span[aria-hidden="true"]').forEach(function(s){subLiSpans.add(s);});
-      var subLiImgs=new Set();
-      item.querySelectorAll('li img').forEach(function(i){subLiImgs.add(i);});
-      var vistos=new Set(),texts=[];
-      item.querySelectorAll('span[aria-hidden="true"]').forEach(function(s){
-        if(subLiSpans.has(s))return;
-        var t=s.textContent.trim();
-        if(t&&t!=='·'&&t!=='•'&&t.length>1&&!vistos.has(t)){vistos.add(t);texts.push(t);}
-      });
-      if(!texts.length||!texts[0]||texts[0].length<3)return;
-      var c={nome:texts[0],emissor:'',data:'',dataExpiracao:'',credencial:'',url:'',logoUrl:''};
-      item.querySelectorAll('img').forEach(function(img){
-        if(!subLiImgs.has(img)&&img.src&&img.src.startsWith('http')&&!img.src.includes('data:')&&!c.logoUrl)c.logoUrl=img.src;
-      });
-      for(var i=1;i<texts.length;i++){
-        var t=texts[i],tl=t.toLowerCase();
-        if(/id da credencial|credential id|license/i.test(tl)){c.credencial=t.replace(/^[^:]+:\\s*/,'').trim();}
-        else if(/sem data|no expiration/i.test(tl)){/* skip */}
-        else if(/expira[^d]|expires/i.test(tl)){var m=t.match(/[a-zA-Z\\u00C0-\\u024F]{3,}\\.?\\s*(?:de\\s*)?\\d{4}|\\d{4}/);if(m&&!c.dataExpiracao)c.dataExpiracao=m[0];}
-        else if(/emitida?|expedido|emitido|issued/i.test(tl)||(t.match(/\\d{4}/)&&i<=3)){var m=t.match(/[a-zA-Z\\u00C0-\\u024F]{3,}\\.?\\s*(?:de\\s*)?\\d{4}|\\d{4}/);if(m&&!c.data)c.data=m[0];}
-        else if(i===1&&t.length>1&&!/^\\d/.test(t))c.emissor=t;
+    var SKIP=/^(emitida?\\s+em|expedido|licen[\\u00e7c]|certifica[\\u00e7c]|ver (mais|tudo|todos)|mostrar|adicionar|editar|salvar|compartilhar|seguir|conectar|mensagem|·|•|\\d{1,3}\\s*(conex|seguid|curtida)|endossos|habilidades|experi|forma[\\u00e7c]|idiomas|premia|publica|interesses|\\+)/i;
+    blocos.forEach(function(bloco){
+      var linhas=bloco.split('\\n').map(function(l){return l.trim();}).filter(function(l){return l.length>1;});
+      if(!linhas.length)return;
+      var nome=linhas[0];
+      if(SKIP.test(nome)||nome.length<3||nome.length>200)return;
+      var c={nome:nome,emissor:'',data:'',dataExpiracao:'',credencial:'',url:'',logoUrl:''};
+      for(var i=1;i<linhas.length;i++){
+        var l=linhas[i],ll=l.toLowerCase();
+        if(/id da credencial|credential id|n[\\u00b0\\u00ba]? da licen[\\u00e7c]/i.test(ll)){c.credencial=l.replace(/^[^:]+:\\s*/,'').trim();}
+        else if(/sem data|no expiration/i.test(ll)){/* nenhuma expira\\u00e7\\u00e3o */}
+        else if(/expira/i.test(ll)&&!/emitida/.test(ll)){var m=l.match(/[a-zA-Z\\u00C0-\\u024F]+\\.?\\s+de\\s+\\d{4}/);if(m&&!c.dataExpiracao)c.dataExpiracao=m[0];}
+        else if(/emitida?\\s+em|expedido|emitido|issued/i.test(ll)){var m=l.match(/[a-zA-Z\\u00C0-\\u024F]+\\.?\\s+de\\s+\\d{4}/);if(m&&!c.data)c.data=m[0];}
+        else if(i===1&&l.length>1&&l.length<150&&!/^\\d/.test(l)&&!SKIP.test(l))c.emissor=l;
       }
-      var a=item.querySelector('a[href]');
-      if(a&&a.href&&!a.href.includes('javascript:'))c.url=a.href.split('?')[0];
       if(c.nome.length>2)certs.push(c);
     });
     var nomes=new Set();
     certs=certs.filter(function(c){var k=c.nome.toLowerCase();if(nomes.has(k))return false;nomes.add(k);return true;});
-    if(!certs.length){alert('Nenhum certificado extraído dos '+items.length+' itens encontrados.\\nRole a página até o fim e tente novamente.');return;}
+    if(!certs.length){alert('Nenhum certificado encontrado.\\nBlocos de texto analisados: '+blocos.length+'\\n\\nCertifique-se de estar em:\\nlinkedin.com/in/daniel-op/details/certifications/');return;}
     fetch('http://localhost:3000/api/import-certs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({certs:certs})})
       .then(function(r){if(r.ok)alert('\\u2713 '+certs.length+' certificado(s) enviado(s)! Volte para o app.');else fb();})
       .catch(fb);
-    function fb(){
-      navigator.clipboard.writeText(JSON.stringify(certs)).then(function(){alert(certs.length+' cert(s) copiado(s)! Cole no campo JSON do app.');}).catch(function(){prompt('Copie e cole no app:',JSON.stringify(certs));});
-    }
-  },800);
+    function fb(){navigator.clipboard.writeText(JSON.stringify(certs)).then(function(){alert(certs.length+' cert(s) copiado(s)! Cole no campo JSON do app.');}).catch(function(){prompt('Copie e cole no app:',JSON.stringify(certs));});}
+  },1200);
 })();`;
 
 const BOOKMARKLET_CODE = 'javascript:' + encodeURIComponent(BOOKMARKLET_FN);
@@ -597,9 +585,10 @@ export default function PerfilPage() {
                 <div className="flex gap-4">
                   <div className="h-7 w-7 rounded-full bg-indigo-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">3</div>
                   <div>
-                    <p className="font-semibold text-sm text-gray-900 dark:text-white">Clique no favorito salvo — os dados chegam aqui</p>
+                    <p className="font-semibold text-sm text-gray-900 dark:text-white">Role até o fim da página e clique no favorito</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Clique em <strong>&quot;📥 Importar Certificados LinkedIn&quot;</strong> na barra de favoritos. O app receberá os dados automaticamente.
+                      Role a página do LinkedIn até carregar <strong>todos os certificados</strong> (você tem 65 — pode precisar rolar bastante).<br />
+                      Depois clique em <strong>&quot;📥 Importar Certificados LinkedIn&quot;</strong> na barra de favoritos. Os dados chegam aqui automaticamente.
                     </p>
                   </div>
                 </div>
