@@ -5,7 +5,6 @@ import { ArrowLeftIcon, TrashIcon, ExternalLinkIcon, MapPinIcon, ClockIcon, Down
 import Link from 'next/link';
 
 const LS_KANBAN = 'vagas_kanban';
-const LS_FAV    = 'vagas_favoritas';
 
 const COLUNAS = [
   { id: 'salvo',       label: 'Salvos',         dot: 'bg-slate-400',   header: 'bg-slate-50 border-slate-200',   card: 'border-slate-200'  },
@@ -116,7 +115,6 @@ function StatsPanel({ vagas }) {
 
 export default function Candidaturas() {
   const [kanban,     setKanban]     = useState({});
-  const [favoritas,  setFavoritas]  = useState([]);
   const [editNota,   setEditNota]   = useState(null);
   const [expandido,  setExpandido]  = useState(null);
   const [mostrarStats, setMostrarStats] = useState(false);
@@ -127,7 +125,6 @@ export default function Candidaturas() {
 
   useEffect(() => {
     try { setKanban(JSON.parse(localStorage.getItem(LS_KANBAN) || '{}')); } catch (_) {}
-    try { setFavoritas(JSON.parse(localStorage.getItem(LS_FAV) || '[]')); } catch (_) {}
   }, []);
 
   function save(next) {
@@ -146,14 +143,6 @@ export default function Candidaturas() {
     if (expandido === link) setExpandido(null);
   }
 
-  function adicionarFavorita(link) {
-    if (kanban[link]) return;
-    save({
-      ...kanban,
-      [link]: { link, titulo: 'Vaga favorita', empresa: '—', local: '—', data: null, status: 'salvo', fonte: '', adicionadoEm: new Date().toISOString() },
-    });
-  }
-
   function toggleEtiqueta(link, etId) {
     const atual = kanban[link]?.etiquetas || [];
     const nova  = atual.includes(etId) ? atual.filter(e => e !== etId) : [...atual, etId];
@@ -170,7 +159,6 @@ export default function Candidaturas() {
       const db = b.adicionadoEm ? new Date(b.adicionadoEm) : 0;
       return db - da;
     });
-  const favsForaBoard = favoritas.filter(l => !kanban[l]);
   const hoje          = new Date().toISOString().split('T')[0];
   const lembreteVencido = link => { const l = kanban[link]?.lembrete; return l && l < hoje; };
   const prazoVencido    = link => { const p = kanban[link]?.prazo;    return p && p < hoje; };
@@ -239,23 +227,6 @@ export default function Candidaturas() {
 
         {/* Stats panel */}
         {mostrarStats && todasVagas.length > 0 && <StatsPanel vagas={todasVagas} />}
-
-        {/* Favoritas fora da board */}
-        {favsForaBoard.length > 0 && (
-          <div className="mb-6 p-4 bg-rose-50 border border-rose-100 rounded-2xl">
-            <p className="text-sm text-rose-700 font-bold mb-3">
-              ❤️ {favsForaBoard.length} vaga{favsForaBoard.length > 1 ? 's favoritas' : ' favorita'} fora do quadro
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {favsForaBoard.map(link => (
-                <button key={link} onClick={() => adicionarFavorita(link)}
-                  className="text-xs bg-rose-500 text-white px-3 py-1.5 rounded-full hover:bg-rose-600 transition-colors font-semibold">
-                  + Adicionar ao quadro
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Board vazio */}
         {todasVagas.length === 0 ? (
