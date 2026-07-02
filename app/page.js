@@ -6,9 +6,9 @@ import {
   BellIcon, HeartIcon, KanbanIcon, BarChart2Icon, MoonIcon, SunIcon,
   DownloadIcon, ArrowUpDownIcon, EyeOffIcon, ListIcon, LayoutGridIcon,
   BellOffIcon, XIcon, ClockIcon, SparklesIcon, ChevronRightIcon,
-  ChevronLeftIcon, FilterXIcon, MonitorIcon, WifiIcon, CarIcon,
-  HistoryIcon, TrophyIcon, ChevronUpIcon, PrinterIcon, Share2Icon,
-  BookmarkIcon, LayersIcon, Building2Icon, CheckIcon, AwardIcon,
+  FilterXIcon, MonitorIcon, WifiIcon, CarIcon,
+  HistoryIcon, TrophyIcon, ChevronUpIcon,
+  BookmarkIcon, LayersIcon, Building2Icon, AwardIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
@@ -332,10 +332,11 @@ function PlataformaButtons() {
   );
 }
 
-function PillBtn({ active, onClick, children, activeClass = 'bg-gray-900 text-white border-gray-900', className = '' }) {
+function PillBtn({ active, onClick, children, activeClass = 'bg-gray-900 text-white border-gray-900', className = '', title }) {
   return (
     <button
       onClick={onClick}
+      title={title}
       className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold border transition-all duration-150 hover:scale-105 active:scale-95 ${
         active ? `${activeClass} shadow-sm` : `bg-white text-gray-600 border-gray-200 hover:border-gray-400 hover:text-gray-900`
       } ${className}`}
@@ -1174,9 +1175,10 @@ export default function Home() {
 
                 <PillBtn active={filtro === 'favoritas'} onClick={() => setFiltro(filtro === 'favoritas' ? 'bauru' : 'favoritas')}
                   activeClass="bg-rose-500 text-white border-rose-500"
-                  className={filtro !== 'favoritas' ? 'hover:border-rose-300 hover:text-rose-500' : ''}>
+                  className={filtro !== 'favoritas' ? 'hover:border-rose-300 hover:text-rose-500' : ''}
+                  title="Favoritas">
                   <HeartIcon className="h-3.5 w-3.5" />
-                  Favoritas <span className="opacity-70 text-[10px]">{favoritas.size}</span>
+                  <span className="opacity-70 text-[10px]">{favoritas.size}</span>
                 </PillBtn>
               </div>
 
@@ -1215,20 +1217,20 @@ export default function Home() {
                   { id: 'remoto',     label: 'Remoto',     icon: <WifiIcon className="h-3 w-3" />    },
                 ].map(m => (
                   <PillBtn key={m.id} active={modoTrabalho === m.id} onClick={() => setModoTrabalho(modoTrabalho === m.id ? null : m.id)}
-                    activeClass="bg-sky-600 text-white border-sky-600">
-                    {m.icon}{m.label}
+                    activeClass="bg-sky-600 text-white border-sky-600" title={m.label}>
+                    {m.icon}
                   </PillBtn>
                 ))}
 
                 <div className="h-5 w-px bg-gray-200" />
 
                 <PillBtn active={somenteNovas} onClick={() => setSomenteNovas(v => !v)}
-                  activeClass="bg-green-600 text-white border-green-600">
-                  <SparklesIcon className="h-3.5 w-3.5" /> Novas
+                  activeClass="bg-green-600 text-white border-green-600" title="Somente novas">
+                  <SparklesIcon className="h-3.5 w-3.5" />
                 </PillBtn>
                 <PillBtn active={naoVisitadas} onClick={() => setNaoVisitadas(v => !v)}
-                  activeClass="bg-slate-700 text-white border-slate-700">
-                  <EyeOffIcon className="h-3.5 w-3.5" /> Não vistas
+                  activeClass="bg-slate-700 text-white border-slate-700" title="Não vistas">
+                  <EyeOffIcon className="h-3.5 w-3.5" />
                 </PillBtn>
 
                 <div className="relative">

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { ArrowLeftIcon, TrashIcon, ExternalLinkIcon, MapPinIcon, ClockIcon, DownloadIcon, StickyNoteIcon, BellIcon, UserIcon, DollarSignIcon, BarChart2Icon, ChevronDownIcon, ChevronUpIcon, TagIcon, XIcon, SearchIcon, ArrowUpDownIcon } from 'lucide-react';
+import { ArrowLeftIcon, TrashIcon, ExternalLinkIcon, MapPinIcon, ClockIcon, DownloadIcon, StickyNoteIcon, BellIcon, UserIcon, DollarSignIcon, BarChart2Icon, ChevronDownIcon, ChevronUpIcon, TagIcon, XIcon, SearchIcon } from 'lucide-react';
 import Link from 'next/link';
 
 const LS_KANBAN = 'vagas_kanban';
