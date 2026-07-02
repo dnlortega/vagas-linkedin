@@ -224,9 +224,17 @@ export default function VagaModal({ vaga, vagas = [], onClose, onOpen, onPrev, o
 
   useEffect(() => {
     if (!jobId || vaga?.fonte !== 'linkedin') { setLoading(false); return; }
+    try {
+      const cached = JSON.parse(localStorage.getItem(`vd_${jobId}`) || 'null');
+      if (cached) { setDetalhe(cached); setLoading(false); return; }
+    } catch (_) {}
     fetch(`/api/vaga/${jobId}`)
       .then(r => r.json())
-      .then(d => { if (d.error) throw new Error(d.error); setDetalhe(d); })
+      .then(d => {
+        if (d.error) throw new Error(d.error);
+        setDetalhe(d);
+        try { localStorage.setItem(`vd_${jobId}`, JSON.stringify(d)); } catch (_) {}
+      })
       .catch(e => setErro(e.message))
       .finally(() => setLoading(false));
   }, [jobId, vaga?.fonte]);

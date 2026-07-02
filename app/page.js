@@ -40,13 +40,13 @@ const PERIODOS = [
 ];
 
 const FONTE_CONFIG = {
-  linkedin:   { label: 'LinkedIn',   color: 'bg-blue-100 text-blue-700 border-blue-200'      },
-  vagasbauru: { label: 'VagasBauru', color: 'bg-rose-100 text-rose-700 border-rose-200'      },
-  indeed:     { label: 'Indeed',     color: 'bg-sky-100 text-sky-700 border-sky-200'          },
-  vagascom:   { label: 'Vagas.com',  color: 'bg-amber-100 text-amber-700 border-amber-200'   },
-  ciee:       { label: 'CIEE',       color: 'bg-teal-100 text-teal-700 border-teal-200'      },
-  catho:      { label: 'Catho',      color: 'bg-orange-100 text-orange-700 border-orange-200'  },
-  empregoscom:{ label: 'Empregos',  color: 'bg-lime-100 text-lime-700 border-lime-200'         },
+  linkedin:    { label: 'LinkedIn',   color: 'bg-blue-100 text-blue-700 border-blue-200',      accent: '#3b82f6' },
+  vagasbauru:  { label: 'VagasBauru', color: 'bg-rose-100 text-rose-700 border-rose-200',      accent: '#f43f5e' },
+  indeed:      { label: 'Indeed',     color: 'bg-sky-100 text-sky-700 border-sky-200',          accent: '#0ea5e9' },
+  vagascom:    { label: 'Vagas.com',  color: 'bg-amber-100 text-amber-700 border-amber-200',   accent: '#f59e0b' },
+  ciee:        { label: 'CIEE',       color: 'bg-teal-100 text-teal-700 border-teal-200',      accent: '#14b8a6' },
+  catho:       { label: 'Catho',      color: 'bg-orange-100 text-orange-700 border-orange-200',accent: '#f97316' },
+  empregoscom: { label: 'Empregos',   color: 'bg-lime-100 text-lime-700 border-lime-200',      accent: '#84cc16' },
 };
 
 const LOCALIDADE_CONFIG = {
@@ -362,7 +362,7 @@ function VagaCard({ vaga, isNovo, isFavorita, ehDuplicata, foiVisitada, noKanban
           className="cursor-pointer flex items-center gap-3 bg-white rounded-2xl border border-gray-100
             shadow-sm hover:shadow-md hover:border-gray-200 transition-all duration-150 px-4 py-3.5 group relative"
         >
-          <div className="absolute left-0 top-3 bottom-3 w-1 rounded-r-full" style={{ backgroundColor: loc.accent }} />
+          <div className="absolute left-0 top-3 bottom-3 w-1 rounded-r-full" style={{ backgroundColor: fonteCfg.accent || loc.accent }} />
           <div className="h-11 w-11 rounded-xl flex-shrink-0 flex items-center justify-center text-white text-sm font-bold ml-2 shadow-sm" style={{ backgroundColor: loc.accent }}>
             {iniciais(vaga.empresa)}
           </div>
@@ -416,7 +416,7 @@ function VagaCard({ vaga, isNovo, isFavorita, ehDuplicata, foiVisitada, noKanban
         className={`cursor-pointer h-full flex flex-col bg-white rounded-2xl overflow-hidden border
           shadow-sm hover:shadow-xl hover:-translate-y-1.5 hover:border-gray-200 transition-all duration-200 group relative ${foiVisitada ? 'border-gray-100' : 'border-gray-100'}`}
       >
-        <div className="h-1.5 w-full flex-shrink-0" style={{ backgroundColor: loc.accent }} />
+        <div className="h-1.5 w-full flex-shrink-0" style={{ backgroundColor: fonteCfg.accent || loc.accent }} />
 
         {/* Ações top-right */}
         <div className="absolute top-3.5 right-3 z-10 flex items-center gap-0.5">
@@ -613,6 +613,7 @@ export default function Home() {
   const [selectedVaga, setSelectedVaga] = useState(null);
   const [novosCount,   setNovosCount]   = useState(0);
   const [gridKey,      setGridKey]      = useState(0);
+  const [filterKey,    setFilterKey]    = useState(0);
   const [favoritas,    setFavoritas]    = useState(new Set());
   const [ocultas,      setOcultas]      = useState(new Set());
   const [mostrarStats, setMostrarStats] = useState(false);
@@ -733,6 +734,8 @@ export default function Home() {
   useEffect(() => {
     document.title = novosCount > 0 ? `(${novosCount}) Vagas de TI em Bauru` : 'Vagas de TI em Bauru';
   }, [novosCount]);
+
+  useEffect(() => { setFilterKey(k => k + 1); }, [filtro, senioridade, modalidade, modoTrabalho, techFiltro, somenteNovas, naoVisitadas]);
 
   // Atalhos de teclado (/, Esc, ←→ navegação entre vagas)
   useEffect(() => {
@@ -1553,7 +1556,7 @@ export default function Home() {
         {!loading && !error && (
           <div className="flex items-center justify-between mb-5 animate-in fade-in-0 duration-300">
             <div className="flex items-center flex-wrap gap-2 text-sm text-gray-500">
-              <span><strong className="text-gray-900 font-bold text-base">{vagasOrdenadas.length}</strong>{' '}vaga{vagasOrdenadas.length !== 1 ? 's' : ''}</span>
+              <span><strong key={vagasOrdenadas.length} className="text-gray-900 font-bold text-base count-up inline-block">{vagasOrdenadas.length}</strong>{' '}vaga{vagasOrdenadas.length !== 1 ? 's' : ''}</span>
               {busca && (
                 <span className="flex items-center gap-1 bg-gray-100 rounded-lg px-2.5 py-1">
                   "{busca}"
@@ -1687,7 +1690,7 @@ export default function Home() {
           }
 
           return (
-            <div key={gridKey} className={gridClass}>
+            <div key={`${gridKey}-${filterKey}`} className={`${gridClass} fade-slide-up`}>
               {vagasOrdenadas.map(renderCard)}
             </div>
           );

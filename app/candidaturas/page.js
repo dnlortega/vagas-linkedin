@@ -121,7 +121,9 @@ export default function Candidaturas() {
   const [expandido,  setExpandido]  = useState(null);
   const [mostrarStats, setMostrarStats] = useState(false);
   const [buscaKanban,  setBuscaKanban]  = useState('');
-  const [ordemKanban,  setOrdemKanban]  = useState('adicionado'); // 'adicionado' | 'empresa' | 'titulo'
+  const [ordemKanban,  setOrdemKanban]  = useState('adicionado');
+  const [dragLinkId,   setDragLinkId]   = useState(null);
+  const [dragOverCol,  setDragOverCol]  = useState(null);
 
   useEffect(() => {
     try { setKanban(JSON.parse(localStorage.getItem(LS_KANBAN) || '{}')); } catch (_) {}
@@ -273,10 +275,20 @@ export default function Candidaturas() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             {COLUNAS.map(col => {
               const vagas = todasVagas.filter(v => (v.status || 'salvo') === col.id);
+              const isDropTarget = dragOverCol === col.id && dragLinkId !== null;
               return (
-                <div key={col.id} className="flex flex-col gap-3">
+                <div key={col.id}
+                  className={`flex flex-col gap-3 transition-all duration-200 ${isDropTarget ? 'scale-[1.02]' : ''}`}
+                  onDragOver={e => { e.preventDefault(); setDragOverCol(col.id); }}
+                  onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget)) setDragOverCol(null); }}
+                  onDrop={() => {
+                    if (dragLinkId) update(dragLinkId, { status: col.id });
+                    setDragLinkId(null);
+                    setDragOverCol(null);
+                  }}
+                >
                   {/* Cabeçalho coluna */}
-                  <div className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl border ${col.header}`}>
+                  <div className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl border transition-all ${col.header} ${isDropTarget ? 'shadow-md' : ''}`}>
                     <div className="flex items-center gap-2">
                       <span className={`h-2.5 w-2.5 rounded-full ${col.dot}`} />
                       <span className="text-xs font-bold text-gray-700">{col.label}</span>
@@ -285,17 +297,23 @@ export default function Candidaturas() {
                   </div>
 
                   {/* Cards */}
-                  <div className="flex flex-col gap-2.5 min-h-16">
+                  <div className={`flex flex-col gap-2.5 min-h-16 rounded-xl transition-all duration-200 ${isDropTarget ? 'bg-blue-50/60 ring-2 ring-blue-200 ring-dashed p-1.5' : ''}`}>
                     {vagas.map(vaga => {
                       const dias     = diasDesde(vaga.adicionadoEm);
                       const vencLemb = lembreteVencido(vaga.link);
                       const vencPraz = prazoVencido(vaga.link);
                       const editando = editNota === vaga.link;
                       const aberto   = expandido === vaga.link;
+                      const isDragging = dragLinkId === vaga.link;
 
                       return (
                         <div key={vaga.link}
-                          className={`bg-white rounded-2xl border shadow-sm p-4 flex flex-col gap-3 transition-all hover:shadow-md ${col.card} ${vencLemb || vencPraz ? 'ring-2 ring-amber-400 ring-offset-1' : ''}`}
+                          draggable
+                          onDragStart={() => setDragLinkId(vaga.link)}
+                          onDragEnd={() => { setDragLinkId(null); setDragOverCol(null); }}
+                          className={`bg-white rounded-2xl border shadow-sm p-4 flex flex-col gap-3 transition-all cursor-grab active:cursor-grabbing select-none
+                            ${isDragging ? 'opacity-40 scale-95 shadow-none' : 'hover:shadow-md'}
+                            ${col.card} ${vencLemb || vencPraz ? 'ring-2 ring-amber-400 ring-offset-1' : ''}`}
                         >
                           {/* Alertas */}
                           {(vencLemb || vencPraz) && (
