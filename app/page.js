@@ -1131,12 +1131,11 @@ export default function Home() {
               <TooltipTrigger asChild>
                 <button
                   onClick={() => setFiltrosVisiveis(v => !v)}
-                  className={`h-9 px-2.5 rounded-xl border text-xs font-semibold flex items-center gap-1 transition-all shrink-0 ${
+                  className={`h-9 w-9 rounded-xl border flex items-center justify-center transition-all shrink-0 ${
                     filtrosVisiveis ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
                   }`}
                 >
                   <ChevronUpIcon className={`h-3.5 w-3.5 transition-transform duration-200 ${filtrosVisiveis ? '' : 'rotate-180'}`} />
-                  <span className="hidden sm:inline">{filtrosVisiveis ? 'Ocultar' : 'Filtros'}</span>
                 </button>
               </TooltipTrigger>
               <TooltipContent className="text-xs">{filtrosVisiveis ? 'Ocultar filtros' : 'Mostrar filtros'}</TooltipContent>
@@ -1254,7 +1253,6 @@ export default function Home() {
                       <button onClick={limparFiltros}
                         className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold border border-red-200 bg-red-50 text-red-500 hover:bg-red-100 transition-all">
                         <FilterXIcon className="h-3.5 w-3.5" />
-                        Limpar
                       </button>
                     </TooltipTrigger>
                     <TooltipContent className="text-xs">Remover todos os filtros ativos</TooltipContent>
@@ -1314,21 +1312,29 @@ export default function Home() {
                   <TooltipContent className="text-xs">{silencioso ? 'Desativar modo silencioso' : 'Modo silencioso'}</TooltipContent>
                 </Tooltip>
 
-                <button onClick={() => { setMostrarStats(v => !v); if (mostrarTop) setMostrarTop(false); }}
-                  className={`inline-flex items-center gap-1.5 rounded-xl px-2 sm:px-3 py-2 text-xs font-semibold border transition-all ${
-                    mostrarStats ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
-                  }`}>
-                  <BarChart2Icon className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Stats</span>
-                </button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button onClick={() => { setMostrarStats(v => !v); if (mostrarTop) setMostrarTop(false); }}
+                      className={`p-2 rounded-xl border transition-all ${
+                        mostrarStats ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+                      }`}>
+                      <BarChart2Icon className="h-3.5 w-3.5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent className="text-xs">Estatísticas</TooltipContent>
+                </Tooltip>
 
-                <button onClick={() => { setMostrarTop(v => !v); if (mostrarStats) setMostrarStats(false); }}
-                  className={`inline-flex items-center gap-1.5 rounded-xl px-2 sm:px-3 py-2 text-xs font-semibold border transition-all ${
-                    mostrarTop ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
-                  }`}>
-                  <TrophyIcon className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Top</span>
-                </button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button onClick={() => { setMostrarTop(v => !v); if (mostrarStats) setMostrarStats(false); }}
+                      className={`p-2 rounded-xl border transition-all ${
+                        mostrarTop ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+                      }`}>
+                      <TrophyIcon className="h-3.5 w-3.5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent className="text-xs">Top tecnologias e empresas</TooltipContent>
+                </Tooltip>
 
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -1375,21 +1381,29 @@ export default function Home() {
                   )}
                 </div>
 
-                <Link href="/candidaturas"
-                  className="inline-flex items-center gap-1.5 rounded-xl px-2 sm:px-3 py-2 text-xs font-semibold border bg-white text-gray-500 border-gray-200 hover:border-indigo-300 hover:text-indigo-600 transition-all relative">
-                  <KanbanIcon className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Candidaturas</span>
-                  {kanban.size > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 h-4 w-4 bg-indigo-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                      {kanban.size > 9 ? '9+' : kanban.size}
-                    </span>
-                  )}
-                </Link>
-                <Link href="/perfil"
-                  className="inline-flex items-center gap-1.5 rounded-xl px-2 sm:px-3 py-2 text-xs font-semibold border bg-white text-gray-500 border-gray-200 hover:border-indigo-300 hover:text-indigo-600 transition-all">
-                  <AwardIcon className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Certificados</span>
-                </Link>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link href="/candidaturas"
+                      className="p-2 rounded-xl border bg-white text-gray-500 border-gray-200 hover:border-indigo-300 hover:text-indigo-600 transition-all relative">
+                      <KanbanIcon className="h-3.5 w-3.5" />
+                      {kanban.size > 0 && (
+                        <span className="absolute -top-1.5 -right-1.5 h-4 w-4 bg-indigo-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                          {kanban.size > 9 ? '9+' : kanban.size}
+                        </span>
+                      )}
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent className="text-xs">Candidaturas (quadro Kanban)</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link href="/perfil"
+                      className="p-2 rounded-xl border bg-white text-gray-500 border-gray-200 hover:border-indigo-300 hover:text-indigo-600 transition-all">
+                      <AwardIcon className="h-3.5 w-3.5" />
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent className="text-xs">Perfil e certificados</TooltipContent>
+                </Tooltip>
               </div>
             </>
           )}
