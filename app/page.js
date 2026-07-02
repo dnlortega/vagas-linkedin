@@ -602,7 +602,7 @@ export default function Home() {
   const [loading,      setLoading]      = useState(true);
   const [refreshing,   setRefreshing]   = useState(false);
   const [error,        setError]        = useState(null);
-  const [filtro,       setFiltro]       = useState('todas');
+  const [filtro,       setFiltro]       = useState('bauru');
   const [senioridade,  setSenioridade]  = useState('todas');
   const [modalidade,   setModalidade]   = useState(null);
   const [periodo,      setPeriodo]      = useState('24h');
@@ -636,6 +636,7 @@ export default function Home() {
   const [agrupar,           setAgrupar]           = useState('nenhum');
   const [filtrosSalvos,     setFiltrosSalvos]     = useState([]);
   const [mostrarSalvos,     setMostrarSalvos]     = useState(false);
+  const [filtrosVisiveis,   setFiltrosVisiveis]   = useState(true);
 
   const buscaDebounced = useDebounce(busca, 220);
 
@@ -781,7 +782,7 @@ export default function Home() {
   }, [vagas]);
 
   function limparFiltros() {
-    setFiltro('todas');
+    setFiltro('bauru');
     setSenioridade('todas');
     setModalidade(null);
     setTechFiltro(null);
@@ -1119,270 +1120,279 @@ export default function Home() {
               )}
             </div>
             <Select value={periodo} onValueChange={setPeriodo}>
-              <SelectTrigger className="w-42 h-9 text-sm border-gray-200 rounded-xl">
+              <SelectTrigger className="w-42 h-9 text-sm border-gray-200 rounded-xl shrink-0">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {PERIODOS.map(p => <SelectItem key={p.id} value={p.id} className="text-sm">{p.label}</SelectItem>)}
               </SelectContent>
             </Select>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setFiltrosVisiveis(v => !v)}
+                  className={`h-9 px-2.5 rounded-xl border text-xs font-semibold flex items-center gap-1 transition-all shrink-0 ${
+                    filtrosVisiveis ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+                  }`}
+                >
+                  <ChevronUpIcon className={`h-3.5 w-3.5 transition-transform duration-200 ${filtrosVisiveis ? '' : 'rotate-180'}`} />
+                  <span className="hidden sm:inline">{filtrosVisiveis ? 'Ocultar' : 'Filtros'}</span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent className="text-xs">{filtrosVisiveis ? 'Ocultar filtros' : 'Mostrar filtros'}</TooltipContent>
+            </Tooltip>
           </div>
 
           {/* Filtros */}
-          <div className="flex flex-wrap gap-2 items-center">
-            {/* Localidade */}
-            {[
-              { id: 'todas',  label: 'Todas',  fn: _ => true },
-              { id: 'bauru',  label: 'Bauru',  fn: v => tipoLocalidade(v.local) === 'bauru' },
-              { id: 'regiao', label: 'Região', fn: v => ['bauru','regiao'].includes(tipoLocalidade(v.local)) },
-              { id: 'remoto', label: 'Remoto', fn: v => tipoLocalidade(v.local) === 'remoto' },
-            ].map(f => (
-              <PillBtn key={f.id} active={filtro === f.id} onClick={() => setFiltro(f.id)}>
-                {f.label} <span className="opacity-60 text-[10px]">{contar(f.fn)}</span>
-              </PillBtn>
-            ))}
+          {filtrosVisiveis && (
+            <>
+              {/* Linha A: Localidade + Fonte + Favoritas (scroll horizontal no mobile) */}
+              <div className="flex flex-nowrap gap-2 items-center overflow-x-auto pb-0.5 no-scrollbar [&>*]:shrink-0">
+                {[
+                  { id: 'todas',  label: 'Todas',  fn: _ => true },
+                  { id: 'bauru',  label: 'Bauru',  fn: v => tipoLocalidade(v.local) === 'bauru' },
+                  { id: 'regiao', label: 'Região', fn: v => ['bauru','regiao'].includes(tipoLocalidade(v.local)) },
+                  { id: 'remoto', label: 'Remoto', fn: v => tipoLocalidade(v.local) === 'remoto' },
+                ].map(f => (
+                  <PillBtn key={f.id} active={filtro === f.id} onClick={() => setFiltro(f.id)}>
+                    {f.label} <span className="opacity-60 text-[10px]">{contar(f.fn)}</span>
+                  </PillBtn>
+                ))}
 
-            <div className="h-5 w-px bg-gray-200" />
+                <div className="h-5 w-px bg-gray-200" />
 
-            {/* Fonte */}
-            {Object.entries(FONTE_CONFIG).map(([f, cfg]) => {
-              const n = fontes[f] || 0;
-              if (n === 0 && !loading) return null;
-              return (
-                <PillBtn key={f} active={filtro === f} onClick={() => setFiltro(filtro === f ? 'todas' : f)}>
-                  {cfg.label} {!loading && <span className="opacity-60 text-[10px]">{n}</span>}
+                {Object.entries(FONTE_CONFIG).map(([f, cfg]) => {
+                  const n = fontes[f] || 0;
+                  if (n === 0 && !loading) return null;
+                  return (
+                    <PillBtn key={f} active={filtro === f} onClick={() => setFiltro(filtro === f ? 'bauru' : f)}>
+                      {cfg.label} {!loading && <span className="opacity-60 text-[10px]">{n}</span>}
+                    </PillBtn>
+                  );
+                })}
+
+                <div className="h-5 w-px bg-gray-200" />
+
+                <PillBtn active={filtro === 'favoritas'} onClick={() => setFiltro(filtro === 'favoritas' ? 'bauru' : 'favoritas')}
+                  activeClass="bg-rose-500 text-white border-rose-500"
+                  className={filtro !== 'favoritas' ? 'hover:border-rose-300 hover:text-rose-500' : ''}>
+                  <HeartIcon className="h-3.5 w-3.5" />
+                  Favoritas <span className="opacity-70 text-[10px]">{favoritas.size}</span>
                 </PillBtn>
-              );
-            })}
+              </div>
 
-            <div className="h-5 w-px bg-gray-200" />
+              {/* Linha B: Senioridade + Modalidade + Modo + Extras (scroll horizontal no mobile) */}
+              <div className="flex flex-nowrap gap-2 items-center overflow-x-auto pb-0.5 no-scrollbar [&>*]:shrink-0">
+                {[
+                  { id: 'junior', label: 'Júnior' },
+                  { id: 'pleno',  label: 'Pleno'  },
+                  { id: 'senior', label: 'Sênior' },
+                ].map(s => (
+                  <PillBtn key={s.id} active={senioridade === s.id} onClick={() => setSenioridade(senioridade === s.id ? 'todas' : s.id)}
+                    activeClass="bg-violet-600 text-white border-violet-600">
+                    {s.label}
+                  </PillBtn>
+                ))}
 
-            {/* Favoritas */}
-            <PillBtn active={filtro === 'favoritas'} onClick={() => setFiltro(filtro === 'favoritas' ? 'todas' : 'favoritas')}
-              activeClass="bg-rose-500 text-white border-rose-500"
-              className={filtro !== 'favoritas' ? 'hover:border-rose-300 hover:text-rose-500' : ''}>
-              <HeartIcon className="h-3.5 w-3.5" />
-              Favoritas <span className="opacity-70 text-[10px]">{favoritas.size}</span>
-            </PillBtn>
+                <div className="h-5 w-px bg-gray-200" />
 
-            <div className="h-5 w-px bg-gray-200" />
+                {[
+                  { id: 'clt',     label: 'CLT'     },
+                  { id: 'pj',      label: 'PJ'      },
+                  { id: 'estagio', label: 'Estágio' },
+                  { id: 'trainee', label: 'Trainee' },
+                ].map(m => (
+                  <PillBtn key={m.id} active={modalidade === m.id} onClick={() => setModalidade(modalidade === m.id ? null : m.id)}
+                    activeClass="bg-emerald-600 text-white border-emerald-600">
+                    {m.label}
+                  </PillBtn>
+                ))}
 
-            {/* Senioridade */}
-            {[
-              { id: 'junior', label: 'Júnior' },
-              { id: 'pleno',  label: 'Pleno'  },
-              { id: 'senior', label: 'Sênior' },
-            ].map(s => (
-              <PillBtn key={s.id} active={senioridade === s.id} onClick={() => setSenioridade(senioridade === s.id ? 'todas' : s.id)}
-                activeClass="bg-violet-600 text-white border-violet-600">
-                {s.label}
-              </PillBtn>
-            ))}
+                <div className="h-5 w-px bg-gray-200" />
 
-            <div className="h-5 w-px bg-gray-200" />
+                {[
+                  { id: 'presencial', label: 'Presencial', icon: <MonitorIcon className="h-3 w-3" /> },
+                  { id: 'hibrido',    label: 'Híbrido',    icon: <CarIcon className="h-3 w-3" />     },
+                  { id: 'remoto',     label: 'Remoto',     icon: <WifiIcon className="h-3 w-3" />    },
+                ].map(m => (
+                  <PillBtn key={m.id} active={modoTrabalho === m.id} onClick={() => setModoTrabalho(modoTrabalho === m.id ? null : m.id)}
+                    activeClass="bg-sky-600 text-white border-sky-600">
+                    {m.icon}{m.label}
+                  </PillBtn>
+                ))}
 
-            {/* Modalidade */}
-            {[
-              { id: 'clt',     label: 'CLT'     },
-              { id: 'pj',      label: 'PJ'      },
-              { id: 'estagio', label: 'Estágio' },
-              { id: 'trainee', label: 'Trainee' },
-            ].map(m => (
-              <PillBtn key={m.id} active={modalidade === m.id} onClick={() => setModalidade(modalidade === m.id ? null : m.id)}
-                activeClass="bg-emerald-600 text-white border-emerald-600">
-                {m.label}
-              </PillBtn>
-            ))}
+                <div className="h-5 w-px bg-gray-200" />
 
-            <div className="h-5 w-px bg-gray-200" />
+                <PillBtn active={somenteNovas} onClick={() => setSomenteNovas(v => !v)}
+                  activeClass="bg-green-600 text-white border-green-600">
+                  <SparklesIcon className="h-3.5 w-3.5" /> Novas
+                </PillBtn>
+                <PillBtn active={naoVisitadas} onClick={() => setNaoVisitadas(v => !v)}
+                  activeClass="bg-slate-700 text-white border-slate-700">
+                  <EyeOffIcon className="h-3.5 w-3.5" /> Não vistas
+                </PillBtn>
 
-            {/* Modo de trabalho */}
-            {[
-              { id: 'presencial', label: 'Presencial', icon: <MonitorIcon className="h-3 w-3" /> },
-              { id: 'hibrido',    label: 'Híbrido',    icon: <CarIcon className="h-3 w-3" />     },
-              { id: 'remoto',     label: 'Remoto',     icon: <WifiIcon className="h-3 w-3" />    },
-            ].map(m => (
-              <PillBtn key={m.id} active={modoTrabalho === m.id} onClick={() => setModoTrabalho(modoTrabalho === m.id ? null : m.id)}
-                activeClass="bg-sky-600 text-white border-sky-600">
-                {m.icon}{m.label}
-              </PillBtn>
-            ))}
+                <div className="relative">
+                  <Building2Icon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-gray-400 pointer-events-none" />
+                  <input
+                    type="text"
+                    placeholder="Empresa…"
+                    value={empresaBusca}
+                    onChange={e => setEmpresaBusca(e.target.value)}
+                    className="pl-7 pr-7 h-7 text-xs border border-gray-200 rounded-full bg-white focus:outline-none focus:border-blue-400 w-28 focus:w-36 transition-all"
+                  />
+                  {empresaBusca && (
+                    <button onClick={() => setEmpresaBusca('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700">
+                      <XIcon className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
 
-            {/* Filtros extras: Novas / Não visitadas / Empresa */}
-            <div className="h-5 w-px bg-gray-200" />
+                {(filtro !== 'bauru' || senioridade !== 'todas' || modalidade || techFiltro || modoTrabalho || busca || somenteNovas || naoVisitadas || empresaBusca) && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button onClick={limparFiltros}
+                        className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold border border-red-200 bg-red-50 text-red-500 hover:bg-red-100 transition-all">
+                        <FilterXIcon className="h-3.5 w-3.5" />
+                        Limpar
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent className="text-xs">Remover todos os filtros ativos</TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
 
-            <PillBtn active={somenteNovas} onClick={() => setSomenteNovas(v => !v)}
-              activeClass="bg-green-600 text-white border-green-600">
-              <SparklesIcon className="h-3.5 w-3.5" /> Novas
-            </PillBtn>
-            <PillBtn active={naoVisitadas} onClick={() => setNaoVisitadas(v => !v)}
-              activeClass="bg-slate-700 text-white border-slate-700">
-              <EyeOffIcon className="h-3.5 w-3.5" /> Não vistas
-            </PillBtn>
+              {/* Linha C: Ações */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button onClick={() => setPinarFavoritas(v => !v)}
+                      className={`p-2 rounded-xl border transition-all ${pinarFavoritas ? 'bg-rose-500 text-white border-rose-500' : 'bg-white text-gray-400 border-gray-200 hover:border-rose-300 hover:text-rose-400'}`}>
+                      <HeartIcon className="h-3.5 w-3.5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent className="text-xs">{pinarFavoritas ? 'Desafixar favoritas' : 'Fixar favoritas no topo'}</TooltipContent>
+                </Tooltip>
 
-            {/* Busca por empresa */}
-            <div className="relative">
-              <Building2Icon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-gray-400 pointer-events-none" />
-              <input
-                type="text"
-                placeholder="Empresa…"
-                value={empresaBusca}
-                onChange={e => setEmpresaBusca(e.target.value)}
-                className="pl-7 pr-7 h-7 text-xs border border-gray-200 rounded-full bg-white focus:outline-none focus:border-blue-400 w-28 focus:w-36 transition-all"
-              />
-              {empresaBusca && (
-                <button onClick={() => setEmpresaBusca('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700">
-                  <XIcon className="h-3 w-3" />
+                <div className="flex rounded-xl border border-gray-200 overflow-hidden">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button onClick={() => { setVista('grade'); setTamanho('normal'); }}
+                        className={`p-2 transition-colors ${vista === 'grade' && tamanho === 'normal' ? 'bg-gray-900 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>
+                        <LayoutGridIcon className="h-3.5 w-3.5" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent className="text-xs">Grade</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button onClick={() => { setVista('grade'); setTamanho('compacto'); }}
+                        className={`p-2 border-l border-gray-200 transition-colors ${vista === 'grade' && tamanho === 'compacto' ? 'bg-gray-900 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>
+                        <SparklesIcon className="h-3.5 w-3.5" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent className="text-xs">Compacto (4 colunas)</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button onClick={() => setVista('lista')}
+                        className={`p-2 border-l border-gray-200 transition-colors ${vista === 'lista' ? 'bg-gray-900 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>
+                        <ListIcon className="h-3.5 w-3.5" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent className="text-xs">Lista</TooltipContent>
+                  </Tooltip>
+                </div>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button onClick={() => setSilencioso(v => !v)}
+                      className={`p-2 rounded-xl border transition-all ${silencioso ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'}`}>
+                      <BellOffIcon className="h-3.5 w-3.5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent className="text-xs">{silencioso ? 'Desativar modo silencioso' : 'Modo silencioso'}</TooltipContent>
+                </Tooltip>
+
+                <button onClick={() => { setMostrarStats(v => !v); if (mostrarTop) setMostrarTop(false); }}
+                  className={`inline-flex items-center gap-1.5 rounded-xl px-2 sm:px-3 py-2 text-xs font-semibold border transition-all ${
+                    mostrarStats ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+                  }`}>
+                  <BarChart2Icon className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Stats</span>
                 </button>
-              )}
-            </div>
 
-            {/* Limpar todos os filtros */}
-            {(filtro !== 'todas' || senioridade !== 'todas' || modalidade || techFiltro || modoTrabalho || busca || somenteNovas || naoVisitadas || empresaBusca) && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button onClick={limparFiltros}
-                    className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold border border-red-200 bg-red-50 text-red-500 hover:bg-red-100 transition-all">
-                    <FilterXIcon className="h-3.5 w-3.5" />
-                    Limpar
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent className="text-xs">Remover todos os filtros ativos</TooltipContent>
-              </Tooltip>
-            )}
+                <button onClick={() => { setMostrarTop(v => !v); if (mostrarStats) setMostrarStats(false); }}
+                  className={`inline-flex items-center gap-1.5 rounded-xl px-2 sm:px-3 py-2 text-xs font-semibold border transition-all ${
+                    mostrarTop ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+                  }`}>
+                  <TrophyIcon className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Top</span>
+                </button>
 
-            {/* Ações à direita */}
-            <div className="ml-auto flex items-center gap-1.5">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button onClick={() => setPinarFavoritas(v => !v)}
-                    className={`p-2 rounded-xl border transition-all ${pinarFavoritas ? 'bg-rose-500 text-white border-rose-500' : 'bg-white text-gray-400 border-gray-200 hover:border-rose-300 hover:text-rose-400'}`}>
-                    <HeartIcon className="h-3.5 w-3.5" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent className="text-xs">{pinarFavoritas ? 'Desafixar favoritas' : 'Fixar favoritas no topo'}</TooltipContent>
-              </Tooltip>
-
-              <div className="flex rounded-xl border border-gray-200 overflow-hidden">
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <button onClick={() => { setVista('grade'); setTamanho('normal'); }}
-                      className={`p-2 transition-colors ${vista === 'grade' && tamanho === 'normal' ? 'bg-gray-900 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>
-                      <LayoutGridIcon className="h-3.5 w-3.5" />
-                    </button>
+                    <select value={agrupar} onChange={e => setAgrupar(e.target.value)}
+                      className={`h-8 text-xs border rounded-xl px-2 pr-6 appearance-none cursor-pointer transition-all ${agrupar !== 'nenhum' ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'}`}>
+                      <option value="nenhum">Agrupar…</option>
+                      <option value="empresa">Por empresa</option>
+                      <option value="fonte">Por fonte</option>
+                    </select>
                   </TooltipTrigger>
-                  <TooltipContent className="text-xs">Grade</TooltipContent>
+                  <TooltipContent className="text-xs">Agrupar vagas</TooltipContent>
                 </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button onClick={() => { setVista('grade'); setTamanho('compacto'); }}
-                      className={`p-2 border-l border-gray-200 transition-colors ${vista === 'grade' && tamanho === 'compacto' ? 'bg-gray-900 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>
-                      <SparklesIcon className="h-3.5 w-3.5" />
+
+                <div className="relative">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button onClick={salvarFiltroAtual}
+                        className="p-2 rounded-xl border border-gray-200 bg-white text-gray-500 hover:border-amber-300 hover:text-amber-600 transition-all">
+                        <BookmarkIcon className="h-3.5 w-3.5" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent className="text-xs">Salvar filtros atuais</TooltipContent>
+                  </Tooltip>
+
+                  {filtrosSalvos.length > 0 && (
+                    <button onClick={() => setMostrarSalvos(v => !v)}
+                      className="absolute -top-1.5 -right-1.5 h-4 w-4 bg-amber-400 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                      {filtrosSalvos.length}
                     </button>
-                  </TooltipTrigger>
-                  <TooltipContent className="text-xs">Compacto (4 colunas)</TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button onClick={() => setVista('lista')}
-                      className={`p-2 border-l border-gray-200 transition-colors ${vista === 'lista' ? 'bg-gray-900 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>
-                      <ListIcon className="h-3.5 w-3.5" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent className="text-xs">Lista</TooltipContent>
-                </Tooltip>
+                  )}
+
+                  {mostrarSalvos && (
+                    <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-2xl shadow-xl z-50 w-52 overflow-hidden" onMouseLeave={() => setMostrarSalvos(false)}>
+                      <p className="px-3 py-2 text-[11px] font-bold text-gray-400 border-b border-gray-100">Filtros salvos</p>
+                      {filtrosSalvos.map(f => (
+                        <div key={f.nome} className="flex items-center gap-1 px-3 py-2 hover:bg-gray-50 group">
+                          <button onClick={() => restaurarFiltro(f)} className="flex-1 text-left text-xs text-gray-700 font-medium truncate">{f.nome}</button>
+                          <button onClick={() => removerFiltroSalvo(f.nome)} className="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
+                            <XIcon className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <Link href="/candidaturas"
+                  className="inline-flex items-center gap-1.5 rounded-xl px-2 sm:px-3 py-2 text-xs font-semibold border bg-white text-gray-500 border-gray-200 hover:border-indigo-300 hover:text-indigo-600 transition-all relative">
+                  <KanbanIcon className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Candidaturas</span>
+                  {kanban.size > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 h-4 w-4 bg-indigo-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                      {kanban.size > 9 ? '9+' : kanban.size}
+                    </span>
+                  )}
+                </Link>
+                <Link href="/perfil"
+                  className="inline-flex items-center gap-1.5 rounded-xl px-2 sm:px-3 py-2 text-xs font-semibold border bg-white text-gray-500 border-gray-200 hover:border-indigo-300 hover:text-indigo-600 transition-all">
+                  <AwardIcon className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Certificados</span>
+                </Link>
               </div>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button onClick={() => setSilencioso(v => !v)}
-                    className={`p-2 rounded-xl border transition-all ${silencioso ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'}`}>
-                    <BellOffIcon className="h-3.5 w-3.5" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent className="text-xs">{silencioso ? 'Desativar modo silencioso' : 'Modo silencioso'}</TooltipContent>
-              </Tooltip>
-
-              <button onClick={() => { setMostrarStats(v => !v); if (mostrarTop) setMostrarTop(false); }}
-                className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold border transition-all ${
-                  mostrarStats ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
-                }`}>
-                <BarChart2Icon className="h-3.5 w-3.5" />
-                Stats
-              </button>
-
-              <button onClick={() => { setMostrarTop(v => !v); if (mostrarStats) setMostrarStats(false); }}
-                className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold border transition-all ${
-                  mostrarTop ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
-                }`}>
-                <TrophyIcon className="h-3.5 w-3.5" />
-                Top
-              </button>
-
-              {/* Agrupar */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <select value={agrupar} onChange={e => setAgrupar(e.target.value)}
-                    className={`h-8 text-xs border rounded-xl px-2 pr-6 appearance-none cursor-pointer transition-all ${agrupar !== 'nenhum' ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'}`}>
-                    <option value="nenhum">Agrupar…</option>
-                    <option value="empresa">Por empresa</option>
-                    <option value="fonte">Por fonte</option>
-                  </select>
-                </TooltipTrigger>
-                <TooltipContent className="text-xs">Agrupar vagas</TooltipContent>
-              </Tooltip>
-
-              {/* Salvar filtros */}
-              <div className="relative">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button onClick={salvarFiltroAtual}
-                      className="p-2 rounded-xl border border-gray-200 bg-white text-gray-500 hover:border-amber-300 hover:text-amber-600 transition-all">
-                      <BookmarkIcon className="h-3.5 w-3.5" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent className="text-xs">Salvar filtros atuais</TooltipContent>
-                </Tooltip>
-
-                {filtrosSalvos.length > 0 && (
-                  <button onClick={() => setMostrarSalvos(v => !v)}
-                    className="absolute -top-1.5 -right-1.5 h-4 w-4 bg-amber-400 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                    {filtrosSalvos.length}
-                  </button>
-                )}
-
-                {mostrarSalvos && (
-                  <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-2xl shadow-xl z-50 w-52 overflow-hidden" onMouseLeave={() => setMostrarSalvos(false)}>
-                    <p className="px-3 py-2 text-[11px] font-bold text-gray-400 border-b border-gray-100">Filtros salvos</p>
-                    {filtrosSalvos.map(f => (
-                      <div key={f.nome} className="flex items-center gap-1 px-3 py-2 hover:bg-gray-50 group">
-                        <button onClick={() => restaurarFiltro(f)} className="flex-1 text-left text-xs text-gray-700 font-medium truncate">{f.nome}</button>
-                        <button onClick={() => removerFiltroSalvo(f.nome)} className="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
-                          <XIcon className="h-3 w-3" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <Link href="/candidaturas"
-                className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold border bg-white text-gray-500 border-gray-200 hover:border-indigo-300 hover:text-indigo-600 transition-all relative">
-                <KanbanIcon className="h-3.5 w-3.5" />
-                Candidaturas
-                {kanban.size > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 h-4 w-4 bg-indigo-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                    {kanban.size > 9 ? '9+' : kanban.size}
-                  </span>
-                )}
-              </Link>
-              <Link href="/perfil"
-                className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold border bg-white text-gray-500 border-gray-200 hover:border-indigo-300 hover:text-indigo-600 transition-all">
-                <AwardIcon className="h-3.5 w-3.5" />
-                Certificados
-              </Link>
-            </div>
-          </div>
+            </>
+          )}
 
           {/* Top Tecnologias + Empresas */}
           {mostrarTop && !loading && (

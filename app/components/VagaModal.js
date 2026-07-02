@@ -496,7 +496,9 @@ export default function VagaModal({ vaga, vagas = [], onClose, onOpen, onPrev, o
               <KanbanIcon className="h-3.5 w-3.5" />
               {noKanban ? 'No quadro ✓' : 'Ao quadro'}
             </button>
+          </div>
 
+          <div className="flex gap-1.5 justify-center flex-wrap">
             <button onClick={compartilharWhatsApp} title="WhatsApp"
               className="flex items-center justify-center h-9 w-9 rounded-xl border border-gray-200 bg-white text-gray-500 hover:border-green-300 hover:text-green-600 transition-all">
               <Share2Icon className="h-4 w-4" />

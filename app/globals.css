@@ -233,6 +233,9 @@ body {
 .job-description a   { color: #2563eb; text-decoration: underline; }
 .job-description br  { display: block; margin-bottom: 0.25rem; }
 
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
 @media print {
   header, nav, button, [role="banner"], .no-print { display: none !important; }
   body { background: white !important; color: black !important; }

@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeftIcon, PlusIcon, TrashIcon, PencilIcon, ClipboardCopyIcon,
   CheckIcon, UploadIcon, DownloadIcon, SearchIcon, XIcon, Award,
   ExternalLinkIcon, ChevronDownIcon, ChevronUpIcon, InfoIcon,
-  FileTextIcon, EyeIcon, ZapIcon, RefreshCwIcon, Loader2Icon,
-  PrinterIcon, Trash2Icon,
+  FileTextIcon, EyeIcon, ZapIcon, PrinterIcon, Trash2Icon,
 } from 'lucide-react';
 
 const LS_CERTS = 'vagas_certificados';
@@ -110,6 +109,20 @@ function gerarTextoGupyTodos(certs) {
   return certs.map((c, i) => `${'─'.repeat(40)}\n[${i + 1}] ${c.nome}\n${gerarTextoGupy(c)}`).join('\n\n');
 }
 
+const MESES_PT = { jan: 0, fev: 1, mar: 2, abr: 3, mai: 4, jun: 5, jul: 6, ago: 7, set: 8, out: 9, nov: 10, dez: 11 };
+function parsarDataTS(str) {
+  if (!str) return 0;
+  const m = str.match(/([a-zA-ZÀ-ú]{3})\.?\s+(?:de\s+)?(\d{4})/i);
+  if (m) return new Date(parseInt(m[2]), MESES_PT[m[1].toLowerCase().slice(0, 3)] ?? 0).getTime();
+  const a = str.match(/(\d{4})/);
+  return a ? new Date(parseInt(a[1]), 0).getTime() : 0;
+}
+function extrairAno(str) {
+  if (!str) return null;
+  const m = str.match(/(\d{4})/);
+  return m ? parseInt(m[1]) : null;
+}
+
 // Script que roda no navegador do usuário enquanto está no LinkedIn
 const BOOKMARKLET_FN = `(function(){
   if(!location.hostname.includes('linkedin.com')){alert('Abra no LinkedIn!');return;}
@@ -125,7 +138,7 @@ const BOOKMARKLET_FN = `(function(){
     var certs=[],cert=null,state='WAIT';
     function isEnd(l){return /^competências:/i.test(l);}
     function isCred(l){return /^código da credencial/i.test(l);}
-    function isDate(l){return /^(emitida?\\s*em|expedido|emitido|issued)/i.test(l);}
+    function isDate(l){return /^(emitida?\\s*em|expedid[ao]\\s*em|data de emiss|issued)/i.test(l)||/^[a-zA-Z\\u00C0-\\u024F]{3,6}\\.?\\s+de\\s+\\d{4}/i.test(l);}
     function isExpiry(l){return /^expira\\s/i.test(l);}
     function isSkip(l){return /^(certificado$|certficado$|exibir credencial|ver credencial|·|•)/i.test(l);}
     function isFooter(l){return /^(sobre$|acessibilidade$|soluções de talentos|carreiras$|publicidade$|dispositivo móvel|linkedin corp|dúvidas\\?|acesse a nossa|gerencie sua|visibilidade da|selecionar idioma)/i.test(l);}
@@ -146,53 +159,87 @@ const BOOKMARKLET_FN = `(function(){
     var seen=new Set();
     certs=certs.filter(function(c){var k=c.nome.toLowerCase();if(seen.has(k))return false;seen.add(k);return true;});
     if(!certs.length){alert('Nenhum certificado encontrado. Role a página até o fim e tente novamente.');return;}
-    fetch('http://localhost:3000/api/import-certs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({certs:certs})})
-      .then(function(r){if(r.ok)alert('\\u2713 '+certs.length+' certificado(s) enviado(s)! Volte para o app.');else fb();})
-      .catch(fb);
-    function fb(){navigator.clipboard.writeText(JSON.stringify(certs)).then(function(){alert(certs.length+' cert(s) copiado(s)! Cole no campo JSON do app.');}).catch(function(){prompt('Copie:',JSON.stringify(certs));});}
+    // Copia para clipboard e abre o app para colar
+    var json=JSON.stringify(certs);
+    navigator.clipboard.writeText(json).then(function(){
+      alert('\\u2713 '+certs.length+' certificado(s) copiado(s)!\\n\\nVOLTE para o app e clique em "Colar do clipboard".');
+      window.open('http://localhost:3000/perfil?paste=1','_blank');
+    }).catch(function(){prompt('Copie o JSON abaixo e cole no app:',json);});
   },1200);
 })()`;
 
 const BOOKMARKLET_CODE = 'javascript:' + encodeURIComponent(BOOKMARKLET_FN);
 
 function CertCard({ cert, onEdit, onDelete, onCopySingle, copiado }) {
+  const [copiadoUrl, setCopiadoUrl] = useState(null);
   const emissor = emissoresMatch(cert.emissor || '');
   const logoSrc = cert.logoUrl || (emissor ? faviconUrl(emissor.dominio) : null);
 
+  function copiarUrl(campo) {
+    const val = campo === 'logo' ? cert.logoUrl : cert.url;
+    if (!val) return;
+    navigator.clipboard.writeText(val).then(() => {
+      setCopiadoUrl(campo);
+      setTimeout(() => setCopiadoUrl(null), 2000);
+    });
+  }
+
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-4 flex gap-3 hover:shadow-md transition-all group">
-      <div className="h-12 w-12 rounded-xl flex-shrink-0 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-700 dark:to-gray-600 flex items-center justify-center overflow-hidden border border-gray-100 dark:border-gray-600">
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-indigo-100 dark:hover:border-indigo-800 transition-all p-3 flex items-start gap-3 group">
+      {/* Logo */}
+      <div className="h-10 w-10 rounded-lg flex-shrink-0 bg-gradient-to-br from-indigo-50 to-blue-100 dark:from-gray-700 dark:to-gray-600 flex items-center justify-center overflow-hidden border border-gray-100 dark:border-gray-600 relative">
         {logoSrc ? (
-          <img src={logoSrc} alt={cert.emissor} className="h-8 w-8 object-contain"
+          <img src={logoSrc} alt={cert.emissor} className="h-7 w-7 object-contain"
             onError={e => { e.currentTarget.style.display = 'none'; }} />
         ) : (
-          <Award className="h-5 w-5 text-indigo-400" />
+          <Award className="h-4 w-4 text-indigo-400" />
+        )}
+        {cert.logoUrl && (
+          <button onClick={() => copiarUrl('logo')} title="Copiar URL da imagem"
+            className="absolute inset-0 bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
+            {copiadoUrl === 'logo' ? <CheckIcon className="h-3 w-3" /> : <ClipboardCopyIcon className="h-3 w-3" />}
+          </button>
         )}
       </div>
 
+      {/* Info */}
       <div className="flex-1 min-w-0">
-        <p className="font-semibold text-gray-900 dark:text-white text-sm leading-tight">{cert.nome}</p>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{cert.emissor || <span className="italic text-gray-300">Sem emissor</span>}</p>
-        {cert.data && <p className="text-[11px] text-indigo-500 dark:text-indigo-400 mt-0.5 font-medium">{formatarDataGupy(cert.data)}{cert.dataExpiracao ? ` → ${formatarDataGupy(cert.dataExpiracao)}` : ''}</p>}
-        {cert.credencial && <p className="text-[11px] text-gray-400 mt-0.5 font-mono">ID: {cert.credencial}</p>}
+        <p className="font-semibold text-gray-900 dark:text-white text-sm leading-tight truncate" title={cert.nome}>{cert.nome}</p>
+        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+          {cert.emissor && <span className="text-xs text-gray-500 dark:text-gray-400 truncate">{cert.emissor}</span>}
+          {cert.data && (
+            <span className="inline-flex items-center text-[11px] bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded font-medium">
+              {formatarDataGupy(cert.data)}{cert.dataExpiracao ? ` → ${formatarDataGupy(cert.dataExpiracao)}` : ''}
+            </span>
+          )}
+        </div>
         {cert.url && (
-          <a href={cert.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[11px] text-blue-500 hover:text-blue-700 mt-0.5">
-            <ExternalLinkIcon className="h-3 w-3" /> Ver certificado
-          </a>
+          <div className="flex items-center gap-1.5 mt-1">
+            <a href={cert.url} target="_blank" rel="noreferrer"
+              className="inline-flex items-center gap-0.5 text-[11px] text-blue-500 hover:text-blue-700 truncate max-w-[140px]" title={cert.url}>
+              <ExternalLinkIcon className="h-2.5 w-2.5 flex-shrink-0" /> Ver certificado
+            </a>
+            <button onClick={() => copiarUrl('url')} title="Copiar URL do certificado"
+              className="text-[11px] text-gray-400 hover:text-indigo-600 transition-colors flex items-center gap-0.5">
+              {copiadoUrl === 'url' ? <CheckIcon className="h-3 w-3 text-emerald-500" /> : <ClipboardCopyIcon className="h-3 w-3" />}
+            </button>
+          </div>
         )}
       </div>
 
-      <div className="flex flex-col gap-1.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-        <button onClick={() => onCopySingle(cert)}
-          className="flex items-center gap-1 text-xs bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:hover:bg-indigo-800/50 text-indigo-700 dark:text-indigo-300 px-2 py-1 rounded-lg font-medium transition-colors">
-          {copiado === cert.id ? <CheckIcon className="h-3 w-3" /> : <ClipboardCopyIcon className="h-3 w-3" />}
-          {copiado === cert.id ? 'Copiado!' : 'Copiar'}
+      {/* Ações */}
+      <div className="flex items-center gap-0.5 flex-shrink-0 self-start">
+        <button onClick={() => onCopySingle(cert)} title="Copiar texto para Gupy"
+          className={`p-1.5 rounded-lg transition-colors ${copiado === cert.id ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600' : 'text-gray-300 dark:text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30'}`}>
+          {copiado === cert.id ? <CheckIcon className="h-4 w-4" /> : <ClipboardCopyIcon className="h-4 w-4" />}
         </button>
-        <button onClick={() => onEdit(cert)} className="text-xs text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-          <PencilIcon className="h-3 w-3 inline mr-1" />Editar
+        <button onClick={() => onEdit(cert)} title="Editar"
+          className="p-1.5 rounded-lg text-gray-300 dark:text-gray-600 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors opacity-0 group-hover:opacity-100">
+          <PencilIcon className="h-3.5 w-3.5" />
         </button>
-        <button onClick={() => onDelete(cert.id)} className="text-xs text-rose-400 hover:text-rose-600 px-2 py-1 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors">
-          <TrashIcon className="h-3 w-3 inline mr-1" />Excluir
+        <button onClick={() => onDelete(cert.id)} title="Excluir"
+          className="p-1.5 rounded-lg text-gray-300 dark:text-gray-600 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors opacity-0 group-hover:opacity-100">
+          <TrashIcon className="h-3.5 w-3.5" />
         </button>
       </div>
     </div>
@@ -321,16 +368,19 @@ export default function PerfilPage() {
   const [csvTexto, setCsvTexto] = useState('');
   const [jsonTexto, setJsonTexto] = useState('');
   const [msg, setMsg] = useState(null); // {tipo: 'ok'|'erro', texto: '...'}
-  const [aguardando, setAguardando] = useState(false); // polling ativo
   const [dark, setDark] = useState(false);
+  const [colando, setColando] = useState(false);
   const fileRef = useRef();
-  const pollRef = useRef(null);
 
   useEffect(() => {
     try {
       const saved = localStorage.getItem(LS_CERTS);
       if (saved) setCerts(JSON.parse(saved));
       setDark(localStorage.getItem('darkMode') === 'true');
+      // Se o bookmarklet abriu esta aba com ?paste=1, lê o clipboard automaticamente
+      if (window.location.search.includes('paste=1')) {
+        setTimeout(() => colarDoClipboard(), 800);
+      }
     } catch { }
   }, []);
 
@@ -341,34 +391,33 @@ export default function PerfilPage() {
 
   function mostrarMsg(tipo, texto) {
     setMsg({ tipo, texto });
-    setTimeout(() => setMsg(null), 4000);
+    setTimeout(() => setMsg(null), 5000);
   }
 
-  // Polling para pegar certificados enviados pelo bookmarklet
-  const iniciarPolling = useCallback(() => {
-    if (pollRef.current) return;
-    setAguardando(true);
-    pollRef.current = setInterval(async () => {
-      try {
-        const res = await fetch('/api/import-certs');
-        const data = await res.json();
-        if (data.certs && data.certs.length > 0) {
-          pararPolling();
-          const merged = mergeUnique([...certs, ...data.certs]);
-          salvar(merged);
-          setAbaImport(null);
-          mostrarMsg('ok', `✓ ${data.certs.length} certificado(s) importado(s) do LinkedIn!`);
-        }
-      } catch { }
-    }, 2000);
-  }, [certs]);
-
-  function pararPolling() {
-    if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
-    setAguardando(false);
+  async function colarDoClipboard() {
+    setColando(true);
+    try {
+      const texto = await navigator.clipboard.readText();
+      const parsed = JSON.parse(texto);
+      const lista = Array.isArray(parsed) ? parsed : [parsed];
+      if (!lista.length || !lista[0].nome) throw new Error('JSON inválido');
+      const novos = lista.map((c, i) => ({
+        id: c.id || `clip_${Date.now()}_${i}`,
+        nome: c.nome || '', emissor: c.emissor || '', data: c.data || '',
+        dataExpiracao: c.dataExpiracao || '', credencial: c.credencial || '',
+        url: c.url || '', logoUrl: c.logoUrl || '',
+      }));
+      salvar(mergeUnique([...certs, ...novos]));
+      setAbaImport(null);
+      mostrarMsg('ok', `✓ ${novos.length} certificado(s) importado(s) do LinkedIn!`);
+      // Limpa o ?paste=1 da URL
+      window.history.replaceState({}, '', '/perfil');
+    } catch (e) {
+      mostrarMsg('erro', 'Não encontrei dados no clipboard. Clique no favorito no LinkedIn primeiro.');
+    } finally {
+      setColando(false);
+    }
   }
-
-  useEffect(() => () => pararPolling(), []);
 
   function mergeUnique(lista) {
     const vistos = new Set();
@@ -463,6 +512,17 @@ export default function PerfilPage() {
     return c.nome?.toLowerCase().includes(q) || c.emissor?.toLowerCase().includes(q);
   });
 
+  const certsSorted = [...certsFiltered].sort((a, b) => parsarDataTS(b.data) - parsarDataTS(a.data));
+  const gruposPorAno = certsSorted.reduce((acc, c) => {
+    const ano = extrairAno(c.data) ?? 'Sem data';
+    if (!acc[ano]) acc[ano] = [];
+    acc[ano].push(c);
+    return acc;
+  }, {});
+  const anosOrdenados = Object.keys(gruposPorAno).sort((a, b) =>
+    a === 'Sem data' ? 1 : b === 'Sem data' ? -1 : Number(b) - Number(a)
+  );
+
   const bookmarkRef = useRef(null);
   const [copiouBookmarklet, setCopiouBookmarklet] = useState(false);
 
@@ -477,7 +537,7 @@ export default function PerfilPage() {
     <div className={dark ? 'dark' : ''}>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-white">
         <header className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 sticky top-0 z-30">
-          <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3">
+          <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
             <Link href="/" className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500">
               <ArrowLeftIcon className="h-4 w-4" />
             </Link>
@@ -490,13 +550,13 @@ export default function PerfilPage() {
             </div>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => { setAbaImport(a => a === 'auto' ? null : 'auto'); if (abaImport !== 'auto') iniciarPolling(); else pararPolling(); setFormAberto(false); setEditando(null); }}
+                onClick={() => { setAbaImport(a => a === 'auto' ? null : 'auto'); setFormAberto(false); setEditando(null); }}
                 className={`text-xs px-3 py-1.5 rounded-xl transition-colors flex items-center gap-1.5 font-medium border ${abaImport === 'auto' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-indigo-200 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30'}`}
               >
                 <ZapIcon className="h-3.5 w-3.5" /> Importar do LinkedIn
               </button>
               <button
-                onClick={() => { setFormAberto(true); setEditando(null); setAbaImport(null); pararPolling(); }}
+                onClick={() => { setFormAberto(true); setEditando(null); setAbaImport(null); }}
                 className="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-xl transition-colors flex items-center gap-1.5 font-medium"
               >
                 <PlusIcon className="h-3.5 w-3.5" /> Adicionar
@@ -505,7 +565,7 @@ export default function PerfilPage() {
           </div>
         </header>
 
-        <main className="max-w-3xl mx-auto px-4 py-6 space-y-5">
+        <main className="max-w-4xl mx-auto px-4 py-6 space-y-5">
 
           {/* Mensagem de feedback */}
           {msg && (
@@ -604,22 +664,15 @@ export default function PerfilPage() {
                   </div>
                 </div>
 
-                {/* Status de aguardo */}
-                <div className={`rounded-xl p-3 border flex items-center gap-3 ${aguardando ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-700' : 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700'}`}>
-                  {aguardando ? (
-                    <>
-                      <Loader2Icon className="h-4 w-4 text-indigo-500 animate-spin flex-shrink-0" />
-                      <span className="text-xs text-indigo-700 dark:text-indigo-300">Aguardando dados do LinkedIn… Clique no favorito agora.</span>
-                      <button onClick={pararPolling} className="ml-auto text-xs text-gray-400 hover:text-gray-600">Cancelar</button>
-                    </>
-                  ) : (
-                    <>
-                      <RefreshCwIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                      <span className="text-xs text-gray-500 dark:text-gray-400">Clique em &quot;Importar do LinkedIn&quot; para iniciar a espera.</span>
-                      <button onClick={iniciarPolling} className="ml-auto text-xs bg-indigo-600 text-white px-2 py-1 rounded-lg hover:bg-indigo-700">Aguardar</button>
-                    </>
-                  )}
-                </div>
+                {/* Botão de colar */}
+                <button
+                  onClick={colarDoClipboard}
+                  disabled={colando}
+                  className="w-full rounded-xl p-3 border border-indigo-300 dark:border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 disabled:opacity-60 transition-colors"
+                >
+                  <ClipboardCopyIcon className="h-4 w-4" />
+                  {colando ? 'Colando…' : 'Colar do clipboard'}
+                </button>
 
                 {/* Alternativas */}
                 <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
@@ -709,7 +762,7 @@ export default function PerfilPage() {
                 Use o bookmarklet para importar automaticamente, ou adicione manualmente.
               </p>
               <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                <button onClick={() => { setAbaImport('auto'); iniciarPolling(); }}
+                <button onClick={() => setAbaImport('auto')}
                   className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl px-5 py-2 transition-colors flex items-center gap-2 justify-center">
                   <ZapIcon className="h-4 w-4" /> Importar do LinkedIn
                 </button>
@@ -724,6 +777,23 @@ export default function PerfilPage() {
           {/* Lista de certificados */}
           {certs.length > 0 && (
             <>
+              {/* Stats */}
+              <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 flex-wrap">
+                <span className="font-bold text-gray-800 dark:text-gray-200 text-sm">{certs.length} certificados</span>
+                <span className="text-gray-300 dark:text-gray-600">·</span>
+                <span>{new Set(certs.map(c => c.emissor).filter(Boolean)).size} emissores</span>
+                {(() => {
+                  const anos = certs.map(c => extrairAno(c.data)).filter(Boolean);
+                  if (!anos.length) return null;
+                  const min = Math.min(...anos), max = Math.max(...anos);
+                  return [
+                    <span key="d" className="text-gray-300 dark:text-gray-600">·</span>,
+                    <span key="r">{min === max ? min : `${min}–${max}`}</span>,
+                  ];
+                })()}
+              </div>
+
+              {/* Barra de ações */}
               <div className="flex flex-col sm:flex-row gap-2">
                 <div className="relative flex-1">
                   <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -731,7 +801,7 @@ export default function PerfilPage() {
                     className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400" />
                   {busca && <button onClick={() => setBusca('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"><XIcon className="h-3.5 w-3.5" /></button>}
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   <button onClick={onCopyTodos}
                     className="flex items-center gap-1.5 text-xs border border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-800/50 px-3 py-2 rounded-xl font-medium transition-colors">
                     {copiadoTodos ? <CheckIcon className="h-3.5 w-3.5" /> : <ClipboardCopyIcon className="h-3.5 w-3.5" />}
@@ -741,25 +811,35 @@ export default function PerfilPage() {
                     className="flex items-center gap-1.5 text-xs border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 px-3 py-2 rounded-xl transition-colors">
                     <DownloadIcon className="h-3.5 w-3.5" /> JSON
                   </button>
-                  <button onClick={onImprimirPDF}
-                    title="Exportar como PDF / Imprimir"
+                  <button onClick={onImprimirPDF} title="Exportar como PDF / Imprimir"
                     className="flex items-center gap-1.5 text-xs border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 px-3 py-2 rounded-xl transition-colors">
                     <PrinterIcon className="h-3.5 w-3.5" /> PDF
                   </button>
-                  <button onClick={onLimparTudo}
-                    title="Limpar todos os certificados"
+                  <button onClick={onLimparTudo} title="Limpar todos os certificados"
                     className="flex items-center gap-1.5 text-xs border border-rose-200 dark:border-rose-800 text-rose-500 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/30 px-3 py-2 rounded-xl transition-colors">
                     <Trash2Icon className="h-3.5 w-3.5" /> Limpar
                   </button>
                 </div>
               </div>
 
-              <div className="space-y-3">
+              {/* Certificados agrupados por ano */}
+              <div className="space-y-6">
                 {certsFiltered.length === 0 && (
                   <p className="text-center text-sm text-gray-400 py-6">Nenhum resultado para &quot;{busca}&quot;</p>
                 )}
-                {certsFiltered.map(cert => (
-                  <CertCard key={cert.id} cert={cert} onEdit={onEdit} onDelete={onDelete} onCopySingle={onCopySingle} copiado={copiado} />
+                {anosOrdenados.map(ano => (
+                  <div key={ano}>
+                    <div className="flex items-center gap-2 mb-2.5">
+                      <span className="text-xs font-bold text-gray-400 dark:text-gray-500 tracking-widest uppercase">{ano}</span>
+                      <div className="h-px flex-1 bg-gray-100 dark:bg-gray-800" />
+                      <span className="text-[11px] text-gray-300 dark:text-gray-600">{gruposPorAno[ano].length}</span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {gruposPorAno[ano].map(cert => (
+                        <CertCard key={cert.id} cert={cert} onEdit={onEdit} onDelete={onDelete} onCopySingle={onCopySingle} copiado={copiado} />
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
 
@@ -778,7 +858,7 @@ export default function PerfilPage() {
                       <li>Use o texto copiado como referência para preencher cada campo</li>
                     </ol>
                   </div>
-                  <PreviewGupy certs={certsFiltered} />
+                  <PreviewGupy certs={certsSorted} />
                 </div>
               )}
             </>
