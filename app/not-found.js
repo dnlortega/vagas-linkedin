@@ -1,3 +1,7 @@
+// Sistema de Vagas de TI em Bauru — Página 404
+// Criado por Daniel Ortega Pereira
+// https://github.com/dnlortega/vagas-linkedin
+
 'use client';
 
 import Link from 'next/link';

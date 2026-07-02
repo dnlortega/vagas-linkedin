@@ -2,6 +2,7 @@
   "name": "vagas-linkedin",
   "version": "1.0.0",
   "private": true,
+  "author": "Daniel Ortega Pereira",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

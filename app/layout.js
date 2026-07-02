@@ -1,3 +1,7 @@
+// Sistema de Vagas de TI em Bauru — Layout principal
+// Criado por Daniel Ortega Pereira
+// https://github.com/dnlortega/vagas-linkedin
+
 import { Inter } from 'next/font/google';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Toaster } from 'sonner';

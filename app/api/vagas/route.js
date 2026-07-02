@@ -1,3 +1,7 @@
+// API de scraping de vagas — LinkedIn, VagasBauru, Indeed, Vagas.com, CIEE
+// Criado por Daniel Ortega Pereira
+// https://github.com/dnlortega/vagas-linkedin
+
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { NextResponse } from 'next/server';

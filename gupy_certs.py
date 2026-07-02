@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Automação de certificados Gupy — Sistema de Vagas de TI em Bauru
+# Criado por Daniel Ortega Pereira
+# https://github.com/dnlortega/vagas-linkedin
 """
 Automação de certificados no Gupy
 ==================================

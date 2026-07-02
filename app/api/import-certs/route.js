@@ -1,3 +1,7 @@
+// API de importação de certificados Gupy
+// Criado por Daniel Ortega Pereira
+// https://github.com/dnlortega/vagas-linkedin
+
 import { NextResponse } from 'next/server';
 
 // Armazenamento temporário em memória (limpa após leitura)

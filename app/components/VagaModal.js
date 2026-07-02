@@ -1,3 +1,7 @@
+// Sistema de Vagas de TI em Bauru
+// Criado por Daniel Ortega Pereira
+// https://github.com/dnlortega/vagas-linkedin
+
 'use client';
 
 import { useEffect, useState } from 'react';
