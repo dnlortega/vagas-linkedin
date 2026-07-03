@@ -24,3 +24,6 @@ yarn-error.log*
 
 # next
 next-env.d.ts
+
+# chrome automation profile (Gupy bot)
+.chrome_gupy_auto/
