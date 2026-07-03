@@ -7,7 +7,6 @@
 import { useEffect, useState } from 'react';
 import { ExternalLinkIcon, MapPinIcon, CalendarIcon, UsersIcon, HeartIcon, KanbanIcon, XIcon, Share2Icon, CopyIcon, StarIcon, ClockIcon, Building2Icon, ChevronLeftIcon, ChevronRightIcon, MailIcon, NavigationIcon, PrinterIcon, SearchIcon, CheckCircleIcon, SparklesIcon, AlertTriangleIcon, FileTextIcon, BarChart2Icon, GlobeIcon, ChevronDownIcon, ChevronUpIcon } from 'lucide-react';
 
-import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -281,11 +280,27 @@ export default function VagaModal({ vaga, vagas = [], onClose, onOpen, onPrev, o
     if (!v) setTimeout(onClose, 200);
   }
 
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') handleOpenChange(false); };
+    document.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
+    };
+  }, []);
+
   const dataExibida = dataRel || detalhe?.publicado || null;
 
   return (
-    <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent side="right" showCloseButton={false} className="w-full sm:max-w-lg p-0 flex flex-col gap-0 overflow-hidden border-l border-gray-100">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
+      {/* Backdrop */}
+      <div
+        className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`}
+        onClick={() => handleOpenChange(false)}
+      />
+      {/* Dialog */}
+      <div className={`relative z-10 w-full sm:max-w-3xl h-[96dvh] sm:h-[90vh] bg-white sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-all duration-200 ${open ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-6 scale-[0.98]'}`}>
 
         {/* Barra colorida topo */}
         <div className="h-1.5 w-full flex-shrink-0" style={{ backgroundColor: fonteCfg.accent }} />
@@ -649,7 +664,7 @@ export default function VagaModal({ vaga, vagas = [], onClose, onOpen, onPrev, o
           </div>
         </div>
 
-      </SheetContent>
-    </Sheet>
+      </div>
+    </div>
   );
 }
