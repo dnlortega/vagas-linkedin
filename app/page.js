@@ -1203,8 +1203,9 @@ export default function Home() {
           {/* Filtros */}
           {filtrosVisiveis && (
             <>
-              {/* Linha A: Localidade + Fonte + Favoritas (scroll horizontal no mobile) */}
-              <div className="flex flex-nowrap gap-2 items-center overflow-x-auto pb-0.5 no-scrollbar [&>*]:shrink-0">
+              {/* ── Linha 1: Localidade + Fonte + Favoritas ── */}
+              <div className="flex flex-nowrap gap-1.5 items-center overflow-x-auto pb-0.5 no-scrollbar [&>*]:shrink-0">
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mr-0.5">Local</span>
                 {[
                   { id: 'todas',  label: 'Todas',  fn: _ => true },
                   { id: 'bauru',  label: 'Bauru',  fn: v => tipoLocalidade(v.local) === 'bauru' },
@@ -1212,35 +1213,37 @@ export default function Home() {
                   { id: 'remoto', label: 'Remoto', fn: v => tipoLocalidade(v.local) === 'remoto' },
                 ].map(f => (
                   <PillBtn key={f.id} active={filtro === f.id} onClick={() => setFiltro(f.id)}>
-                    {f.label} <span className="opacity-60 text-[10px]">{contar(f.fn)}</span>
+                    {f.label} <span className="opacity-50 text-[10px]">{contar(f.fn)}</span>
                   </PillBtn>
                 ))}
 
-                <div className="h-5 w-px bg-gray-200" />
+                <div className="h-5 w-px bg-gray-200 mx-1" />
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mr-0.5">Fonte</span>
 
                 {Object.entries(FONTE_CONFIG).map(([f, cfg]) => {
                   const n = fontes[f] || 0;
                   if (n === 0 && !loading) return null;
                   return (
                     <PillBtn key={f} active={filtro === f} onClick={() => setFiltro(filtro === f ? 'bauru' : f)}>
-                      {cfg.label} {!loading && <span className="opacity-60 text-[10px]">{n}</span>}
+                      {cfg.label} {!loading && <span className="opacity-50 text-[10px]">{n}</span>}
                     </PillBtn>
                   );
                 })}
 
-                <div className="h-5 w-px bg-gray-200" />
+                <div className="h-5 w-px bg-gray-200 mx-1" />
 
                 <PillBtn active={filtro === 'favoritas'} onClick={() => setFiltro(filtro === 'favoritas' ? 'bauru' : 'favoritas')}
                   activeClass="bg-rose-500 text-white border-rose-500"
-                  className={filtro !== 'favoritas' ? 'hover:border-rose-300 hover:text-rose-500' : ''}
-                  title="Favoritas">
+                  className={filtro !== 'favoritas' ? 'hover:border-rose-300 hover:text-rose-500' : ''}>
                   <HeartIcon className="h-3.5 w-3.5" />
-                  <span className="opacity-70 text-[10px]">{favoritas.size}</span>
+                  Favoritas
+                  {favoritas.size > 0 && <span className="opacity-70 text-[10px]">{favoritas.size}</span>}
                 </PillBtn>
               </div>
 
-              {/* Linha B: Senioridade + Modalidade + Modo + Extras (scroll horizontal no mobile) */}
-              <div className="flex flex-nowrap gap-2 items-center overflow-x-auto pb-0.5 no-scrollbar [&>*]:shrink-0">
+              {/* ── Linha 2: Nível + Contrato + Modo de trabalho + Empresa + Limpar ── */}
+              <div className="flex flex-nowrap gap-1.5 items-center overflow-x-auto pb-0.5 no-scrollbar [&>*]:shrink-0">
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mr-0.5">Nível</span>
                 {[
                   { id: 'junior', label: 'Júnior' },
                   { id: 'pleno',  label: 'Pleno'  },
@@ -1252,7 +1255,8 @@ export default function Home() {
                   </PillBtn>
                 ))}
 
-                <div className="h-5 w-px bg-gray-200" />
+                <div className="h-5 w-px bg-gray-200 mx-1" />
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mr-0.5">Contrato</span>
 
                 {[
                   { id: 'clt',     label: 'CLT'     },
@@ -1266,7 +1270,8 @@ export default function Home() {
                   </PillBtn>
                 ))}
 
-                <div className="h-5 w-px bg-gray-200" />
+                <div className="h-5 w-px bg-gray-200 mx-1" />
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mr-0.5">Regime</span>
 
                 {[
                   { id: 'presencial', label: 'Presencial', icon: <MonitorIcon className="h-3 w-3" /> },
@@ -1274,21 +1279,13 @@ export default function Home() {
                   { id: 'remoto',     label: 'Remoto',     icon: <WifiIcon className="h-3 w-3" />    },
                 ].map(m => (
                   <PillBtn key={m.id} active={modoTrabalho === m.id} onClick={() => setModoTrabalho(modoTrabalho === m.id ? null : m.id)}
-                    activeClass="bg-sky-600 text-white border-sky-600" title={m.label}>
+                    activeClass="bg-sky-600 text-white border-sky-600">
                     {m.icon}
+                    {m.label}
                   </PillBtn>
                 ))}
 
-                <div className="h-5 w-px bg-gray-200" />
-
-                <PillBtn active={somenteNovas} onClick={() => setSomenteNovas(v => !v)}
-                  activeClass="bg-green-600 text-white border-green-600" title="Somente novas">
-                  <SparklesIcon className="h-3.5 w-3.5" />
-                </PillBtn>
-                <PillBtn active={naoVisitadas} onClick={() => setNaoVisitadas(v => !v)}
-                  activeClass="bg-slate-700 text-white border-slate-700" title="Não vistas">
-                  <EyeOffIcon className="h-3.5 w-3.5" />
-                </PillBtn>
+                <div className="h-5 w-px bg-gray-200 mx-1" />
 
                 <div className="relative">
                   <Building2Icon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-gray-400 pointer-events-none" />
@@ -1307,76 +1304,66 @@ export default function Home() {
                 </div>
 
                 {(filtro !== 'bauru' || senioridade !== 'todas' || modalidade || techFiltro || modoTrabalho || busca || somenteNovas || naoVisitadas || empresaBusca) && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button onClick={limparFiltros}
-                        className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold border border-red-200 bg-red-50 text-red-500 hover:bg-red-100 transition-all">
-                        <FilterXIcon className="h-3.5 w-3.5" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent className="text-xs">Remover todos os filtros ativos</TooltipContent>
-                  </Tooltip>
+                  <button onClick={limparFiltros}
+                    className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs font-semibold border border-red-200 bg-red-50 text-red-500 hover:bg-red-100 transition-all">
+                    <FilterXIcon className="h-3.5 w-3.5" />
+                    Limpar
+                  </button>
                 )}
               </div>
 
-              {/* Linha C: Ações */}
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button onClick={() => setPinarFavoritas(v => !v)}
-                      className={`p-2 rounded-xl border transition-all ${pinarFavoritas ? 'bg-rose-500 text-white border-rose-500' : 'bg-white text-gray-400 border-gray-200 hover:border-rose-300 hover:text-rose-400'}`}>
-                      <HeartIcon className="h-3.5 w-3.5" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent className="text-xs">{pinarFavoritas ? 'Desafixar favoritas' : 'Fixar favoritas no topo'}</TooltipContent>
-                </Tooltip>
+              {/* ── Linha 3: Visualização + Extras + Navegação ── */}
+              <div className="flex flex-nowrap gap-1.5 items-center overflow-x-auto pb-0.5 no-scrollbar [&>*]:shrink-0">
 
+                {/* Visualização */}
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mr-0.5">Ver</span>
                 <div className="flex rounded-xl border border-gray-200 overflow-hidden">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button onClick={() => { setVista('grade'); setTamanho('normal'); }}
-                        className={`p-2 transition-colors ${vista === 'grade' && tamanho === 'normal' ? 'bg-gray-900 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>
-                        <LayoutGridIcon className="h-3.5 w-3.5" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent className="text-xs">Grade</TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button onClick={() => { setVista('grade'); setTamanho('compacto'); }}
-                        className={`p-2 border-l border-gray-200 transition-colors ${vista === 'grade' && tamanho === 'compacto' ? 'bg-gray-900 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>
-                        <SparklesIcon className="h-3.5 w-3.5" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent className="text-xs">Compacto (4 colunas)</TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button onClick={() => setVista('lista')}
-                        className={`p-2 border-l border-gray-200 transition-colors ${vista === 'lista' ? 'bg-gray-900 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>
-                        <ListIcon className="h-3.5 w-3.5" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent className="text-xs">Lista</TooltipContent>
-                  </Tooltip>
+                  {[
+                    { label: 'Grade',    icon: <LayoutGridIcon className="h-3.5 w-3.5" />, active: vista === 'grade' && tamanho === 'normal',    fn: () => { setVista('grade'); setTamanho('normal'); } },
+                    { label: 'Compacto', icon: <SparklesIcon className="h-3.5 w-3.5" />,  active: vista === 'grade' && tamanho === 'compacto', fn: () => { setVista('grade'); setTamanho('compacto'); } },
+                    { label: 'Lista',    icon: <ListIcon className="h-3.5 w-3.5" />,       active: vista === 'lista',                             fn: () => setVista('lista') },
+                  ].map((v, i) => (
+                    <button key={v.label} onClick={v.fn}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold transition-colors ${i > 0 ? 'border-l border-gray-200' : ''} ${v.active ? 'bg-gray-900 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>
+                      {v.icon}
+                      {v.label}
+                    </button>
+                  ))}
                 </div>
 
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button onClick={() => setSilencioso(v => !v)}
-                      className={`p-2 rounded-xl border transition-all ${silencioso ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'}`}>
-                      <BellOffIcon className="h-3.5 w-3.5" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent className="text-xs">{silencioso ? 'Desativar modo silencioso' : 'Modo silencioso'}</TooltipContent>
-                </Tooltip>
+                <div className="h-5 w-px bg-gray-200 mx-1" />
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mr-0.5">Extras</span>
+
+                <PillBtn active={somenteNovas} onClick={() => setSomenteNovas(v => !v)}
+                  activeClass="bg-green-600 text-white border-green-600">
+                  <SparklesIcon className="h-3.5 w-3.5" />
+                  Novas
+                </PillBtn>
+
+                <PillBtn active={naoVisitadas} onClick={() => setNaoVisitadas(v => !v)}
+                  activeClass="bg-slate-700 text-white border-slate-700">
+                  <EyeOffIcon className="h-3.5 w-3.5" />
+                  Não vistas
+                </PillBtn>
+
+                <PillBtn active={pinarFavoritas} onClick={() => setPinarFavoritas(v => !v)}
+                  activeClass="bg-rose-500 text-white border-rose-500"
+                  className="hover:border-rose-300 hover:text-rose-400">
+                  <HeartIcon className="h-3.5 w-3.5" />
+                  Fixar fav.
+                </PillBtn>
+
+                <select value={agrupar} onChange={e => setAgrupar(e.target.value)}
+                  className={`h-7 text-xs border rounded-full px-2.5 pr-6 appearance-none cursor-pointer transition-all ${agrupar !== 'nenhum' ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'}`}>
+                  <option value="nenhum">Agrupar…</option>
+                  <option value="empresa">Por empresa</option>
+                  <option value="fonte">Por fonte</option>
+                </select>
 
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <button onClick={() => { setMostrarStats(v => !v); if (mostrarTop) setMostrarTop(false); }}
-                      className={`p-2 rounded-xl border transition-all ${
-                        mostrarStats ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
-                      }`}>
+                      className={`p-1.5 rounded-xl border transition-all ${mostrarStats ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-white text-gray-400 border-gray-200 hover:border-gray-400'}`}>
                       <BarChart2Icon className="h-3.5 w-3.5" />
                     </button>
                   </TooltipTrigger>
@@ -1386,9 +1373,7 @@ export default function Home() {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <button onClick={() => { setMostrarTop(v => !v); if (mostrarStats) setMostrarStats(false); }}
-                      className={`p-2 rounded-xl border transition-all ${
-                        mostrarTop ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
-                      }`}>
+                      className={`p-1.5 rounded-xl border transition-all ${mostrarTop ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-white text-gray-400 border-gray-200 hover:border-gray-400'}`}>
                       <TrophyIcon className="h-3.5 w-3.5" />
                     </button>
                   </TooltipTrigger>
@@ -1397,34 +1382,30 @@ export default function Home() {
 
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <select value={agrupar} onChange={e => setAgrupar(e.target.value)}
-                      className={`h-8 text-xs border rounded-xl px-2 pr-6 appearance-none cursor-pointer transition-all ${agrupar !== 'nenhum' ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'}`}>
-                      <option value="nenhum">Agrupar…</option>
-                      <option value="empresa">Por empresa</option>
-                      <option value="fonte">Por fonte</option>
-                    </select>
+                    <button onClick={() => setSilencioso(v => !v)}
+                      className={`p-1.5 rounded-xl border transition-all ${silencioso ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-400 border-gray-200 hover:border-gray-400'}`}>
+                      <BellOffIcon className="h-3.5 w-3.5" />
+                    </button>
                   </TooltipTrigger>
-                  <TooltipContent className="text-xs">Agrupar vagas</TooltipContent>
+                  <TooltipContent className="text-xs">{silencioso ? 'Desativar silencioso' : 'Modo silencioso'}</TooltipContent>
                 </Tooltip>
 
                 <div className="relative">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button onClick={salvarFiltroAtual}
-                        className="p-2 rounded-xl border border-gray-200 bg-white text-gray-500 hover:border-amber-300 hover:text-amber-600 transition-all">
+                        className="p-1.5 rounded-xl border border-gray-200 bg-white text-gray-400 hover:border-amber-300 hover:text-amber-600 transition-all">
                         <BookmarkIcon className="h-3.5 w-3.5" />
                       </button>
                     </TooltipTrigger>
-                    <TooltipContent className="text-xs">Salvar filtros atuais</TooltipContent>
+                    <TooltipContent className="text-xs">Salvar filtros</TooltipContent>
                   </Tooltip>
-
                   {filtrosSalvos.length > 0 && (
                     <button onClick={() => setMostrarSalvos(v => !v)}
                       className="absolute -top-1.5 -right-1.5 h-4 w-4 bg-amber-400 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
                       {filtrosSalvos.length}
                     </button>
                   )}
-
                   {mostrarSalvos && (
                     <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-2xl shadow-xl z-50 w-52 overflow-hidden" onMouseLeave={() => setMostrarSalvos(false)}>
                       <p className="px-3 py-2 text-[11px] font-bold text-gray-400 border-b border-gray-100">Filtros salvos</p>
@@ -1440,29 +1421,25 @@ export default function Home() {
                   )}
                 </div>
 
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Link href="/candidaturas"
-                      className="p-2 rounded-xl border bg-white text-gray-500 border-gray-200 hover:border-indigo-300 hover:text-indigo-600 transition-all relative">
-                      <KanbanIcon className="h-3.5 w-3.5" />
-                      {kanban.size > 0 && (
-                        <span className="absolute -top-1.5 -right-1.5 h-4 w-4 bg-indigo-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                          {kanban.size > 9 ? '9+' : kanban.size}
-                        </span>
-                      )}
-                    </Link>
-                  </TooltipTrigger>
-                  <TooltipContent className="text-xs">Candidaturas (quadro Kanban)</TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Link href="/perfil"
-                      className="p-2 rounded-xl border bg-white text-gray-500 border-gray-200 hover:border-indigo-300 hover:text-indigo-600 transition-all">
-                      <AwardIcon className="h-3.5 w-3.5" />
-                    </Link>
-                  </TooltipTrigger>
-                  <TooltipContent className="text-xs">Perfil e certificados</TooltipContent>
-                </Tooltip>
+                <div className="h-5 w-px bg-gray-200 mx-1" />
+
+                {/* Navegação */}
+                <Link href="/candidaturas"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border bg-white text-xs font-semibold text-gray-600 border-gray-200 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50 transition-all relative">
+                  <KanbanIcon className="h-3.5 w-3.5" />
+                  Candidaturas
+                  {kanban.size > 0 && (
+                    <span className="h-4 w-4 bg-indigo-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                      {kanban.size > 9 ? '9+' : kanban.size}
+                    </span>
+                  )}
+                </Link>
+
+                <Link href="/perfil"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border bg-white text-xs font-semibold text-gray-600 border-gray-200 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50 transition-all">
+                  <AwardIcon className="h-3.5 w-3.5" />
+                  Perfil
+                </Link>
               </div>
             </>
           )}
