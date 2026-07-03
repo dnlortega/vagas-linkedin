@@ -293,14 +293,14 @@ export default function VagaModal({ vaga, vagas = [], onClose, onOpen, onPrev, o
   const dataExibida = dataRel || detalhe?.publicado || null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
       <div
-        className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`}
+        className={`absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`}
         onClick={() => handleOpenChange(false)}
       />
-      {/* Dialog */}
-      <div className={`relative z-10 w-full sm:max-w-3xl h-[96dvh] sm:h-[90vh] bg-white sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-all duration-200 ${open ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-6 scale-[0.98]'}`}>
+      {/* Dialog 100% */}
+      <div className={`relative z-10 w-full h-full bg-white flex flex-col overflow-hidden transition-all duration-200 ${open ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
 
         {/* Barra colorida topo */}
         <div className="h-1.5 w-full flex-shrink-0" style={{ backgroundColor: fonteCfg.accent }} />
