@@ -336,6 +336,50 @@ function PlataformaButtons() {
   );
 }
 
+function Logo({ size = 46 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 46 46" fill="none" aria-hidden="true">
+      <rect width="46" height="46" rx="11" fill="white" fillOpacity="0.2"/>
+      {/* < */}
+      <path d="M11 15 L5 23 L11 31" stroke="white" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"/>
+      {/* V */}
+      <path d="M17 13 L23 33 L29 13" stroke="white" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"/>
+      {/* / */}
+      <path d="M33 33 L38 13" stroke="white" strokeWidth="2.6" strokeLinecap="round"/>
+      {/* > */}
+      <path d="M35 15 L41 23 L35 31" stroke="white" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
+function PWAInstallBtn() {
+  const [prompt, setPrompt] = useState(null);
+  const [installed, setInstalled] = useState(false);
+
+  useEffect(() => {
+    const handler = (e) => { e.preventDefault(); setPrompt(e); };
+    window.addEventListener('beforeinstallprompt', handler);
+    window.addEventListener('appinstalled', () => setInstalled(true));
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  if (installed || !prompt) return null;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          onClick={async () => { prompt.prompt(); const { outcome } = await prompt.userChoice; if (outcome === 'accepted') setPrompt(null); }}
+          className="p-2 rounded-xl bg-white/10 border border-white/20 text-white/80 hover:bg-white/20 transition-all"
+        >
+          <DownloadIcon className="h-4 w-4" />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent>Instalar app no celular</TooltipContent>
+    </Tooltip>
+  );
+}
+
 function PillBtn({ active, onClick, children, activeClass = 'bg-gray-900 text-white border-gray-900', className = '', title }) {
   return (
     <button
@@ -1013,9 +1057,10 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-7 pb-6">
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-5">
             <div>
-              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight leading-none">
+              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight leading-none flex items-center gap-3">
+                <Logo />
                 Vagas de TI
-                <span className="font-light opacity-60 ml-3 text-2xl">Bauru</span>
+                <span className="font-light opacity-60 ml-1 text-2xl">Bauru</span>
               </h1>
               <p className="text-blue-100/80 text-sm mt-2 flex items-center gap-1">
                 {loading
@@ -1056,6 +1101,8 @@ export default function Home() {
                   <TooltipContent>{novosCount} vaga{novosCount > 1 ? 's novas' : ' nova'} desde a última visita</TooltipContent>
                 </Tooltip>
               )}
+
+              <PWAInstallBtn />
 
               <Tooltip>
                 <TooltipTrigger asChild>

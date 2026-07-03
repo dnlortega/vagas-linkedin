@@ -240,6 +240,74 @@ body {
 .no-scrollbar { scrollbar-width: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 
+/* ── Splash Screen ── */
+.splash-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #0d1b2a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.splash-exit {
+  animation: splash-fade-out 0.75s cubic-bezier(0.4,0,0.2,1) forwards;
+}
+.splash-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+.splash-logo {
+  filter: drop-shadow(0 0 28px rgba(59, 130, 246, 0.45));
+}
+
+/* Strokes do logo <V/> */
+.sp-s1, .sp-s2, .sp-s3, .sp-s4 {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+}
+.sp-s1 { animation: sp-draw 0.5s ease-out 0.08s  forwards; }
+.sp-s2 { animation: sp-draw 0.6s ease-out 0.22s  forwards; }
+.sp-s3 { animation: sp-draw 0.32s ease-out 0.52s forwards; }
+.sp-s4 { animation: sp-draw 0.5s ease-out 0.62s  forwards; }
+
+.splash-wordmark {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+.splash-wordmark-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+.splash-title {
+  font-family: var(--font-inter), system-ui, sans-serif;
+  font-size: 1.625rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.03em;
+}
+.splash-city {
+  font-family: var(--font-inter), system-ui, sans-serif;
+  font-size: 1.25rem;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+@keyframes sp-draw {
+  from { stroke-dashoffset: 100; }
+  to   { stroke-dashoffset: 0; }
+}
+@keyframes splash-fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; pointer-events: none; }
+}
+
 @media print {
   header, nav, button, [role="banner"], .no-print { display: none !important; }
   body { background: white !important; color: black !important; }

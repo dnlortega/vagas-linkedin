@@ -5,6 +5,7 @@
 import { Inter } from 'next/font/google';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Toaster } from 'sonner';
+import SplashScreen from './components/SplashScreen';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
@@ -31,6 +32,7 @@ export default function RootLayout({ children }) {
     <html lang="pt-BR">
       <body className={inter.variable}>
         <TooltipProvider>
+          <SplashScreen />
           {children}
         </TooltipProvider>
         <Toaster position="bottom-right" richColors closeButton />
