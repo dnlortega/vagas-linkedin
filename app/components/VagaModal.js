@@ -5,7 +5,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ExternalLinkIcon, MapPinIcon, CalendarIcon, UsersIcon, HeartIcon, KanbanIcon, XIcon, Share2Icon, CopyIcon, StarIcon, ClockIcon, Building2Icon, ChevronLeftIcon, ChevronRightIcon, MailIcon, NavigationIcon, PrinterIcon, SearchIcon, CheckCircleIcon } from 'lucide-react';
+import { ExternalLinkIcon, MapPinIcon, CalendarIcon, UsersIcon, HeartIcon, KanbanIcon, XIcon, Share2Icon, CopyIcon, StarIcon, ClockIcon, Building2Icon, ChevronLeftIcon, ChevronRightIcon, MailIcon, NavigationIcon, PrinterIcon, SearchIcon, CheckCircleIcon, SparklesIcon, AlertTriangleIcon, FileTextIcon, BarChart2Icon, GlobeIcon, ChevronDownIcon, ChevronUpIcon } from 'lucide-react';
 
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -129,6 +129,10 @@ export default function VagaModal({ vaga, vagas = [], onClose, onOpen, onPrev, o
   const [estrelas, setEstrelas] = useState(0);
   const [copiado,    setCopiado]    = useState(false);
   const [notaSalva,  setNotaSalva]  = useState(false);
+  const [aiAcao,     setAiAcao]     = useState(null);
+  const [aiLoading,  setAiLoading]  = useState(false);
+  const [aiResultado, setAiResultado] = useState({});
+  const [aiAberto,   setAiAberto]   = useState(false);
 
   const jobId    = vaga?.link?.match(/(\d{9,})/)?.[1];
   const dataRel  = formatData(vaga?.data);
@@ -224,6 +228,35 @@ export default function VagaModal({ vaga, vagas = [], onClose, onOpen, onPrev, o
   function abrirMaps() {
     if (!vaga.local || vaga.local === 'N/A') return;
     window.open(`https://www.google.com/maps/search/${encodeURIComponent(vaga.local)}`, '_blank');
+  }
+
+  async function chamarGemini(acao) {
+    if (aiLoading) return;
+    if (aiResultado[acao]) {
+      setAiAcao(acao);
+      setAiAberto(true);
+      return;
+    }
+    const textoDesc = detalhe?.descricao
+      ? detalhe.descricao.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+      : '';
+    setAiAcao(acao);
+    setAiLoading(true);
+    setAiAberto(true);
+    try {
+      const res = await fetch('/api/gemini', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ acao, descricao: textoDesc, titulo: vaga?.titulo, empresa: vaga?.empresa }),
+      });
+      const data = await res.json();
+      if (data.erro) throw new Error(data.erro);
+      setAiResultado(prev => ({ ...prev, [acao]: data.resultado }));
+    } catch (e) {
+      setAiResultado(prev => ({ ...prev, [acao]: `Erro: ${e.message}` }));
+    } finally {
+      setAiLoading(false);
+    }
   }
 
   useEffect(() => {
@@ -426,6 +459,76 @@ export default function VagaModal({ vaga, vagas = [], onClose, onOpen, onPrev, o
                 <p className="text-xs text-gray-400 mt-1 max-w-[220px]">Clique em "Ver vaga" para ver a descrição completa.</p>
               </div>
             )}
+
+            {/* Painel IA Gemini */}
+            <div className="mt-5 pt-5 border-t border-gray-100">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-1.5">
+                  <SparklesIcon className="h-3.5 w-3.5 text-violet-500" />
+                  <p className="text-xs font-semibold text-gray-500">Análise com IA</p>
+                </div>
+                {aiAberto && (
+                  <button onClick={() => setAiAberto(false)} className="text-[10px] text-gray-400 hover:text-gray-600">
+                    <ChevronUpIcon className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Botões das ações */}
+              <div className="grid grid-cols-5 gap-1.5 mb-3">
+                {[
+                  { acao: 'resumir',          icon: FileTextIcon,      label: 'Resumir',    color: 'blue'   },
+                  { acao: 'redflags',         icon: AlertTriangleIcon, label: 'Red flags',  color: 'rose'   },
+                  { acao: 'carta',            icon: MailIcon,          label: 'Carta',      color: 'green'  },
+                  { acao: 'compatibilidade',  icon: BarChart2Icon,     label: 'Fit',        color: 'amber'  },
+                  { acao: 'traduzir',         icon: GlobeIcon,         label: 'Traduzir',   color: 'violet' },
+                ].map(({ acao, icon: Icon, label, color }) => {
+                  const isActive = aiAcao === acao && aiAberto;
+                  const isDone   = !!aiResultado[acao];
+                  const colorMap = {
+                    blue:   { base: 'border-blue-200 text-blue-600 hover:bg-blue-50',   active: 'bg-blue-600 text-white border-blue-600'   },
+                    rose:   { base: 'border-rose-200 text-rose-600 hover:bg-rose-50',   active: 'bg-rose-600 text-white border-rose-600'   },
+                    green:  { base: 'border-green-200 text-green-700 hover:bg-green-50', active: 'bg-green-600 text-white border-green-600' },
+                    amber:  { base: 'border-amber-200 text-amber-700 hover:bg-amber-50', active: 'bg-amber-500 text-white border-amber-500' },
+                    violet: { base: 'border-violet-200 text-violet-600 hover:bg-violet-50', active: 'bg-violet-600 text-white border-violet-600' },
+                  };
+                  const cls = isActive ? colorMap[color].active : colorMap[color].base;
+                  return (
+                    <button
+                      key={acao}
+                      onClick={() => { setAiAcao(acao); setAiAberto(true); chamarGemini(acao); }}
+                      disabled={aiLoading && aiAcao === acao}
+                      title={label}
+                      className={`relative flex flex-col items-center gap-1 py-2.5 px-1 rounded-xl border bg-white text-[10px] font-semibold transition-all ${cls}`}
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                      <span className="leading-none">{label}</span>
+                      {isDone && !isActive && (
+                        <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-green-400" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Resultado da IA */}
+              {aiAberto && (
+                <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-4 min-h-[60px]">
+                  {aiLoading ? (
+                    <div className="flex items-center gap-2 text-xs text-gray-400">
+                      <SparklesIcon className="h-3.5 w-3.5 animate-pulse text-violet-400" />
+                      <span>Gemini está pensando…</span>
+                    </div>
+                  ) : aiResultado[aiAcao] ? (
+                    <div className="text-xs text-gray-700 leading-relaxed whitespace-pre-wrap">
+                      {aiResultado[aiAcao]}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-400">Clique em um dos botões acima para analisar esta vaga.</p>
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* Notas pessoais */}
             <div className="mt-6 pt-5 border-t border-gray-100">
