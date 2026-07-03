@@ -46,7 +46,7 @@ export default function SplashScreen() {
         </svg>
 
         <div className={`splash-wordmark${phase !== 'draw' ? ' splash-wordmark-in' : ''}`}>
-          <span className="splash-title">Vagas de TI</span>
+          <span className="splash-title">Vagas</span>
           <span className="splash-city">Bauru</span>
         </div>
       </div>

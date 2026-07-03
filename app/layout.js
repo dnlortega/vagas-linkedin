@@ -1,4 +1,4 @@
-// Sistema de Vagas de TI em Bauru — Layout principal
+// Sistema de Vagas em Bauru — Layout principal
 // Criado por Daniel Ortega Pereira
 // https://github.com/dnlortega/vagas-linkedin
 
@@ -11,14 +11,14 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata = {
-  title: 'Vagas de TI em Bauru',
-  description: 'Vagas de tecnologia em Bauru e região — LinkedIn e VagasBauru',
+  title: 'Vagas em Bauru',
+  description: 'Vagas de emprego em Bauru e região — LinkedIn, VagasBauru, Catho, Indeed e mais',
   manifest: '/manifest.json',
   themeColor: '#1d4ed8',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'VagasTI Bauru',
+    title: 'Vagas Bauru',
   },
   viewport: {
     width: 'device-width',

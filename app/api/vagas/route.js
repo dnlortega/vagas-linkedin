@@ -1,4 +1,4 @@
-// API de scraping de vagas — LinkedIn, VagasBauru, Indeed, Vagas.com, CIEE
+// API de scraping de vagas em Bauru — LinkedIn, VagasBauru, Indeed, Vagas.com, Catho, CIEE, Empregos.com
 // Criado por Daniel Ortega Pereira
 // https://github.com/dnlortega/vagas-linkedin
 
@@ -11,9 +11,6 @@ const HEADERS_HTML = { 'User-Agent': UA, 'Accept-Language': 'pt-BR,pt;q=0.9', Ac
 const HEADERS_JSON = { 'User-Agent': UA, 'Accept-Language': 'pt-BR,pt;q=0.9', Accept: 'application/json' };
 
 const CIDADES = ['bauru', 'agudos', 'lençóis', 'lencois', 'botucatu', 'jaú', 'jau', 'pederneiras'];
-
-// Palavras-chave para identificar vagas de TI no VagasBauru (que é geral)
-const KEYWORDS_TI = /desenvolv|programad|software|tecnologia|inform[aá]tic|analista\s+de\s+(sistemas|dados|ti|suporte|bi)|devops|cloud|infra(estrutura)?|suporte\s+(t[eé]c|ti)|helpdesk|help\s+desk|banco\s+de\s+dados|\bdba\b|seguran[cç]a\s+da\s+informa|ciberseguran|quality\s+assurance|\bqa\b|engenheiro\s+(de\s+)?(software|dados|sistemas|cloud)|rede\s+(de\s+)?comput|ti\s+|techn|power\s*bi|business\s+intelligence|\bpowerbi\b|data\s+(analyst|engineer|scientist)|machine\s+learning|\bml\b\s+engineer/i;
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
@@ -31,6 +28,11 @@ const TERMOS_LINKEDIN = [
   'banco de dados',       'data science',         'infraestrutura TI',
   'ti bauru',             'power bi',             'analista de dados',
   'suporte de TI',        'DBA',
+  'administrativo',       'vendas',               'marketing',
+  'financeiro',           'recursos humanos',     'logística',
+  'engenheiro',           'técnico',              'supervisor',
+  'analista',             'assistente',           'coordenador',
+  'gerente',              'contabilidade',        'jurídico',
 ];
 
 async function linkedinPagina(keyword, start) {
@@ -80,15 +82,13 @@ async function fetchVagasBauru() {
   const todas = [];
   try {
     const resp = await axios.get('https://vagasbauru.com.br/api/vagas', {
-      params: { limit: 200 },
+      params: { limit: 500 },
       headers: HEADERS_JSON,
       timeout: 10000,
     });
     const jobs = resp.data?.dados || [];
     for (const job of jobs) {
       const titulo = job.titulo || 'Vaga';
-      if (!KEYWORDS_TI.test(titulo)) continue;
-
       const cidade = job.cidade_vizinha || job.cidade || 'Bauru';
       const estado = job.cidade_vizinha_estado || job.estado || 'SP';
       const local  = `${cidade}, ${estado}`;
@@ -110,7 +110,7 @@ async function fetchVagasBauru() {
 
 // ─── Indeed ──────────────────────────────────────────────────────────────────
 
-const TERMOS_INDEED = ['desenvolvedor TI', 'programador', 'analista sistemas', 'suporte técnico'];
+const TERMOS_INDEED = ['desenvolvedor', 'programador', 'analista sistemas', 'suporte técnico', 'administrativo', 'vendas', 'engenheiro', 'técnico', 'assistente'];
 
 async function fetchIndeed() {
   const todas = [];
@@ -150,7 +150,7 @@ async function fetchIndeed() {
 
 async function fetchVagasCom() {
   const todas = [];
-  const termos = ['desenvolvedor', 'programador', 'analista+de+sistemas', 'suporte+tecnico', 'ti'];
+  const termos = ['desenvolvedor', 'programador', 'analista', 'suporte-tecnico', 'administrativo', 'vendas', 'engenheiro', 'tecnico', 'assistente', 'financeiro'];
   for (const termo of termos) {
     try {
       const resp = await axios.get(`https://www.vagas.com.br/vagas-de-${termo}-em-bauru-sp`, {
@@ -180,7 +180,7 @@ async function fetchVagasCom() {
 
 async function fetchEmpregosCom() {
   const todas = [];
-  const termos = ['desenvolvedor', 'programador', 'suporte-tecnico', 'analista-sistemas'];
+  const termos = ['desenvolvedor', 'programador', 'suporte-tecnico', 'analista', 'administrativo', 'vendas', 'engenheiro', 'tecnico', 'assistente'];
   for (const termo of termos) {
     try {
       const resp = await axios.get(`https://www.empregos.com.br/empregos/${termo}/bauru-sp`, {
@@ -193,7 +193,7 @@ async function fetchEmpregosCom() {
         const empresa = $(el).find('[class*="company"], [class*="empresa"]').first().text().trim() || 'N/A';
         const href    = $(el).find('a').first().attr('href') || '';
         const link    = href.startsWith('http') ? href : `https://www.empregos.com.br${href}`;
-        if (titulo && href && KEYWORDS_TI.test(titulo)) {
+        if (titulo && href) {
           todas.push({ titulo, empresa, local: 'Bauru, SP', data: null, link: link.split('?')[0], termo, fonte: 'empregoscom' });
         }
       });
@@ -207,7 +207,7 @@ async function fetchEmpregosCom() {
 
 // ─── Catho ───────────────────────────────────────────────────────────────────
 
-const TERMOS_CATHO = ['desenvolvedor', 'programador', 'analista+de+sistemas', 'suporte+tecnico', 'ti'];
+const TERMOS_CATHO = ['desenvolvedor', 'programador', 'analista', 'suporte+tecnico', 'administrativo', 'vendas', 'engenheiro', 'tecnico', 'assistente'];
 
 async function fetchCatho() {
   const todas = [];
@@ -257,7 +257,7 @@ async function fetchCatho() {
       if (!err.response || ![403, 404].includes(err.response.status)) console.error(`[catho] "${termo}":`, err.message);
     }
   }
-  return todas.filter(v => KEYWORDS_TI.test(v.titulo));
+  return todas;
 }
 
 // ─── CIEE ─────────────────────────────────────────────────────────────────────

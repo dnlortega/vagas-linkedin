@@ -205,7 +205,7 @@ function CenteredLoader() {
 
       {/* Texto e fonte ativa */}
       <div className="flex flex-col items-center gap-2">
-        <p className="text-lg font-bold text-gray-800">Buscando vagas de TI…</p>
+        <p className="text-lg font-bold text-gray-800">Buscando vagas…</p>
         <p className="text-sm text-gray-400 h-5 transition-all">
           Verificando <span className="font-semibold text-blue-600">{FONTES_LOADER[dots]}</span>
         </p>
@@ -783,7 +783,7 @@ export default function Home() {
   }, [silencioso]);
 
   useEffect(() => {
-    document.title = novosCount > 0 ? `(${novosCount}) Vagas de TI em Bauru` : 'Vagas de TI em Bauru';
+    document.title = novosCount > 0 ? `(${novosCount}) Vagas em Bauru` : 'Vagas em Bauru';
   }, [novosCount]);
 
   useEffect(() => { setFilterKey(k => k + 1); }, [filtro, senioridade, modalidade, modoTrabalho, techFiltro, somenteNovas, naoVisitadas]);
@@ -1062,7 +1062,7 @@ export default function Home() {
             <div>
               <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight leading-none flex items-center gap-3">
                 <Logo />
-                Vagas de TI
+                Vagas
                 <span className="font-light opacity-60 ml-1 text-2xl">Bauru</span>
               </h1>
               <p className="text-blue-100/80 text-sm mt-2 flex items-center gap-1">
