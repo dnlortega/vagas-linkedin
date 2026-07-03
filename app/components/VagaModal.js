@@ -434,6 +434,75 @@ export default function VagaModal({ vaga, vagas = [], onClose, onOpen, onPrev, o
         {/* Descrição */}
         <ScrollArea className="flex-1 min-h-0 bg-white">
           <div className="px-6 py-5">
+
+            {/* ── Painel IA Gemini (sempre visível no topo) ── */}
+            <div className="mb-5 pb-5 border-b border-gray-100">
+              <div className="flex items-center justify-between mb-2.5">
+                <div className="flex items-center gap-1.5">
+                  <SparklesIcon className="h-3.5 w-3.5 text-violet-500" />
+                  <p className="text-xs font-semibold text-gray-600">Análise com IA</p>
+                </div>
+                {aiAberto && (
+                  <button onClick={() => setAiAberto(false)} className="text-[10px] text-gray-400 hover:text-gray-600 flex items-center gap-0.5">
+                    <ChevronUpIcon className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+
+              <div className="grid grid-cols-5 gap-1.5">
+                {[
+                  { acao: 'resumir',         icon: FileTextIcon,      label: 'Resumir',   color: 'blue'   },
+                  { acao: 'redflags',        icon: AlertTriangleIcon, label: 'Red flags', color: 'rose'   },
+                  { acao: 'carta',           icon: MailIcon,          label: 'Carta',     color: 'green'  },
+                  { acao: 'compatibilidade', icon: BarChart2Icon,     label: 'Fit',       color: 'amber'  },
+                  { acao: 'traduzir',        icon: GlobeIcon,         label: 'Traduzir',  color: 'violet' },
+                ].map(({ acao, icon: Icon, label, color }) => {
+                  const isActive = aiAcao === acao && aiAberto;
+                  const isDone   = !!aiResultado[acao];
+                  const colorMap = {
+                    blue:   { base: 'border-blue-200 text-blue-600 hover:bg-blue-50',    active: 'bg-blue-600 text-white border-blue-600'    },
+                    rose:   { base: 'border-rose-200 text-rose-600 hover:bg-rose-50',    active: 'bg-rose-600 text-white border-rose-600'    },
+                    green:  { base: 'border-green-200 text-green-700 hover:bg-green-50', active: 'bg-green-600 text-white border-green-600'  },
+                    amber:  { base: 'border-amber-200 text-amber-700 hover:bg-amber-50', active: 'bg-amber-500 text-white border-amber-500'  },
+                    violet: { base: 'border-violet-200 text-violet-600 hover:bg-violet-50', active: 'bg-violet-600 text-white border-violet-600' },
+                  };
+                  const cls = isActive ? colorMap[color].active : colorMap[color].base;
+                  return (
+                    <button
+                      key={acao}
+                      onClick={() => chamarGemini(acao)}
+                      disabled={aiLoading && aiAcao === acao}
+                      title={label}
+                      className={`relative flex flex-col items-center gap-1 py-2.5 px-1 rounded-xl border bg-white text-[10px] font-semibold transition-all ${cls}`}
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                      <span className="leading-none">{label}</span>
+                      {isDone && !isActive && (
+                        <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-green-400" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {aiAberto && (
+                <div className="mt-3 rounded-xl border border-violet-100 bg-violet-50/50 p-4 min-h-[56px]">
+                  {aiLoading ? (
+                    <div className="flex items-center gap-2 text-xs text-violet-400">
+                      <SparklesIcon className="h-3.5 w-3.5 animate-pulse" />
+                      <span>Gemini está pensando…</span>
+                    </div>
+                  ) : aiResultado[aiAcao] ? (
+                    <div className="text-xs text-gray-700 leading-relaxed whitespace-pre-wrap">
+                      {aiResultado[aiAcao]}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-violet-400">Clique em um botão acima para analisar esta vaga.</p>
+                  )}
+                </div>
+              )}
+            </div>
+
             {loading ? (
               <div className="space-y-3">
                 {Array.from({ length: 10 }).map((_, i) => (
@@ -459,76 +528,6 @@ export default function VagaModal({ vaga, vagas = [], onClose, onOpen, onPrev, o
                 <p className="text-xs text-gray-400 mt-1 max-w-[220px]">Clique em "Ver vaga" para ver a descrição completa.</p>
               </div>
             )}
-
-            {/* Painel IA Gemini */}
-            <div className="mt-5 pt-5 border-t border-gray-100">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-1.5">
-                  <SparklesIcon className="h-3.5 w-3.5 text-violet-500" />
-                  <p className="text-xs font-semibold text-gray-500">Análise com IA</p>
-                </div>
-                {aiAberto && (
-                  <button onClick={() => setAiAberto(false)} className="text-[10px] text-gray-400 hover:text-gray-600">
-                    <ChevronUpIcon className="h-3.5 w-3.5" />
-                  </button>
-                )}
-              </div>
-
-              {/* Botões das ações */}
-              <div className="grid grid-cols-5 gap-1.5 mb-3">
-                {[
-                  { acao: 'resumir',          icon: FileTextIcon,      label: 'Resumir',    color: 'blue'   },
-                  { acao: 'redflags',         icon: AlertTriangleIcon, label: 'Red flags',  color: 'rose'   },
-                  { acao: 'carta',            icon: MailIcon,          label: 'Carta',      color: 'green'  },
-                  { acao: 'compatibilidade',  icon: BarChart2Icon,     label: 'Fit',        color: 'amber'  },
-                  { acao: 'traduzir',         icon: GlobeIcon,         label: 'Traduzir',   color: 'violet' },
-                ].map(({ acao, icon: Icon, label, color }) => {
-                  const isActive = aiAcao === acao && aiAberto;
-                  const isDone   = !!aiResultado[acao];
-                  const colorMap = {
-                    blue:   { base: 'border-blue-200 text-blue-600 hover:bg-blue-50',   active: 'bg-blue-600 text-white border-blue-600'   },
-                    rose:   { base: 'border-rose-200 text-rose-600 hover:bg-rose-50',   active: 'bg-rose-600 text-white border-rose-600'   },
-                    green:  { base: 'border-green-200 text-green-700 hover:bg-green-50', active: 'bg-green-600 text-white border-green-600' },
-                    amber:  { base: 'border-amber-200 text-amber-700 hover:bg-amber-50', active: 'bg-amber-500 text-white border-amber-500' },
-                    violet: { base: 'border-violet-200 text-violet-600 hover:bg-violet-50', active: 'bg-violet-600 text-white border-violet-600' },
-                  };
-                  const cls = isActive ? colorMap[color].active : colorMap[color].base;
-                  return (
-                    <button
-                      key={acao}
-                      onClick={() => { setAiAcao(acao); setAiAberto(true); chamarGemini(acao); }}
-                      disabled={aiLoading && aiAcao === acao}
-                      title={label}
-                      className={`relative flex flex-col items-center gap-1 py-2.5 px-1 rounded-xl border bg-white text-[10px] font-semibold transition-all ${cls}`}
-                    >
-                      <Icon className="h-3.5 w-3.5" />
-                      <span className="leading-none">{label}</span>
-                      {isDone && !isActive && (
-                        <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-green-400" />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Resultado da IA */}
-              {aiAberto && (
-                <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-4 min-h-[60px]">
-                  {aiLoading ? (
-                    <div className="flex items-center gap-2 text-xs text-gray-400">
-                      <SparklesIcon className="h-3.5 w-3.5 animate-pulse text-violet-400" />
-                      <span>Gemini está pensando…</span>
-                    </div>
-                  ) : aiResultado[aiAcao] ? (
-                    <div className="text-xs text-gray-700 leading-relaxed whitespace-pre-wrap">
-                      {aiResultado[aiAcao]}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-gray-400">Clique em um dos botões acima para analisar esta vaga.</p>
-                  )}
-                </div>
-              )}
-            </div>
 
             {/* Notas pessoais */}
             <div className="mt-6 pt-5 border-t border-gray-100">
