@@ -11,11 +11,11 @@ import Link from 'next/link';
 const LS_KANBAN = 'vagas_kanban';
 
 const COLUNAS = [
-  { id: 'salvo',       label: 'Salvos',         dot: 'bg-slate-400',   header: 'bg-slate-50 border-slate-200',   card: 'border-slate-200'  },
-  { id: 'candidatado', label: 'Candidatado',    dot: 'bg-blue-500',    header: 'bg-blue-50 border-blue-200',     card: 'border-blue-200'   },
-  { id: 'entrevista',  label: 'Em entrevista',  dot: 'bg-amber-500',   header: 'bg-amber-50 border-amber-200',   card: 'border-amber-200'  },
-  { id: 'rejeitado',   label: 'Rejeitado',      dot: 'bg-rose-400',    header: 'bg-rose-50 border-rose-200',     card: 'border-rose-200'   },
-  { id: 'arquivado',   label: 'Arquivado',      dot: 'bg-gray-300',    header: 'bg-gray-50 border-gray-200',     card: 'border-gray-200'   },
+  { id: 'salvo',       label: 'Salvos',        dot: 'bg-slate-400', header: 'bg-white border-slate-200',        accent: '#94a3b8' },
+  { id: 'candidatado', label: 'Candidatado',   dot: 'bg-blue-500',  header: 'bg-blue-50/60 border-blue-200',   accent: '#3b82f6' },
+  { id: 'entrevista',  label: 'Em entrevista', dot: 'bg-amber-500', header: 'bg-amber-50/60 border-amber-200', accent: '#f59e0b' },
+  { id: 'rejeitado',   label: 'Rejeitado',     dot: 'bg-rose-400',  header: 'bg-rose-50/60 border-rose-200',   accent: '#f43f5e' },
+  { id: 'arquivado',   label: 'Arquivado',     dot: 'bg-gray-300',  header: 'bg-gray-50/60 border-gray-200',   accent: '#9ca3af' },
 ];
 
 const STATUS_OPTIONS = COLUNAS.map(c => ({ value: c.id, label: c.label }));
@@ -169,19 +169,19 @@ export default function Candidaturas() {
   const total = todasVagas.filter(v => v.status !== 'arquivado').length;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#f0f4f8]">
 
       {/* Header */}
-      <header className="bg-white border-b border-gray-100 shadow-sm">
+      <header className="header-gradient text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-3">
-            <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors font-medium">
+            <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-white/70 hover:text-white transition-colors font-medium">
               <ArrowLeftIcon className="h-4 w-4" />
               Voltar
             </Link>
-            <div className="h-5 w-px bg-gray-200" />
-            <h1 className="text-lg font-bold text-gray-900">Minhas Candidaturas</h1>
-            <span className="bg-gray-100 text-gray-600 text-xs font-semibold px-2.5 py-1 rounded-full">{total}</span>
+            <div className="h-5 w-px bg-white/20" />
+            <h1 className="text-lg font-bold text-white">Minhas Candidaturas</h1>
+            <span className="bg-white/15 text-white/90 text-xs font-semibold px-2.5 py-1 rounded-full border border-white/20">{total}</span>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             {/* Busca kanban */}
@@ -192,7 +192,7 @@ export default function Candidaturas() {
                 placeholder="Buscar candidatura…"
                 value={buscaKanban}
                 onChange={e => setBuscaKanban(e.target.value)}
-                className="pl-8 pr-3 h-9 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:border-blue-400 w-44"
+                className="pl-8 pr-3 h-9 text-sm border border-white/20 rounded-xl bg-white/15 focus:outline-none focus:bg-white/25 placeholder:text-white/40 text-white w-44 backdrop-blur-sm"
               />
               {buscaKanban && (
                 <button onClick={() => setBuscaKanban('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700">
@@ -203,7 +203,7 @@ export default function Candidaturas() {
 
             {/* Ordenar kanban */}
             <select value={ordemKanban} onChange={e => setOrdemKanban(e.target.value)}
-              className="h-9 text-xs border border-gray-200 rounded-xl px-2 bg-white focus:outline-none text-gray-600">
+              className="h-9 text-xs border border-white/20 rounded-xl px-2 bg-white/15 focus:outline-none text-white/90 backdrop-blur-sm">
               <option value="adicionado">Mais recente</option>
               <option value="empresa">Empresa A–Z</option>
               <option value="titulo">Título A–Z</option>
@@ -211,14 +211,14 @@ export default function Candidaturas() {
 
             <button
               onClick={() => setMostrarStats(s => !s)}
-              className={`inline-flex items-center gap-1.5 text-sm border rounded-xl px-3 py-2 transition-all font-medium ${mostrarStats ? 'bg-gray-900 text-white border-gray-900' : 'text-gray-500 hover:text-gray-800 border-gray-200 bg-white hover:border-gray-400'}`}
+              className={`inline-flex items-center gap-1.5 text-sm border rounded-xl px-3 py-2 transition-all font-medium ${mostrarStats ? 'bg-white/25 text-white border-white/30' : 'text-white/70 hover:text-white border-white/20 bg-white/10 hover:bg-white/20'}`}
             >
               <BarChart2Icon className="h-4 w-4" />
               Stats
             </button>
             <button
               onClick={() => exportarKanbanCSV(kanban)}
-              className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 border border-gray-200 rounded-xl px-3 py-2 bg-white hover:border-gray-400 transition-all font-medium"
+              className="inline-flex items-center gap-1.5 text-sm text-white/70 hover:text-white border border-white/20 rounded-xl px-3 py-2 bg-white/10 hover:bg-white/20 transition-all font-medium"
             >
               <DownloadIcon className="h-4 w-4" />
               Exportar CSV
@@ -263,16 +263,17 @@ export default function Candidaturas() {
                   }}
                 >
                   {/* Cabeçalho coluna */}
-                  <div className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl border transition-all ${col.header} ${isDropTarget ? 'shadow-md' : ''}`}>
+                  <div className={`flex items-center justify-between px-3.5 py-2.5 rounded-[11px] border transition-all ${col.header} ${isDropTarget ? 'shadow-md' : ''}`}
+                    style={{ borderTopColor: col.accent, borderTopWidth: '2px' }}>
                     <div className="flex items-center gap-2">
                       <span className={`h-2.5 w-2.5 rounded-full ${col.dot}`} />
                       <span className="text-xs font-bold text-gray-700">{col.label}</span>
                     </div>
-                    <span className="text-xs font-bold text-gray-400 bg-white/80 px-2 py-0.5 rounded-full">{vagas.length}</span>
+                    <span className="text-xs font-bold tabular-nums" style={{ color: col.accent }}>{vagas.length}</span>
                   </div>
 
                   {/* Cards */}
-                  <div className={`flex flex-col gap-2.5 min-h-16 rounded-xl transition-all duration-200 ${isDropTarget ? 'bg-blue-50/60 ring-2 ring-blue-200 ring-dashed p-1.5' : ''}`}>
+                  <div className={`flex flex-col gap-2 min-h-16 rounded-xl transition-all duration-200 ${isDropTarget ? 'bg-blue-50/50 ring-2 ring-blue-300/60 ring-dashed p-1.5' : ''}`}>
                     {vagas.map(vaga => {
                       const dias     = diasDesde(vaga.adicionadoEm);
                       const vencLemb = lembreteVencido(vaga.link);
@@ -286,9 +287,11 @@ export default function Candidaturas() {
                           draggable
                           onDragStart={() => setDragLinkId(vaga.link)}
                           onDragEnd={() => { setDragLinkId(null); setDragOverCol(null); }}
-                          className={`bg-white rounded-2xl border shadow-sm p-4 flex flex-col gap-3 transition-all cursor-grab active:cursor-grabbing select-none
-                            ${isDragging ? 'opacity-40 scale-95 shadow-none' : 'hover:shadow-md'}
-                            ${col.card} ${vencLemb || vencPraz ? 'ring-2 ring-amber-400 ring-offset-1' : ''}`}
+                          className={`bg-white rounded-[12px] border border-slate-100 border-l-[3px] p-4 flex flex-col gap-3 transition-all cursor-grab active:cursor-grabbing select-none
+                            shadow-[0_1px_3px_rgba(15,23,42,0.05)]
+                            ${isDragging ? 'opacity-40 scale-95 shadow-none' : 'hover:shadow-[0_4px_14px_rgba(15,23,42,0.09)] hover:-translate-y-px'}
+                            ${vencLemb || vencPraz ? 'ring-2 ring-amber-400/60 ring-offset-1' : ''}`}
+                          style={{ borderLeftColor: col.accent }}
                         >
                           {/* Alertas */}
                           {(vencLemb || vencPraz) && (

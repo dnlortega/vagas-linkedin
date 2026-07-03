@@ -126,7 +126,16 @@ body {
   background-color: var(--color-background);
   color: var(--color-foreground);
   font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
+
+/* Scrollbar fina e discreta em todo o site */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+* { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
 
 /* ── Animações ───────────────────────────────────────────────────────────── */
 
@@ -165,9 +174,9 @@ body {
   100% { background-position: 0%   50%; }
 }
 .header-gradient {
-  background: linear-gradient(-45deg, #1d4ed8, #2563eb, #1e3a8a, #3b82f6, #1d4ed8);
-  background-size: 300% 300%;
-  animation: gradient-shift 10s ease infinite;
+  background: linear-gradient(-45deg, #1e3a8a, #1d4ed8, #0f2460, #2563eb, #1e40af, #1d4ed8);
+  background-size: 400% 400%;
+  animation: gradient-shift 12s ease infinite;
 }
 
 /* Entrada das vagas em cascata */

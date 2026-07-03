@@ -1,0 +1,10 @@
+2026/07/01-12:15:58.483 1374 Creating DB C:\Projetos\vagas-linkedin\.chrome_gupy_auto\Default\IndexedDB\https_push.getbeamer.com_0.indexeddb.leveldb since it was missing.
+2026/07/01-12:15:58.496 1374 Reusing MANIFEST C:\Projetos\vagas-linkedin\.chrome_gupy_auto\Default\IndexedDB\https_push.getbeamer.com_0.indexeddb.leveldb/MANIFEST-000001
+2026/07/01-12:15:58.517 e08 Level-0 table #5: started
+2026/07/01-12:15:58.523 e08 Level-0 table #5: 1256 bytes OK
+2026/07/01-12:15:58.528 e08 Delete type=0 #3
+2026/07/01-12:15:58.529 e08 Manual compaction at level-0 from '\x00\x01\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x02\x00\x00\x00' @ 0 : 0; will stop at (end)
+2026/07/01-12:15:58.712 1e00 Level-0 table #7: started
+2026/07/01-12:15:58.718 1e00 Level-0 table #7: 1905 bytes OK
+2026/07/01-12:15:58.722 1e00 Delete type=0 #4
+2026/07/01-12:15:58.723 1374 Manual compaction at level-0 from '\x00\x04\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x05\x00\x00\x00' @ 0 : 0; will stop at (end)

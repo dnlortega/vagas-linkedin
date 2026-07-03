@@ -380,13 +380,13 @@ function PWAInstallBtn() {
   );
 }
 
-function PillBtn({ active, onClick, children, activeClass = 'bg-gray-900 text-white border-gray-900', className = '', title }) {
+function PillBtn({ active, onClick, children, activeClass = 'bg-blue-600 text-white border-blue-600', className = '', title }) {
   return (
     <button
       onClick={onClick}
       title={title}
       className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold border transition-all duration-150 hover:scale-105 active:scale-95 ${
-        active ? `${activeClass} shadow-sm` : `bg-white text-gray-600 border-gray-200 hover:border-gray-400 hover:text-gray-900`
+        active ? `${activeClass} shadow-sm shadow-blue-200` : `bg-white text-slate-500 border-slate-200 hover:border-slate-400 hover:text-slate-800 hover:bg-slate-50`
       } ${className}`}
     >
       {children}
@@ -407,11 +407,12 @@ function VagaCard({ vaga, isNovo, isFavorita, ehDuplicata, foiVisitada, noKanban
       <div style={{ animationDelay: `${Math.min(index * 15, 200)}ms` }} className="card-in">
         <div
           onClick={() => onOpen(vaga)}
-          className="cursor-pointer flex items-center gap-3 bg-white rounded-2xl border border-gray-100
-            shadow-sm hover:shadow-md hover:border-gray-200 transition-all duration-150 px-4 py-3.5 group relative"
+          className="cursor-pointer flex items-center gap-3 bg-white rounded-[14px] border border-slate-100
+            shadow-[0_1px_3px_rgba(15,23,42,0.05)] hover:shadow-[0_4px_16px_rgba(15,23,42,0.08)]
+            hover:border-slate-200 hover:-translate-y-px transition-all duration-150 px-4 py-3.5 group relative"
         >
           <div className="absolute left-0 top-3 bottom-3 w-1 rounded-r-full" style={{ backgroundColor: fonteCfg.accent || loc.accent }} />
-          <div className="h-11 w-11 rounded-xl flex-shrink-0 flex items-center justify-center text-white text-sm font-bold ml-2 shadow-sm" style={{ backgroundColor: loc.accent }}>
+          <div className="h-11 w-11 rounded-full flex-shrink-0 flex items-center justify-center text-white text-sm font-bold ml-2 shadow-sm ring-[3px] ring-white" style={{ backgroundColor: loc.accent }}>
             {iniciais(vaga.empresa)}
           </div>
           <div className="flex-1 min-w-0">
@@ -458,13 +459,15 @@ function VagaCard({ vaga, isNovo, isFavorita, ehDuplicata, foiVisitada, noKanban
   // Vista grade
   const compact = tamanho === 'compacto';
   return (
-    <div style={{ animationDelay: `${Math.min(index * 40, 500)}ms` }} className={`card-in h-full ${foiVisitada ? 'opacity-75' : ''}`}>
+    <div style={{ animationDelay: `${Math.min(index * 40, 500)}ms` }} className="card-in h-full">
       <div
         onClick={() => onOpen(vaga)}
-        className={`cursor-pointer h-full flex flex-col bg-white rounded-2xl overflow-hidden border
-          shadow-sm hover:shadow-xl hover:-translate-y-1.5 hover:border-gray-200 transition-all duration-200 group relative ${foiVisitada ? 'border-gray-100' : 'border-gray-100'}`}
+        className={`cursor-pointer h-full flex flex-col bg-white rounded-[14px] overflow-hidden border transition-all duration-200 group relative
+          shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.03)]
+          hover:shadow-[0_10px_28px_rgba(15,23,42,0.10),0_4px_10px_rgba(15,23,42,0.05)]
+          hover:-translate-y-1 ${foiVisitada ? 'border-slate-100 opacity-60' : 'border-slate-100 hover:border-slate-200'}`}
       >
-        <div className="h-1.5 w-full flex-shrink-0" style={{ backgroundColor: fonteCfg.accent || loc.accent }} />
+        <div className="h-[3px] w-full flex-shrink-0" style={{ background: `linear-gradient(90deg, ${fonteCfg.accent || loc.accent}, ${fonteCfg.accent || loc.accent}20)` }} />
 
         {/* Ações top-right */}
         <div className="absolute top-3.5 right-3 z-10 flex items-center gap-0.5">
@@ -505,7 +508,7 @@ function VagaCard({ vaga, isNovo, isFavorita, ehDuplicata, foiVisitada, noKanban
 
         {/* Cabeçalho */}
         <div className={`${compact ? 'px-3.5 pt-3.5 pb-2' : 'px-5 pt-5 pb-3'} flex gap-3 items-start`}>
-          <div className={`${compact ? 'h-9 w-9 text-sm' : 'h-12 w-12 text-base'} rounded-xl flex-shrink-0 flex items-center justify-center text-white font-bold shadow-md transition-transform duration-200 group-hover:scale-105`}
+          <div className={`${compact ? 'h-9 w-9 text-sm' : 'h-12 w-12 text-base'} rounded-full flex-shrink-0 flex items-center justify-center text-white font-bold shadow-sm ring-[3px] ring-white transition-transform duration-200 group-hover:scale-105`}
             style={{ backgroundColor: loc.accent }}>
             {iniciais(vaga.empresa)}
           </div>
@@ -572,8 +575,8 @@ function VagaCard({ vaga, isNovo, isFavorita, ehDuplicata, foiVisitada, noKanban
         {/* CTA — hidden in compact mode */}
         {!compact && (
           <div className="px-5 pb-5 flex gap-2">
-            <div className="flex-1 h-9 rounded-xl bg-gray-50 group-hover:bg-blue-600 border border-gray-200 group-hover:border-blue-600
-              text-gray-500 group-hover:text-white text-xs font-semibold
+            <div className="flex-1 h-9 rounded-[10px] bg-slate-50 group-hover:bg-blue-600 border border-slate-200 group-hover:border-blue-600
+              text-slate-500 group-hover:text-white text-xs font-semibold tracking-wide
               transition-all duration-200 flex items-center justify-center gap-1.5">
               Ver detalhes
               <ChevronRightIcon className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
@@ -603,8 +606,8 @@ function VagaCardSkeleton({ index = 0, vista = 'grade' }) {
   if (vista === 'lista') {
     return (
       <div style={{ animationDelay: `${index * 30}ms` }} className="card-in">
-        <div className="flex items-center gap-3 bg-white rounded-2xl border border-gray-100 px-4 py-3.5 shadow-sm">
-          <div className="h-11 w-11 rounded-xl shimmer flex-shrink-0 ml-2" />
+        <div className="flex items-center gap-3 bg-white rounded-[14px] border border-slate-100 px-4 py-3.5 shadow-[0_1px_3px_rgba(15,23,42,0.05)]">
+          <div className="h-11 w-11 rounded-full shimmer flex-shrink-0 ml-2" />
           <div className="flex-1 space-y-2">
             <div className="flex gap-1"><div className="h-4 w-16 rounded-md shimmer" /><div className="h-4 w-10 rounded-md shimmer" /></div>
             <div className="h-4 w-3/4 rounded shimmer" />
@@ -616,10 +619,10 @@ function VagaCardSkeleton({ index = 0, vista = 'grade' }) {
   }
   return (
     <div style={{ animationDelay: `${index * 60}ms` }} className="card-in h-full">
-      <div className="h-full flex flex-col bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
-        <div className="h-1.5 w-full shimmer" />
+      <div className="h-full flex flex-col bg-white rounded-[14px] border border-slate-100 overflow-hidden shadow-[0_1px_3px_rgba(15,23,42,0.05)]">
+        <div className="h-[3px] w-full shimmer" />
         <div className="px-5 pt-5 pb-3 flex gap-3.5 items-start">
-          <div className="h-12 w-12 rounded-xl shrink-0 shimmer" />
+          <div className="h-12 w-12 rounded-full shrink-0 shimmer" />
           <div className="flex-1 space-y-2 pt-0.5">
             <div className="h-3 w-2/3 rounded shimmer" />
             <div className="h-5 w-20 rounded-lg shimmer" />
@@ -1049,7 +1052,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#f0f4f8]">
       <LoadingBar visible={isAtivo} />
 
       {/* ── Header ── */}
@@ -1135,7 +1138,7 @@ export default function Home() {
       </header>
 
       {/* ── Barra de filtros ── */}
-      <div className="sticky top-0 z-10 bg-white/98 backdrop-blur-md border-b border-gray-200 shadow-sm">
+      <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-[0_1px_0_0_#e2e8f0,0_2px_8px_rgba(15,23,42,0.04)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-col gap-3">
 
           {/* Busca + período */}
