@@ -1,11 +1,53 @@
-<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="48" height="48" rx="11" fill="#2563eb"/>
-  <!-- < -->
-  <path d="M12 16 L5.5 24 L12 32" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
-  <!-- V -->
-  <path d="M17 13.5 L24 34.5 L31 13.5" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
-  <!-- / -->
-  <path d="M35 34.5 L40 13.5" stroke="white" stroke-width="2.8" stroke-linecap="round"/>
-  <!-- > -->
-  <path d="M36 16 L42.5 24 L36 32" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Gradiente de fundo sofisticado e profundo -->
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e1b4b" />
+      <stop offset="40%" stop-color="#1e3a8a" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+    
+    <!-- Filtro de brilho e profundidade (glow) -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="10" flood-color="#000000" flood-opacity="0.4" />
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#3b82f6" flood-opacity="0.2" />
+    </filter>
+
+    <!-- Gradiente dos caracteres para sensação 3D de luz -->
+    <linearGradient id="stroke-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="30%" stop-color="#e0f2fe" />
+      <stop offset="100%" stop-color="#38bdf8" />
+    </linearGradient>
+
+    <!-- Gradiente para o círculo de fundo brilhante -->
+    <radialGradient id="center-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.25" />
+      <stop offset="100%" stop-color="#3b82f6" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <!-- Fundo arredondado premium estilo App Icon -->
+  <rect width="512" height="512" rx="112" fill="url(#bg-grad)" />
+  
+  <!-- Círculo interno decorativo sutil -->
+  <rect x="24" y="24" width="464" height="464" rx="88" stroke="#ffffff" stroke-opacity="0.08" stroke-width="2" fill="none" />
+  
+  <!-- Brilho radial no centro do logo -->
+  <circle cx="256" cy="256" r="200" fill="url(#center-glow)" />
+
+  <!-- Caracteres principais estilizados com glow -->
+  <g filter="url(#glow)">
+    <!-- < -->
+    <path d="M128 176 L62 256 L128 336" stroke="url(#stroke-grad)" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+    
+    <!-- V -->
+    <path d="M182 144 L256 368 L330 144" stroke="url(#stroke-grad)" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+    
+    <!-- / -->
+    <path d="M374 368 L426 144" stroke="url(#stroke-grad)" stroke-width="34" stroke-linecap="round"/>
+    
+    <!-- > -->
+    <path d="M384 176 L450 256 L384 336" stroke="url(#stroke-grad)" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
 </svg>

@@ -352,24 +352,18 @@ function Logo({ size = 46 }) {
   );
 }
 
-function PWAInstallBtn() {
-  const [prompt, setPrompt] = useState(null);
-  const [installed, setInstalled] = useState(false);
-
-  useEffect(() => {
-    const handler = (e) => { e.preventDefault(); setPrompt(e); };
-    window.addEventListener('beforeinstallprompt', handler);
-    window.addEventListener('appinstalled', () => setInstalled(true));
-    return () => window.removeEventListener('beforeinstallprompt', handler);
-  }, []);
-
+function PWAInstallBtn({ prompt, setPrompt, installed }) {
   if (installed || !prompt) return null;
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <button
-          onClick={async () => { prompt.prompt(); const { outcome } = await prompt.userChoice; if (outcome === 'accepted') setPrompt(null); }}
+          onClick={async () => {
+            prompt.prompt();
+            const { outcome } = await prompt.userChoice;
+            if (outcome === 'accepted') setPrompt(null);
+          }}
           className="p-2 rounded-xl bg-white/10 border border-white/20 text-white/80 hover:bg-white/20 transition-all"
         >
           <DownloadIcon className="h-4 w-4" />
@@ -691,6 +685,23 @@ export default function Home() {
   const [mostrarSalvos,     setMostrarSalvos]     = useState(false);
   const [filtrosVisiveis,   setFiltrosVisiveis]   = useState(true);
 
+  // Estados e Efeito para suporte a PWA (Instalação e Segundo Plano)
+  const [pwaPrompt, setPwaPrompt] = useState(null);
+  const [pwaInstalled, setPwaInstalled] = useState(false);
+  const [dismissedBanner, setDismissedBanner] = useState(false);
+
+  useEffect(() => {
+    const handler = (e) => {
+      e.preventDefault();
+      setPwaPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    window.addEventListener('appinstalled', () => setPwaInstalled(true));
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler);
+    };
+  }, []);
+
   const buscaDebounced = useDebounce(busca, 220);
 
   const toastIdRef    = useRef(null);
@@ -917,8 +928,27 @@ export default function Home() {
   async function ativarNotificacoes() {
     if (!('Notification' in window)) return toast.error('Navegador não suporta notificações');
     const perm = await Notification.requestPermission();
-    if (perm === 'granted') toast.success('Notificações ativadas! ✅');
-    else toast.error('Permissão negada');
+    if (perm === 'granted') {
+      toast.success('Notificações ativadas! ✅');
+      
+      // Registrar periodic sync também se suportado
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.ready.then(async (registration) => {
+          if ('periodicSync' in registration) {
+            try {
+              await registration.periodicSync.register('check-new-jobs', {
+                minInterval: 4 * 60 * 60 * 1000, // 4 horas
+              });
+              console.log('Periodic background sync registrado com sucesso!');
+            } catch (err) {
+              console.log('Periodic sync não registrado:', err);
+            }
+          }
+        });
+      }
+    } else {
+      toast.error('Permissão negada');
+    }
   }
 
   const toggleFavorita = useCallback((link, e) => {
@@ -1055,6 +1085,49 @@ export default function Home() {
     <div className="min-h-screen bg-[#f0f4f8]">
       <LoadingBar visible={isAtivo} />
 
+      {/* ── Banner de Instalação PWA (Mobile e Desktop) ── */}
+      {pwaPrompt && !pwaInstalled && !dismissedBanner && (
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-3 px-4 shadow-md transition-all duration-300 relative border-b border-blue-500/20 z-50">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 pr-8">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-white/10 rounded-xl">
+                <DownloadIcon className="h-5 w-5 text-blue-100 animate-bounce" />
+              </div>
+              <div className="text-left">
+                <h4 className="font-bold text-sm sm:text-base">Vagas Bauru no seu Android!</h4>
+                <p className="text-xs text-blue-100 mt-0.5">Adicione à tela inicial para rodar em segundo plano e receber alertas automáticos de novas vagas.</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+              <button
+                onClick={() => setDismissedBanner(true)}
+                className="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white/80 hover:bg-white/10 hover:text-white transition-all"
+              >
+                Agora não
+              </button>
+              <button
+                onClick={async () => {
+                  pwaPrompt.prompt();
+                  const { outcome } = await pwaPrompt.userChoice;
+                  if (outcome === 'accepted') setPwaPrompt(null);
+                }}
+                className="px-4 py-1.5 bg-white text-blue-700 rounded-lg text-xs font-bold shadow-md hover:bg-blue-50 transition-all active:scale-95 flex items-center gap-1.5"
+              >
+                <DownloadIcon className="h-3.5 w-3.5" />
+                Instalar Aplicativo
+              </button>
+            </div>
+          </div>
+          <button
+            onClick={() => setDismissedBanner(true)}
+            className="absolute top-1/2 -translate-y-1/2 right-3 text-white/60 hover:text-white transition-colors"
+            title="Fechar"
+          >
+            <XIcon className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
       {/* ── Header ── */}
       <header className="header-gradient text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-7 pb-6">
@@ -1105,7 +1178,7 @@ export default function Home() {
                 </Tooltip>
               )}
 
-              <PWAInstallBtn />
+              <PWAInstallBtn prompt={pwaPrompt} setPrompt={setPwaPrompt} installed={pwaInstalled} />
 
               <Tooltip>
                 <TooltipTrigger asChild>
