@@ -287,6 +287,52 @@ async function fetchCIEE() {
   return todas;
 }
 
+// ─── Quero Vagas Tech ────────────────────────────────────────────────────────
+
+const TERMOS_TI_REGEX = /\b(desenvolvedor|programador|software|fullstack|full[- ]?stack|front[- ]?end|back[- ]?end|devops|sre|cloud|dados|data|bi\b|power\s?bi|analista.*(?:sistema|ti|dados|suporte)|engenheiro.*(?:software|dados|cloud)|arquiteto.*(?:ti|software|solu)|dba|banco.*dados|infraestrutura.*ti|segurança.*informação|cibersegurança|machine learning|inteligência artificial|\bai\b|\bia\b|qa|teste.*software|scrum|agile|product.*owner|\bpo\b|tech lead|\bux\b|\bui\b|designer.*(?:ux|ui|produto)|mobile|android|ios|flutter|react|angular|vue|node|python|java(?!script)|javascript|typescript|\bc#|csharp|\.net|dotnet|php|ruby|golang|rust|kotlin|swift|sql|nosql|mongo|postgres|mysql|redis|kafka|docker|kubernetes|terraform|aws|azure|gcp|linux|redes|telecom|suporte.*(?:ti|técnico)|help.*desk|service.*desk|field.*service|\bti\b|\bit\b|tecnologia|tech|\berp\b|\bsap\b|\btotvs\b|\bcrm\b|salesforce|\brpa\b|automação|iot|embedded|firmware|\bvlsi\b|hardware|\bpcb\b|fpga|microcontrolador)\b/i;
+
+async function fetchQueroVagasTech() {
+  const todas = [];
+  const MAX_PAGES = 7; // até ~210 vagas
+  try {
+    for (let page = 1; page <= MAX_PAGES; page++) {
+      const resp = await axios.get('https://www.querovagastech.com.br/api/jobs', {
+        params: { page, pageSize: 30, sort: 'postedAt:desc' },
+        headers: HEADERS_JSON,
+        timeout: 15000,
+      });
+      const data = resp.data;
+      const items = data?.items || [];
+      if (items.length === 0) break;
+
+      for (const job of items) {
+        const titulo = job.title || '';
+        // Filtra apenas vagas relacionadas a TI
+        if (!TERMOS_TI_REGEX.test(titulo)) continue;
+
+        const local = job.location || 'Brasil';
+        const dataPost = job.postedAt ? job.postedAt.split('T')[0] : null;
+        todas.push({
+          titulo,
+          empresa: job.company || 'N/A',
+          local,
+          data: dataPost,
+          link: job.applyUrl || `https://www.querovagastech.com.br/`,
+          termo: 'querovagastech',
+          fonte: 'querovagastech',
+        });
+      }
+
+      // Se já buscou todas as vagas disponíveis, para
+      if (page * 30 >= (data.total || 0)) break;
+      await sleep(300);
+    }
+  } catch (err) {
+    console.error('[querovagastech]', err.message);
+  }
+  return todas;
+}
+
 // ─── Cache com stale-while-revalidate ────────────────────────────────────────
 
 let cacheData = null;
@@ -297,7 +343,7 @@ const TTL_FRESCO  = 5  * 60 * 1000; // 5 min: serve direto do cache, sem refresh
 const TTL_VALIDO  = 15 * 60 * 1000; // 15 min: serve cache mas atualiza em background
 
 async function buildData() {
-  const [linkedin, vagasbauru, indeed, vagascom, ciee, catho, empregoscom] = await Promise.allSettled([
+  const [linkedin, vagasbauru, indeed, vagascom, ciee, catho, empregoscom, querovagastech] = await Promise.allSettled([
     fetchLinkedIn(),
     fetchVagasBauru(),
     fetchIndeed(),
@@ -305,18 +351,20 @@ async function buildData() {
     fetchCIEE(),
     fetchCatho(),
     fetchEmpregosCom(),
+    fetchQueroVagasTech(),
   ]);
 
-  const FONTES_LOCAIS = new Set(['vagasbauru', 'indeed', 'vagascom', 'ciee', 'catho', 'empregoscom']);
+  const FONTES_LOCAIS = new Set(['vagasbauru', 'indeed', 'vagascom', 'ciee', 'catho', 'empregoscom', 'querovagastech']);
 
   const todas = [
-    ...(linkedin.status    === 'fulfilled' ? linkedin.value    : []),
-    ...(vagasbauru.status  === 'fulfilled' ? vagasbauru.value  : []),
-    ...(indeed.status      === 'fulfilled' ? indeed.value      : []),
-    ...(vagascom.status    === 'fulfilled' ? vagascom.value    : []),
-    ...(ciee.status        === 'fulfilled' ? ciee.value        : []),
-    ...(catho.status       === 'fulfilled' ? catho.value       : []),
-    ...(empregoscom.status === 'fulfilled' ? empregoscom.value : []),
+    ...(linkedin.status       === 'fulfilled' ? linkedin.value       : []),
+    ...(vagasbauru.status     === 'fulfilled' ? vagasbauru.value     : []),
+    ...(indeed.status         === 'fulfilled' ? indeed.value         : []),
+    ...(vagascom.status       === 'fulfilled' ? vagascom.value       : []),
+    ...(ciee.status           === 'fulfilled' ? ciee.value           : []),
+    ...(catho.status          === 'fulfilled' ? catho.value          : []),
+    ...(empregoscom.status    === 'fulfilled' ? empregoscom.value    : []),
+    ...(querovagastech.status === 'fulfilled' ? querovagastech.value : []),
   ].filter(v => naRegiao(v.local) || !v.local || v.local === 'N/A' || FONTES_LOCAIS.has(v.fonte));
 
   // Deduplicar por link
@@ -328,16 +376,17 @@ async function buildData() {
   });
 
   const fontes = {
-    linkedin:    unicas.filter(v => v.fonte === 'linkedin').length,
-    vagasbauru:  unicas.filter(v => v.fonte === 'vagasbauru').length,
-    indeed:      unicas.filter(v => v.fonte === 'indeed').length,
-    vagascom:    unicas.filter(v => v.fonte === 'vagascom').length,
-    ciee:        unicas.filter(v => v.fonte === 'ciee').length,
-    catho:       unicas.filter(v => v.fonte === 'catho').length,
-    empregoscom: unicas.filter(v => v.fonte === 'empregoscom').length,
+    linkedin:       unicas.filter(v => v.fonte === 'linkedin').length,
+    vagasbauru:     unicas.filter(v => v.fonte === 'vagasbauru').length,
+    indeed:         unicas.filter(v => v.fonte === 'indeed').length,
+    vagascom:       unicas.filter(v => v.fonte === 'vagascom').length,
+    ciee:           unicas.filter(v => v.fonte === 'ciee').length,
+    catho:          unicas.filter(v => v.fonte === 'catho').length,
+    empregoscom:    unicas.filter(v => v.fonte === 'empregoscom').length,
+    querovagastech: unicas.filter(v => v.fonte === 'querovagastech').length,
   };
 
-  console.log(`[vagas] ${unicas.length} únicas | LinkedIn:${fontes.linkedin} VagasBauru:${fontes.vagasbauru} Indeed:${fontes.indeed} Vagas.com:${fontes.vagascom} CIEE:${fontes.ciee} Catho:${fontes.catho} Empregos.com:${fontes.empregoscom}`);
+  console.log(`[vagas] ${unicas.length} únicas | LinkedIn:${fontes.linkedin} VagasBauru:${fontes.vagasbauru} Indeed:${fontes.indeed} Vagas.com:${fontes.vagascom} CIEE:${fontes.ciee} Catho:${fontes.catho} Empregos.com:${fontes.empregoscom} QueroVagasTech:${fontes.querovagastech}`);
 
   return { gerado_em: new Date().toISOString(), total: unicas.length, fontes, vagas: unicas, cached: false };
 }

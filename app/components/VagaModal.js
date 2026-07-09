@@ -17,11 +17,14 @@ const LS_NOTAS  = 'vagas_notas';
 const LS_STARS  = 'vagas_estrelas';
 
 const FONTE_CONFIG = {
-  linkedin:   { label: 'LinkedIn',   color: 'bg-blue-100 text-blue-700 border-blue-200',    accent: '#3b82f6' },
-  vagasbauru: { label: 'VagasBauru', color: 'bg-rose-100 text-rose-700 border-rose-200',    accent: '#f43f5e' },
-  indeed:     { label: 'Indeed',     color: 'bg-sky-100 text-sky-700 border-sky-200',        accent: '#0ea5e9' },
-  vagascom:   { label: 'Vagas.com',  color: 'bg-amber-100 text-amber-700 border-amber-200', accent: '#f59e0b' },
-  ciee:       { label: 'CIEE',       color: 'bg-teal-100 text-teal-700 border-teal-200',    accent: '#14b8a6' },
+  linkedin:       { label: 'LinkedIn',   color: 'bg-blue-100 text-blue-700 border-blue-200',    accent: '#3b82f6' },
+  vagasbauru:     { label: 'VagasBauru', color: 'bg-rose-100 text-rose-700 border-rose-200',    accent: '#f43f5e' },
+  indeed:         { label: 'Indeed',     color: 'bg-sky-100 text-sky-700 border-sky-200',        accent: '#0ea5e9' },
+  vagascom:       { label: 'Vagas.com',  color: 'bg-amber-100 text-amber-700 border-amber-200', accent: '#f59e0b' },
+  ciee:           { label: 'CIEE',       color: 'bg-teal-100 text-teal-700 border-teal-200',    accent: '#14b8a6' },
+  catho:          { label: 'Catho',      color: 'bg-orange-100 text-orange-700 border-orange-200', accent: '#f97316' },
+  empregoscom:    { label: 'Empregos',   color: 'bg-lime-100 text-lime-700 border-lime-200',    accent: '#84cc16' },
+  querovagastech: { label: 'QueroVagas', color: 'bg-violet-100 text-violet-700 border-violet-200', accent: '#8b5cf6' },
 };
 
 // Detecção de tecnologias no título (espelho do page.js)
