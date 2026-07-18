@@ -335,11 +335,102 @@ let cacheData = null;
 let cacheTs   = 0;
 let refreshing = false;
 
+// ─── Agile Bauru ──────────────────────────────────────────────────────────────
+async function fetchAgileBauru() {
+  const todas = [];
+  try {
+    const resp = await axios.get('https://agile-bauru.hera.app.br/vagas', { headers: HEADERS_HTML, timeout: 10000 });
+    const $ = cheerio.load(resp.data);
+    
+    // Tentativa genérica de buscar cards de vaga
+    $('a').each((_, el) => {
+      const link = $(el).attr('href') || '';
+      if (link.includes('/vagas/') || link.includes('/job')) {
+        const titulo = $(el).text().trim().replace(/\s+/g, ' ');
+        if (titulo.length > 5) {
+          todas.push({
+            titulo: titulo.substring(0, 80),
+            empresa: 'Agile Bauru',
+            local: 'Bauru, SP',
+            data: null,
+            link: link.startsWith('http') ? link : `https://agile-bauru.hera.app.br${link}`,
+            termo: 'agilebauru',
+            fonte: 'agilebauru',
+          });
+        }
+      }
+    });
+  } catch (err) {
+    console.error('[agilebauru]', err.message);
+  }
+  return todas;
+}
+
+// ─── Programathor ─────────────────────────────────────────────────────────────
+async function fetchProgramathor() {
+  const todas = [];
+  try {
+    const resp = await axios.get('https://programathor.com.br/jobs', { headers: HEADERS_HTML, timeout: 10000 });
+    const $ = cheerio.load(resp.data);
+    $('.mac-box-job').each((_, el) => {
+      const titulo = $(el).find('h3, .text-24').first().text().trim();
+      const empresa = $(el).find('.job-company-name').text().trim() || 'N/A';
+      const isRemoto = $(el).text().toLowerCase().includes('remoto');
+      const href = $(el).find('a').first().attr('href') || '';
+      
+      if (titulo && href) {
+        todas.push({
+          titulo,
+          empresa,
+          local: isRemoto ? 'Remoto' : 'Brasil',
+          data: null,
+          link: href.startsWith('http') ? href : `https://programathor.com.br${href}`,
+          termo: 'programathor',
+          fonte: 'programathor',
+        });
+      }
+    });
+  } catch (err) {
+    console.error('[programathor]', err.message);
+  }
+  return todas;
+}
+
+// ─── InfoJobs ─────────────────────────────────────────────────────────────────
+async function fetchInfoJobs() {
+  const todas = [];
+  try {
+    const resp = await axios.get('https://www.infojobs.com.br/vagas-de-emprego-ti-em-bauru,-sp.aspx', { headers: HEADERS_HTML, timeout: 10000 });
+    const $ = cheerio.load(resp.data);
+    $('.js_jobVacancy').each((_, el) => {
+      const titulo = $(el).find('.js_vacancyTitle').text().trim() || $(el).find('h2').text().trim();
+      const empresa = $(el).find('.js_vacancyCompany').text().trim() || 'N/A';
+      const href = $(el).find('a').first().attr('href') || '';
+      
+      if (titulo && href) {
+        todas.push({
+          titulo,
+          empresa,
+          local: 'Bauru, SP',
+          data: null,
+          link: href.startsWith('http') ? href : `https://www.infojobs.com.br${href}`,
+          termo: 'infojobs',
+          fonte: 'infojobs',
+        });
+      }
+    });
+  } catch (err) {
+    console.error('[infojobs]', err.message);
+  }
+  return todas;
+}
+
+// ─── Cache com stale-while-revalidate ────────────────────────────────────────
 const TTL_FRESCO  = 60 * 60 * 1000; // 1 hora: serve direto do cache, sem refresh
 const TTL_VALIDO  = 60 * 60 * 1000; // 1 hora: expira o cache após esse tempo
 
 async function buildData() {
-  const [linkedin, vagasbauru, indeed, vagascom, ciee, catho, empregoscom, querovagastech] = await Promise.allSettled([
+  const [linkedin, vagasbauru, indeed, vagascom, ciee, catho, empregoscom, querovagastech, agilebauru, programathor, infojobs] = await Promise.allSettled([
     fetchLinkedIn(),
     fetchVagasBauru(),
     fetchIndeed(),
@@ -348,9 +439,12 @@ async function buildData() {
     fetchCatho(),
     fetchEmpregosCom(),
     fetchQueroVagasTech(),
+    fetchAgileBauru(),
+    fetchProgramathor(),
+    fetchInfoJobs(),
   ]);
 
-  const FONTES_LOCAIS = new Set(['vagasbauru', 'indeed', 'vagascom', 'ciee', 'catho', 'empregoscom', 'querovagastech']);
+  const FONTES_LOCAIS = new Set(['vagasbauru', 'indeed', 'vagascom', 'ciee', 'catho', 'empregoscom', 'querovagastech', 'agilebauru', 'programathor', 'infojobs']);
 
   const todas = [
     ...(linkedin.status       === 'fulfilled' ? linkedin.value       : []),
@@ -361,6 +455,9 @@ async function buildData() {
     ...(catho.status          === 'fulfilled' ? catho.value          : []),
     ...(empregoscom.status    === 'fulfilled' ? empregoscom.value    : []),
     ...(querovagastech.status === 'fulfilled' ? querovagastech.value : []),
+    ...(agilebauru.status     === 'fulfilled' ? agilebauru.value     : []),
+    ...(programathor.status   === 'fulfilled' ? programathor.value   : []),
+    ...(infojobs.status       === 'fulfilled' ? infojobs.value       : []),
   ].filter(v => naRegiao(v.local) || !v.local || v.local === 'N/A' || FONTES_LOCAIS.has(v.fonte));
 
   // Deduplicar por link
@@ -380,6 +477,9 @@ async function buildData() {
     catho:          unicas.filter(v => v.fonte === 'catho').length,
     empregoscom:    unicas.filter(v => v.fonte === 'empregoscom').length,
     querovagastech: unicas.filter(v => v.fonte === 'querovagastech').length,
+    agilebauru:     unicas.filter(v => v.fonte === 'agilebauru').length,
+    programathor:   unicas.filter(v => v.fonte === 'programathor').length,
+    infojobs:       unicas.filter(v => v.fonte === 'infojobs').length,
   };
 
   console.log(`[vagas] ${unicas.length} únicas | LinkedIn:${fontes.linkedin} VagasBauru:${fontes.vagasbauru} Indeed:${fontes.indeed} Vagas.com:${fontes.vagascom} CIEE:${fontes.ciee} Catho:${fontes.catho} Empregos.com:${fontes.empregoscom} QueroVagasTech:${fontes.querovagastech}`);
