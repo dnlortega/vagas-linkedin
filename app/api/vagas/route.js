@@ -339,8 +339,8 @@ let cacheData = null;
 let cacheTs   = 0;
 let refreshing = false;
 
-const TTL_FRESCO  = 5  * 60 * 1000; // 5 min: serve direto do cache, sem refresh
-const TTL_VALIDO  = 15 * 60 * 1000; // 15 min: serve cache mas atualiza em background
+const TTL_FRESCO  = 60 * 60 * 1000; // 1 hora: serve direto do cache, sem refresh
+const TTL_VALIDO  = 60 * 60 * 1000; // 1 hora: expira o cache após esse tempo
 
 async function buildData() {
   const [linkedin, vagasbauru, indeed, vagascom, ciee, catho, empregoscom, querovagastech] = await Promise.allSettled([
