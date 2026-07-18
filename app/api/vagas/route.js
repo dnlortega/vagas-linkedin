@@ -10,7 +10,7 @@ const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
 const HEADERS_HTML = { 'User-Agent': UA, 'Accept-Language': 'pt-BR,pt;q=0.9', Accept: 'text/html,*/*;q=0.8' };
 const HEADERS_JSON = { 'User-Agent': UA, 'Accept-Language': 'pt-BR,pt;q=0.9', Accept: 'application/json' };
 
-const CIDADES = ['bauru', 'agudos', 'lençóis', 'lencois', 'botucatu', 'jaú', 'jau', 'pederneiras'];
+const CIDADES = ['bauru'];
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
@@ -28,11 +28,6 @@ const TERMOS_LINKEDIN = [
   'banco de dados',       'data science',         'infraestrutura TI',
   'ti bauru',             'power bi',             'analista de dados',
   'suporte de TI',        'DBA',
-  'administrativo',       'vendas',               'marketing',
-  'financeiro',           'recursos humanos',     'logística',
-  'engenheiro',           'técnico',              'supervisor',
-  'analista',             'assistente',           'coordenador',
-  'gerente',              'contabilidade',        'jurídico',
 ];
 
 async function linkedinPagina(keyword, start) {
@@ -110,7 +105,7 @@ async function fetchVagasBauru() {
 
 // ─── Indeed ──────────────────────────────────────────────────────────────────
 
-const TERMOS_INDEED = ['desenvolvedor', 'programador', 'analista sistemas', 'suporte técnico', 'administrativo', 'vendas', 'engenheiro', 'técnico', 'assistente'];
+const TERMOS_INDEED = ['desenvolvedor', 'programador', 'analista sistemas', 'suporte técnico'];
 
 async function fetchIndeed() {
   const todas = [];
@@ -150,7 +145,7 @@ async function fetchIndeed() {
 
 async function fetchVagasCom() {
   const todas = [];
-  const termos = ['desenvolvedor', 'programador', 'analista', 'suporte-tecnico', 'administrativo', 'vendas', 'engenheiro', 'tecnico', 'assistente', 'financeiro'];
+  const termos = ['desenvolvedor', 'programador', 'analista', 'suporte-tecnico'];
   for (const termo of termos) {
     try {
       const resp = await axios.get(`https://www.vagas.com.br/vagas-de-${termo}-em-bauru-sp`, {
@@ -180,7 +175,7 @@ async function fetchVagasCom() {
 
 async function fetchEmpregosCom() {
   const todas = [];
-  const termos = ['desenvolvedor', 'programador', 'suporte-tecnico', 'analista', 'administrativo', 'vendas', 'engenheiro', 'tecnico', 'assistente'];
+  const termos = ['desenvolvedor', 'programador', 'suporte-tecnico', 'analista'];
   for (const termo of termos) {
     try {
       const resp = await axios.get(`https://www.empregos.com.br/empregos/${termo}/bauru-sp`, {
@@ -207,7 +202,7 @@ async function fetchEmpregosCom() {
 
 // ─── Catho ───────────────────────────────────────────────────────────────────
 
-const TERMOS_CATHO = ['desenvolvedor', 'programador', 'analista', 'suporte+tecnico', 'administrativo', 'vendas', 'engenheiro', 'tecnico', 'assistente'];
+const TERMOS_CATHO = ['desenvolvedor', 'programador', 'analista', 'suporte+tecnico'];
 
 async function fetchCatho() {
   const todas = [];
