@@ -5,6 +5,7 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { NextResponse } from 'next/server';
+import prisma from '@/lib/prisma';
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36';
 const HEADERS_HTML = { 'User-Agent': UA, 'Accept-Language': 'pt-BR,pt;q=0.9', Accept: 'text/html,*/*;q=0.8' };
@@ -383,32 +384,98 @@ async function buildData() {
 
   console.log(`[vagas] ${unicas.length} únicas | LinkedIn:${fontes.linkedin} VagasBauru:${fontes.vagasbauru} Indeed:${fontes.indeed} Vagas.com:${fontes.vagascom} CIEE:${fontes.ciee} Catho:${fontes.catho} Empregos.com:${fontes.empregoscom} QueroVagasTech:${fontes.querovagastech}`);
 
+  // Integração com banco de dados (Neon via Prisma)
+  try {
+    // 1. Limpeza de vagas com mais de 30 dias
+    const trintaDiasAtras = new Date();
+    trintaDiasAtras.setDate(trintaDiasAtras.getDate() - 30);
+    await prisma.vaga.deleteMany({
+      where: {
+        createdAt: {
+          lt: trintaDiasAtras,
+        },
+      },
+    });
+
+    // 2. Salvar ou atualizar as vagas encontradas
+    for (const v of unicas) {
+      if (!v.link) continue;
+      await prisma.vaga.upsert({
+        where: { link: v.link },
+        update: {
+          titulo: v.titulo,
+          empresa: v.empresa,
+          local: v.local,
+          data: v.data || null,
+        },
+        create: {
+          titulo: v.titulo,
+          empresa: v.empresa,
+          local: v.local,
+          data: v.data || null,
+          link: v.link,
+          termo: v.termo || 'geral',
+          fonte: v.fonte,
+        },
+      });
+    }
+  } catch (err) {
+    console.error('[db] Erro ao gravar vagas no banco:', err.message);
+  }
+
   return { gerado_em: new Date().toISOString(), total: unicas.length, fontes, vagas: unicas, cached: false };
 }
 
 export async function GET(req) {
   const forceRefresh = new URL(req.url).searchParams.has('refresh');
-  const agora = Date.now();
 
-  // Cache fresco e sem force: retorna imediatamente
-  if (!forceRefresh && cacheData && agora - cacheTs < TTL_FRESCO) {
-    return NextResponse.json({ ...cacheData, cached: true });
+  try {
+    // 1. Retornar vagas que já estão no banco para rapidez imediata
+    const vagasDb = await prisma.vaga.findMany({
+      orderBy: { createdAt: 'desc' }
+    });
+
+    // Se o banco estiver vazio ou o usuário forçou o refresh, buscar nas fontes agora mesmo
+    if (vagasDb.length === 0 || forceRefresh) {
+      const dados = await buildData();
+      return NextResponse.json(dados);
+    }
+
+    // Calcular estatísticas com base no que está no banco
+    const fontes = {
+      linkedin:       vagasDb.filter(v => v.fonte === 'linkedin').length,
+      vagasbauru:     vagasDb.filter(v => v.fonte === 'vagasbauru').length,
+      indeed:         vagasDb.filter(v => v.fonte === 'indeed').length,
+      vagascom:       vagasDb.filter(v => v.fonte === 'vagascom').length,
+      ciee:           vagasDb.filter(v => v.fonte === 'ciee').length,
+      catho:          vagasDb.filter(v => v.fonte === 'catho').length,
+      empregoscom:    vagasDb.filter(v => v.fonte === 'empregoscom').length,
+      querovagastech: vagasDb.filter(v => v.fonte === 'querovagastech').length,
+    };
+
+    const payload = {
+      gerado_em: new Date().toISOString(),
+      total: vagasDb.length,
+      fontes,
+      vagas: vagasDb,
+      cached: true
+    };
+
+    // Atualização em background (simples, sempre que consultar dispara se não tiver refresh recente em memória)
+    // Para simplificar, vou confiar no uso prático do usuário de que se houver acesso será retornado o que está no banco, 
+    // e caso queira forçar a busca, basta enviar '?refresh=1'.
+    // Mas se quiser que atualize, vou disparar o buildData sem aguardar, para popular para as próximas requisições.
+    if (!refreshing) {
+      refreshing = true;
+      buildData()
+        .then(() => { console.log('[bg] Banco de dados atualizado com novas vagas.'); })
+        .catch(e => console.error('[cache] erro no refresh background:', e))
+        .finally(() => { refreshing = false; });
+    }
+
+    return NextResponse.json(payload);
+  } catch (err) {
+    console.error('Erro geral no GET /api/vagas:', err.message);
+    return NextResponse.json({ error: 'Erro interno ao consultar vagas.' }, { status: 500 });
   }
-
-  // Cache ainda válido (mas stale): retorna cache e atualiza em background
-  if (!forceRefresh && cacheData && agora - cacheTs < TTL_VALIDO && !refreshing) {
-    refreshing = true;
-    buildData().then(d => {
-      cacheData = d;
-      cacheTs = Date.now();
-    }).catch(e => console.error('[cache] erro no refresh background:', e))
-      .finally(() => { refreshing = false; });
-    return NextResponse.json({ ...cacheData, cached: true });
-  }
-
-  // Cache expirado ou force: espera os dados frescos
-  const dados = await buildData();
-  cacheData = dados;
-  cacheTs = Date.now();
-  return NextResponse.json(dados);
 }
