@@ -87,6 +87,37 @@ export default function LoginPage() {
             Cadastre-se grátis
           </Link>
         </div>
+
+        {/* ── Contas de Teste Rápido ── */}
+        <div className="mt-8 pt-6 border-t border-slate-800">
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider text-center mb-3">
+            Acesso Rápido (Ambiente de Testes)
+          </p>
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => { setEmail("teste@exemplo.com"); setSenha("123456"); }}
+              className="flex items-center justify-between px-4 py-2.5 bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 hover:border-slate-600 rounded-xl transition-all group"
+            >
+              <div className="flex flex-col items-start">
+                <span className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">Usuário Teste</span>
+                <span className="text-xs text-slate-400">teste@exemplo.com</span>
+              </div>
+              <span className="text-xs font-mono bg-slate-900 px-2 py-1 rounded text-slate-300">senha: 123456</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => { setEmail("dnlortega@gmail.com"); setSenha("sua_senha_aqui"); }}
+              className="flex items-center justify-between px-4 py-2.5 bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 hover:border-slate-600 rounded-xl transition-all group"
+            >
+              <div className="flex flex-col items-start">
+                <span className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">Daniel (Admin)</span>
+                <span className="text-xs text-slate-400">dnlortega@gmail.com</span>
+              </div>
+              <span className="text-xs text-slate-500 italic">preencher senha</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
