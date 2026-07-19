@@ -13,7 +13,7 @@ import {
   FilterXIcon, MonitorIcon, WifiIcon, CarIcon,
   HistoryIcon, TrophyIcon, ChevronUpIcon,
   BookmarkIcon, LayersIcon, Building2Icon, AwardIcon,
-  LogOutIcon, SlidersHorizontalIcon, ChevronDownIcon,
+  LogOutIcon, SlidersHorizontalIcon, ChevronDownIcon, AlertTriangleIcon
 } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
@@ -394,7 +394,7 @@ function PillBtn({ active, onClick, children, activeClass = 'bg-indigo-600 text-
   );
 }
 
-function VagaCard({ vaga, isNovo, isFavorita, ehDuplicata, foiVisitada, noKanban, onOpen, onToggleFav, onOcultar, onEmpresaClick, onTechClick, onKanban, busca = '', vista = 'grade', tamanho = 'normal', index = 0 }) {
+function VagaCard({ vaga, isNovo, isFavorita, ehDuplicata, foiVisitada, noKanban, onOpen, onToggleFav, onOcultar, onEmpresaClick, onTechClick, onKanban, onReport, busca = '', vista = 'grade', tamanho = 'normal', index = 0 }) {
   const tipo     = tipoLocalidade(vaga.local);
   const loc      = LOCALIDADE_CONFIG[tipo];
   const fonteCfg = FONTE_CONFIG[vaga.fonte] || { label: vaga.fonte, color: 'bg-gray-100 text-gray-600 border-gray-200' };
@@ -402,7 +402,7 @@ function VagaCard({ vaga, isNovo, isFavorita, ehDuplicata, foiVisitada, noKanban
   const senior   = detectSenioridade(vaga.titulo);
   const techs    = detectarTechs(vaga.titulo);
 
-  const TI_REGEX = /\b(desenvolvedor|programador|software|fullstack|full[- ]?stack|front[- ]?end|back[- ]?end|devops|sre|cloud|dados|data|bi\b|power\s?bi|analista|suporte|infra|dba|segurança|cyber|tecnologia|tech|sistemas|computação|c#|java|python|php|javascript|typescript|node)\b/i;
+  const TI_REGEX = /\b(desenvolvedor|programador|software|fullstack|full[- ]?stack|front[- ]?end|back[- ]?end|devops|sre|cloud|dados|data|bi\b|power\s?bi|analista.*(sistemas?|t\.?i\.?|dados|suporte|infra|seguran[çc]a)|engenheiro.*(software|dados|cloud)|arquiteto.*(t\.?i\.?|software|solu)|dba|suporte.*(t\.?i\.?|t[ée]cnico)|help.*desk|service.*desk|infra|segurança|cyber|tecnologia|tech|sistemas?|computação|c#|java|python|php|javascript|typescript|node)/i;
   const isTI = TI_REGEX.test(vaga.titulo);
 
   if (vista === 'lista') {
@@ -461,6 +461,16 @@ function VagaCard({ vaga, isNovo, isFavorita, ehDuplicata, foiVisitada, noKanban
             </TooltipTrigger>
             <TooltipContent className="text-xs">Ocultar</TooltipContent>
           </Tooltip>
+          {onReport && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button onClick={e => onReport(vaga, e)} className="p-1.5 flex-shrink-0 text-red-200 hover:text-red-500 transition-colors">
+                  <AlertTriangleIcon className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent className="text-xs bg-red-600 border-red-700">Reportar: Não é TI</TooltipContent>
+            </Tooltip>
+          )}
           <ChevronRightIcon className="h-4 w-4 text-gray-300 group-hover:text-blue-400 flex-shrink-0 transition-colors" />
         </div>
       </div>
@@ -503,6 +513,17 @@ function VagaCard({ vaga, isNovo, isFavorita, ehDuplicata, foiVisitada, noKanban
             </TooltipTrigger>
             <TooltipContent className="text-xs">Ocultar vaga</TooltipContent>
           </Tooltip>
+          {onReport && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button onClick={e => onReport(vaga, e)}
+                  className="p-1.5 rounded-full text-red-200 hover:text-red-500 hover:bg-red-50 transition-all">
+                  <AlertTriangleIcon className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent className="text-xs bg-red-600 border-red-700 text-white">Reportar: Não é TI</TooltipContent>
+            </Tooltip>
+          )}
           <button onClick={e => onToggleFav(vaga.link, e)}
             className="p-1.5 rounded-full transition-all hover:scale-110 active:scale-95">
             <HeartIcon className={`h-4 w-4 transition-colors ${isFavorita ? 'fill-rose-500 text-rose-500' : 'text-gray-300 hover:text-rose-400'}`} />
@@ -1028,6 +1049,31 @@ export default function Home() {
     });
   }, []);
 
+  const reportNotTI = useCallback(async (vaga, e) => {
+    e?.stopPropagation();
+    if (!session) {
+      toast('Você precisa estar logado para reportar uma vaga.');
+      router.push('/login');
+      return;
+    }
+    const toastId = toast.loading('Reportando vaga...');
+    try {
+      const res = await fetch('/api/vagas/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ link: vaga.link }),
+      });
+      if (res.ok) {
+        toast.success('Obrigado! A vaga foi removida da lista de TI.', { id: toastId });
+        ocultarVaga(vaga.link, null);
+      } else {
+        toast.error('Erro ao reportar a vaga.', { id: toastId });
+      }
+    } catch (error) {
+      toast.error('Erro de conexão.', { id: toastId });
+    }
+  }, [session, router, ocultarVaga]);
+
   const vagasFiltradas = useMemo(() => vagas.filter(v => {
     if (ocultas.has(v.link)) return false;
     const tipo = tipoLocalidade(v.local);
@@ -1050,11 +1096,11 @@ export default function Home() {
     const matchNova   = !somenteNovas  || novasLinks.has(v.link);
     const matchNaoVis = !naoVisitadas  || !visitadas.has(v.link);
     const matchEmp    = !empresaBusca  || (v.empresa || '').toLowerCase().includes(empresaBusca.toLowerCase());
-    const TI_REGEX    = /\b(desenvolvedor|programador|software|fullstack|full[- ]?stack|front[- ]?end|back[- ]?end|devops|sre|cloud|dados|data|bi\b|power\s?bi|analista|suporte|infra|dba|segurança|cyber|tecnologia|tech|sistemas|computação|c#|java|python|php|javascript|typescript|node)\b/i;
+    const TI_REGEX    = /\b(desenvolvedor|programador|software|fullstack|full[- ]?stack|front[- ]?end|back[- ]?end|devops|sre|cloud|dados|data|bi\b|power\s?bi|analista.*(sistemas?|t\.?i\.?|dados|suporte|infra|seguran[çc]a)|engenheiro.*(software|dados|cloud)|arquiteto.*(t\.?i\.?|software|solu)|dba|suporte.*(t\.?i\.?|t[ée]cnico)|help.*desk|service.*desk|infra|segurança|cyber|tecnologia|tech|sistemas?|computação|c#|java|python|php|javascript|typescript|node)/i;
     const EXCLUDE_TI_REGEX = /\b(fiscal|cont[áa]bil|contabilidade|financeiro|rh|recursos humanos|departamento pessoal|vendas|comercial|marketing|faturamento|tribut[áa]rio|cobran[çc]a|telemarketing|atendimento)\b/i;
-    const isTI = (TI_REGEX.test(v.titulo) || detectarTechs(v.titulo).length > 0) 
+    const isTI = v.isTI !== false && ((TI_REGEX.test(v.titulo) || detectarTechs(v.titulo).length > 0) 
                  && !EXCLUDE_TI_REGEX.test(v.titulo) 
-                 && !EXCLUDE_TI_REGEX.test(v.empresa || '');
+                 && !EXCLUDE_TI_REGEX.test(v.empresa || ''));
     const matchTI     = !somenteTI || isTI;
     return matchLoc && matchSen && matchMod && matchTech && matchWork && matchNova && matchNaoVis && matchEmp && matchTI && matchBusca(v, buscaDebounced) && matchPeriodo(v.data, periodo);
   }), [vagas, ocultas, filtro, favoritas, senioridade, modalidade, techFiltro, modoTrabalho, buscaDebounced, periodo, somenteNovas, naoVisitadas, novasLinks, visitadas, empresaBusca, somenteTI]);

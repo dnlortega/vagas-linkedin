@@ -6,6 +6,7 @@ import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36';
 const HEADERS_HTML = { 'User-Agent': UA, 'Accept-Language': 'pt-BR,pt;q=0.9', Accept: 'text/html,*/*;q=0.8' };
@@ -20,6 +21,16 @@ function naRegiao(local) {
   return CIDADES.some(c => l.includes(c)) || l.includes('remot') || l.includes('híbrid') || l.includes('hibrido');
 }
 
+async function fetchHtml(targetUrl, options = {}) {
+  const apiKey = process.env.SCRAPER_API_KEY;
+  if (apiKey) {
+    // Usa ScraperAPI para contornar bloqueios se a chave existir
+    const scraperUrl = `http://api.scraperapi.com?api_key=${apiKey}&url=${encodeURIComponent(targetUrl)}`;
+    return axios.get(scraperUrl, { timeout: options.timeout || 25000 });
+  }
+  return axios.get(targetUrl, options);
+}
+
 // ─── LinkedIn ────────────────────────────────────────────────────────────────
 
 const TERMOS_LINKEDIN = [
@@ -32,14 +43,8 @@ const TERMOS_LINKEDIN = [
 ];
 
 async function linkedinPagina(keyword, start) {
-  const resp = await axios.get(
-    'https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search',
-    {
-      params: { keywords: keyword, location: 'Bauru, São Paulo, Brasil', start, count: 25 },
-      headers: HEADERS_HTML,
-      timeout: 12000,
-    }
-  );
+  const url = `https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords=${encodeURIComponent(keyword)}&location=${encodeURIComponent('Bauru, São Paulo, Brasil')}&start=${start}&count=25`;
+  const resp = await fetchHtml(url, { headers: HEADERS_HTML, timeout: 12000 });
   const $ = cheerio.load(resp.data);
   const vagas = [];
   $('li').each((_, el) => {
@@ -112,8 +117,8 @@ async function fetchIndeed() {
   const todas = [];
   for (const termo of TERMOS_INDEED) {
     try {
-      const resp = await axios.get('https://br.indeed.com/empregos', {
-        params: { q: termo, l: 'Bauru, SP', fromage: 30, sort: 'date' },
+      const url = `https://br.indeed.com/empregos?q=${encodeURIComponent(termo)}&l=${encodeURIComponent('Bauru, SP')}&fromage=30&sort=date`;
+      const resp = await fetchHtml(url, {
         headers: {
           'User-Agent': UA,
           'Accept-Language': 'pt-BR,pt;q=0.9',
@@ -149,7 +154,8 @@ async function fetchVagasCom() {
   const termos = ['desenvolvedor', 'programador', 'analista', 'suporte-tecnico'];
   for (const termo of termos) {
     try {
-      const resp = await axios.get(`https://www.vagas.com.br/vagas-de-${termo}-em-bauru-sp`, {
+      const url = `https://www.vagas.com.br/vagas-de-${termo}-em-bauru-sp`;
+      const resp = await fetchHtml(url, {
         headers: { ...HEADERS_HTML, Referer: 'https://www.vagas.com.br/' },
         timeout: 12000,
       });
@@ -209,8 +215,8 @@ async function fetchCatho() {
   const todas = [];
   for (const termo of TERMOS_CATHO) {
     try {
-      const resp = await axios.get('https://www.catho.com.br/vagas/', {
-        params: { q: termo, l: 'bauru-sp' },
+      const url = `https://www.catho.com.br/vagas/?q=${encodeURIComponent(termo)}&l=bauru-sp`;
+      const resp = await fetchHtml(url, {
         headers: {
           ...HEADERS_HTML,
           Referer: 'https://www.catho.com.br/',
@@ -395,6 +401,35 @@ async function fetchProgramathor() {
   }
   return todas;
 }
+// ─── Trabalha Brasil ─────────────────────────────────────────────────────────
+
+async function fetchTrabalhaBrasil() {
+  const todas = [];
+  try {
+    const resp = await axios.get('https://www.trabalhabrasil.com.br/vagas-empregos-em-bauru-sp/tecnologia-da-informacao', { headers: HEADERS_HTML, timeout: 12000 });
+    const $ = cheerio.load(resp.data);
+    $('.job-vacancy').each((_, el) => {
+      const titulo = $(el).find('.job-vacancy-title, h2, h3').text().trim();
+      const empresa = $(el).find('.job-vacancy-company, .company').text().trim() || 'N/A';
+      const href = $(el).attr('href') || $(el).find('a').attr('href') || '';
+      if (titulo && href) {
+        todas.push({
+          titulo,
+          empresa,
+          local: 'Bauru, SP',
+          data: null,
+          link: href.startsWith('http') ? href : `https://www.trabalhabrasil.com.br${href}`,
+          termo: 'ti',
+          fonte: 'trabalhabrasil',
+        });
+      }
+    });
+    await sleep(500);
+  } catch (err) {
+    console.error('[trabalhabrasil]', err.message);
+  }
+  return todas;
+}
 
 // ─── InfoJobs ─────────────────────────────────────────────────────────────────
 async function fetchInfoJobs() {
@@ -430,7 +465,7 @@ const TTL_FRESCO  = 60 * 60 * 1000; // 1 hora: serve direto do cache, sem refres
 const TTL_VALIDO  = 60 * 60 * 1000; // 1 hora: expira o cache após esse tempo
 
 async function buildData() {
-  const [linkedin, vagasbauru, indeed, vagascom, ciee, catho, empregoscom, querovagastech, agilebauru, programathor, infojobs] = await Promise.allSettled([
+  const [linkedin, vagasbauru, indeed, vagascom, ciee, catho, empregoscom, querovagastech, agilebauru, programathor, infojobs, trabalhabrasil] = await Promise.allSettled([
     fetchLinkedIn(),
     fetchVagasBauru(),
     fetchIndeed(),
@@ -442,9 +477,10 @@ async function buildData() {
     fetchAgileBauru(),
     fetchProgramathor(),
     fetchInfoJobs(),
+    fetchTrabalhaBrasil(),
   ]);
 
-  const FONTES_LOCAIS = new Set(['vagasbauru', 'indeed', 'vagascom', 'ciee', 'catho', 'empregoscom', 'querovagastech', 'agilebauru', 'programathor', 'infojobs']);
+  const FONTES_LOCAIS = new Set(['vagasbauru', 'indeed', 'vagascom', 'ciee', 'catho', 'empregoscom', 'querovagastech', 'agilebauru', 'programathor', 'infojobs', 'trabalhabrasil']);
 
   const todas = [
     ...(linkedin.status       === 'fulfilled' ? linkedin.value       : []),
@@ -458,6 +494,7 @@ async function buildData() {
     ...(agilebauru.status     === 'fulfilled' ? agilebauru.value     : []),
     ...(programathor.status   === 'fulfilled' ? programathor.value   : []),
     ...(infojobs.status       === 'fulfilled' ? infojobs.value       : []),
+    ...(trabalhabrasil.status === 'fulfilled' ? trabalhabrasil.value : []),
   ].filter(v => naRegiao(v.local) || !v.local || v.local === 'N/A' || FONTES_LOCAIS.has(v.fonte));
 
   // Deduplicar por link
@@ -480,9 +517,10 @@ async function buildData() {
     agilebauru:     unicas.filter(v => v.fonte === 'agilebauru').length,
     programathor:   unicas.filter(v => v.fonte === 'programathor').length,
     infojobs:       unicas.filter(v => v.fonte === 'infojobs').length,
+    trabalhabrasil: unicas.filter(v => v.fonte === 'trabalhabrasil').length,
   };
 
-  console.log(`[vagas] ${unicas.length} únicas | LinkedIn:${fontes.linkedin} VagasBauru:${fontes.vagasbauru} Indeed:${fontes.indeed} Vagas.com:${fontes.vagascom} CIEE:${fontes.ciee} Catho:${fontes.catho} Empregos.com:${fontes.empregoscom} QueroVagasTech:${fontes.querovagastech}`);
+  console.log(`[vagas] ${unicas.length} únicas | LinkedIn:${fontes.linkedin} VagasBauru:${fontes.vagasbauru} TrabalhaBrasil:${fontes.trabalhabrasil} Catho:${fontes.catho} QueroVagasTech:${fontes.querovagastech}`);
 
   // Integração com banco de dados (Neon via Prisma)
   try {
@@ -497,9 +535,77 @@ async function buildData() {
       },
     });
 
-    // 2. Salvar ou atualizar as vagas encontradas
+    // 2. IA de Classificação (Gemini) para novas vagas
+    const apiKey = process.env.GEMINI_API_KEY;
+    const linksUnicos = unicas.map(v => v.link).filter(Boolean);
+    const vagasDb = await prisma.vaga.findMany({
+      where: { link: { in: linksUnicos } },
+      select: { link: true, isTI: true }
+    });
+    const vagasExistentesMap = new Map(vagasDb.map(v => [v.link, v.isTI]));
+    const novasParaIA = unicas.filter(v => v.link && !vagasExistentesMap.has(v.link));
+
+    if (novasParaIA.length > 0 && apiKey) {
+      try {
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({ model: 'gemini-3.1-flash-lite' });
+        // Manda em lotes de até 100 para não estourar tokens
+        const lotes = [];
+        for (let i = 0; i < novasParaIA.length; i += 100) {
+          lotes.push(novasParaIA.slice(i, i + 100));
+        }
+
+        for (const lote of lotes) {
+          const listaTitulos = lote.map((v, i) => `${i}::${v.titulo}::${v.empresa}`).join('\n');
+          const prompt = `Você é um classificador rigoroso de vagas de TI. Analise a lista de vagas abaixo no formato "ID::Titulo::Empresa".
+Retorne um array JSON contendo APENAS os IDs numéricos das vagas que SÃO definitivamente da área de TI (Desenvolvimento, Infraestrutura, Suporte de TI, Dados, Segurança).
+IMPORTANTE: Ignore estritamente (não inclua o ID de) vagas de Contabilidade, Administrativo, Comercial, Vendas, RH, Motorista, Limpeza, etc., mesmo que tenham o termo "Analista" ou "Suporte".
+Exemplo de retorno: [0, 3, 4]
+Lista de vagas:
+${listaTitulos}`;
+          
+          const result = await model.generateContent(prompt);
+          let text = result.response.text().trim();
+          if (text.startsWith('```json')) text = text.replace(/```json|```/g, '').trim();
+          if (text.startsWith('```')) text = text.replace(/```/g, '').trim();
+          
+          const idsTI = JSON.parse(text);
+          for (let i = 0; i < lote.length; i++) {
+            lote[i].isTI = idsTI.includes(i);
+          }
+        }
+        console.log(`[ia] Classificadas ${novasParaIA.length} vagas usando Gemini.`);
+
+        // 2.1 Notificações do Telegram para novas vagas de TI
+        const botToken = process.env.TELEGRAM_BOT_TOKEN;
+        const chatId = process.env.TELEGRAM_CHAT_ID;
+        const novasTI = novasParaIA.filter(v => v.isTI);
+        if (botToken && chatId && novasTI.length > 0) {
+          try {
+            const telegramUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
+            const resumo = `🚨 *${novasTI.length} novas vagas de TI encontradas!*\n\n${novasTI.slice(0, 15).map(v => `• [${v.titulo}](${v.link}) - ${v.empresa}`).join('\n')}`;
+            await axios.post(telegramUrl, {
+              chat_id: chatId,
+              text: resumo,
+              parse_mode: 'Markdown',
+              disable_web_page_preview: true
+            });
+            console.log(`[telegram] Notificação enviada sobre ${novasTI.length} vagas de TI.`);
+          } catch (err) {
+            console.error('[telegram] Erro ao enviar notificação:', err.message);
+          }
+        }
+      } catch (err) {
+        console.error('[ia] Erro ao classificar em lote:', err.message);
+      }
+    }
+
+    // 3. Salvar ou atualizar as vagas encontradas
     for (const v of unicas) {
       if (!v.link) continue;
+      
+      const isTIPersist = v.isTI !== undefined ? v.isTI : (vagasExistentesMap.has(v.link) ? vagasExistentesMap.get(v.link) : true);
+
       await prisma.vaga.upsert({
         where: { link: v.link },
         update: {
@@ -516,6 +622,7 @@ async function buildData() {
           link: v.link,
           termo: v.termo || 'geral',
           fonte: v.fonte,
+          isTI: isTIPersist,
         },
       });
     }
