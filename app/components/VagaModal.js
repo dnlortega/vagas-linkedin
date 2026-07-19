@@ -262,21 +262,24 @@ export default function VagaModal({ vaga, vagas = [], onClose, onOpen, onPrev, o
   }
 
   useEffect(() => {
-    if (!jobId || vaga?.fonte !== 'linkedin') { setLoading(false); return; }
+    if (!vaga?.link) { setLoading(false); return; }
+    const cacheKey = `vd_${vaga.link}`;
     try {
-      const cached = JSON.parse(localStorage.getItem(`vd_${jobId}`) || 'null');
+      const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
       if (cached) { setDetalhe(cached); setLoading(false); return; }
     } catch (_) {}
-    fetch(`/api/vaga/${jobId}`)
+    setLoading(true);
+    setErro(null);
+    fetch(`/api/vaga?url=${encodeURIComponent(vaga.link)}`)
       .then(r => r.json())
       .then(d => {
         if (d.error) throw new Error(d.error);
         setDetalhe(d);
-        try { localStorage.setItem(`vd_${jobId}`, JSON.stringify(d)); } catch (_) {}
+        try { localStorage.setItem(cacheKey, JSON.stringify(d)); } catch (_) {}
       })
       .catch(e => setErro(e.message))
       .finally(() => setLoading(false));
-  }, [jobId, vaga?.fonte]);
+  }, [vaga?.link]);
 
   function handleOpenChange(v) {
     setOpen(v);

@@ -7,6 +7,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { Toaster } from 'sonner';
 import SplashScreen from './components/SplashScreen';
 import PwaRegister from './components/PwaRegister';
+import Providers from './components/Providers';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
@@ -33,11 +34,13 @@ export default function RootLayout({ children }) {
   return (
     <html lang="pt-BR">
       <body className={inter.variable}>
-        <TooltipProvider>
-          <PwaRegister />
-          <SplashScreen />
-          {children}
-        </TooltipProvider>
+        <Providers>
+          <TooltipProvider>
+            <PwaRegister />
+            <SplashScreen />
+            {children}
+          </TooltipProvider>
+        </Providers>
         <Toaster position="bottom-right" richColors closeButton />
       </body>
     </html>

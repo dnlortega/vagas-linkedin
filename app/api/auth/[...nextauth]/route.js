@@ -3,6 +3,8 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
 
+export const runtime = "nodejs";
+
 export const authOptions = {
   providers: [
     CredentialsProvider({
@@ -13,23 +15,24 @@ export const authOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error("Dados inválidos");
+          return null;
         }
 
-        const user = await prisma.usuario.findUnique({
-          where: { email: credentials.email }
-        });
+        try {
+          const user = await prisma.usuario.findUnique({
+            where: { email: credentials.email }
+          });
 
-        if (!user) {
-          throw new Error("Usuário não encontrado");
+          if (!user) return null;
+
+          const passwordsMatch = await bcrypt.compare(credentials.password, user.senha);
+          if (!passwordsMatch) return null;
+
+          return { id: user.id, name: user.nome, email: user.email };
+        } catch (err) {
+          console.error("[NextAuth] Erro:", err);
+          return null;
         }
-
-        const passwordsMatch = await bcrypt.compare(credentials.password, user.senha);
-        if (!passwordsMatch) {
-          throw new Error("Senha incorreta");
-        }
-
-        return { id: user.id, name: user.nome, email: user.email };
       }
     })
   ],
@@ -38,6 +41,7 @@ export const authOptions = {
   pages: {
     signIn: "/login",
   },
+  debug: process.env.NODE_ENV === "development",
 };
 
 const handler = NextAuth(authOptions);

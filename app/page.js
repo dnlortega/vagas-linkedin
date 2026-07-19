@@ -13,9 +13,11 @@ import {
   FilterXIcon, MonitorIcon, WifiIcon, CarIcon,
   HistoryIcon, TrophyIcon, ChevronUpIcon,
   BookmarkIcon, LayersIcon, Building2Icon, AwardIcon,
+  LogOutIcon, SlidersHorizontalIcon, ChevronDownIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { signOut, useSession } from 'next-auth/react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -376,13 +378,13 @@ function PWAInstallBtn({ prompt, setPrompt, installed }) {
   );
 }
 
-function PillBtn({ active, onClick, children, activeClass = 'bg-blue-600 text-white border-blue-600', className = '', title }) {
+function PillBtn({ active, onClick, children, activeClass = 'bg-indigo-600 text-white border-indigo-600 shadow-indigo-200/50', className = '', title }) {
   return (
     <button
       onClick={onClick}
       title={title}
-      className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold border transition-all duration-150 hover:scale-105 active:scale-95 ${
-        active ? `${activeClass} shadow-sm shadow-blue-200` : `bg-white text-slate-500 border-slate-200 hover:border-slate-400 hover:text-slate-800 hover:bg-slate-50`
+      className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold border transition-all duration-200 hover:scale-[1.03] active:scale-[0.97] ${
+        active ? `${activeClass} shadow-md` : `bg-white/80 backdrop-blur-xs text-slate-600 border-slate-200/70 hover:border-slate-350 hover:text-slate-900 shadow-sm shadow-slate-100/40 hover:shadow`
       } ${className}`}
     >
       {children}
@@ -398,22 +400,33 @@ function VagaCard({ vaga, isNovo, isFavorita, ehDuplicata, foiVisitada, noKanban
   const senior   = detectSenioridade(vaga.titulo);
   const techs    = detectarTechs(vaga.titulo);
 
+  const TI_REGEX = /\b(desenvolvedor|programador|software|fullstack|full[- ]?stack|front[- ]?end|back[- ]?end|devops|sre|cloud|dados|data|bi\b|power\s?bi|analista|suporte|infra|dba|segurança|cyber|tecnologia|tech|sistemas|computação|c#|java|python|php|javascript|typescript|node)\b/i;
+  const isTI = TI_REGEX.test(vaga.titulo);
+
   if (vista === 'lista') {
     return (
       <div style={{ animationDelay: `${Math.min(index * 15, 200)}ms` }} className="card-in">
         <div
           onClick={() => onOpen(vaga)}
-          className="cursor-pointer flex items-center gap-3 bg-white rounded-[14px] border border-slate-100
-            shadow-[0_1px_3px_rgba(15,23,42,0.05)] hover:shadow-[0_4px_16px_rgba(15,23,42,0.08)]
-            hover:border-slate-200 hover:-translate-y-px transition-all duration-150 px-4 py-3.5 group relative"
+          className={`cursor-pointer flex items-center gap-3 bg-white rounded-[14px] px-4 py-3.5 group relative transition-all duration-150
+            shadow-[0_1px_3px_rgba(15,23,42,0.05)] hover:shadow-[0_4px_16px_rgba(15,23,42,0.08)] hover:-translate-y-px ${
+              foiVisitada ? 'border border-slate-100 opacity-60' :
+              isTI ? 'border-2 border-indigo-200/60 bg-indigo-50/5 hover:border-indigo-400' :
+              'border border-slate-100 hover:border-slate-200'
+            }`}
         >
-          <div className="absolute left-0 top-3 bottom-3 w-1 rounded-r-full" style={{ backgroundColor: fonteCfg.accent || loc.accent }} />
-          <div className="h-11 w-11 rounded-full flex-shrink-0 flex items-center justify-center text-white text-sm font-bold ml-2 shadow-sm ring-[3px] ring-white" style={{ backgroundColor: loc.accent }}>
+          <div className="absolute left-0 top-3 bottom-3 w-1 rounded-r-full" style={{ backgroundColor: isTI ? '#6366f1' : (fonteCfg.accent || loc.accent) }} />
+          <div className="h-11 w-11 rounded-full flex-shrink-0 flex items-center justify-center text-white text-sm font-bold ml-2 shadow-sm ring-[3px] ring-white" style={{ backgroundColor: isTI ? '#6366f1' : loc.accent }}>
             {iniciais(vaga.empresa)}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center flex-wrap gap-1 mb-1">
               <span className={`inline-flex items-center rounded-md border px-1.5 py-px text-[10px] font-bold uppercase ${fonteCfg.color}`}>{fonteCfg.label}</span>
+              {isTI && (
+                <span className="bg-indigo-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md flex items-center gap-0.5 animate-pulse shadow-sm shadow-indigo-150">
+                  ✨ DESTAQUE TI
+                </span>
+              )}
               {senior && <span className={`text-[10px] font-semibold px-1.5 py-px rounded-md border ${senior === 'junior' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : senior === 'senior' ? 'bg-violet-50 text-violet-700 border-violet-200' : 'bg-cyan-50 text-cyan-700 border-cyan-200'}`}>{senior === 'junior' ? 'Jr' : senior === 'senior' ? 'Sr' : 'Pl'}</span>}
               {isNovo && <span className="bg-green-500 text-white text-[10px] font-bold px-2 py-px rounded-full">Novo</span>}
               {noKanban && <span className="bg-indigo-100 text-indigo-600 text-[10px] font-bold px-1.5 py-px rounded-md border border-indigo-200">📋</span>}
@@ -461,9 +474,13 @@ function VagaCard({ vaga, isNovo, isFavorita, ehDuplicata, foiVisitada, noKanban
         className={`cursor-pointer h-full flex flex-col bg-white rounded-[14px] overflow-hidden border transition-all duration-200 group relative
           shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.03)]
           hover:shadow-[0_10px_28px_rgba(15,23,42,0.10),0_4px_10px_rgba(15,23,42,0.05)]
-          hover:-translate-y-1 ${foiVisitada ? 'border-slate-100 opacity-60' : 'border-slate-100 hover:border-slate-200'}`}
+          hover:-translate-y-1 ${
+            foiVisitada ? 'border-slate-100 opacity-60' : 
+            isTI ? 'border-indigo-150/90 bg-indigo-50/5 hover:border-indigo-400 shadow-indigo-100/30' :
+            'border-slate-100 hover:border-slate-200'
+          }`}
       >
-        <div className="h-[3px] w-full flex-shrink-0" style={{ background: `linear-gradient(90deg, ${fonteCfg.accent || loc.accent}, ${fonteCfg.accent || loc.accent}20)` }} />
+        <div className="h-[3.5px] w-full flex-shrink-0" style={{ background: isTI ? 'linear-gradient(90deg, #6366f1, #a855f7)' : `linear-gradient(90deg, ${fonteCfg.accent || loc.accent}, ${fonteCfg.accent || loc.accent}20)` }} />
 
         {/* Ações top-right */}
         <div className="absolute top-3.5 right-3 z-10 flex items-center gap-0.5">
@@ -517,6 +534,11 @@ function VagaCard({ vaga, isNovo, isFavorita, ehDuplicata, foiVisitada, noKanban
             <span className={`inline-flex items-center rounded-lg border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${fonteCfg.color}`}>
               {fonteCfg.label}
             </span>
+            {isTI && (
+              <span className="inline-flex items-center gap-1 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-700 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ml-1.5 animate-pulse shadow-sm shadow-indigo-100">
+                ✨ Destaque TI
+              </span>
+            )}
           </div>
         </div>
 
@@ -1083,58 +1105,306 @@ export default function Home() {
     setSelectedVaga(vaga);
   }
 
+  const { data: session } = useSession();
+  const [filtrosAbertos, setFiltrosAbertos] = useState(false);
+
   return (
     <div className="min-h-screen bg-[#f0f4f8]">
       <LoadingBar visible={isAtivo} />
 
-      {/* ── Banner de Instalação PWA (Mobile e Desktop) ── */}
-      {pwaPrompt && !pwaInstalled && !dismissedBanner && (
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-3 px-4 shadow-md transition-all duration-300 relative border-b border-blue-500/20 z-50">
-          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 pr-8">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-white/10 rounded-xl">
-                <DownloadIcon className="h-5 w-5 text-blue-100 animate-bounce" />
-              </div>
-              <div className="text-left">
-                <h4 className="font-bold text-sm sm:text-base">Vagas Bauru no seu Android!</h4>
-                <p className="text-xs text-blue-100 mt-0.5">Adicione à tela inicial para rodar em segundo plano e receber alertas automáticos de novas vagas.</p>
-              </div>
+      {/* ── Topo Fixo: Logo + busca + avatar ── */}
+      <header className="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-3">
+
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2 shrink-0">
+            <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center shadow">
+              <BriefcaseIcon className="h-4 w-4 text-white" />
             </div>
-            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-              <button
-                onClick={() => setDismissedBanner(true)}
-                className="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white/80 hover:bg-white/10 hover:text-white transition-all"
-              >
-                Agora não
+            <span className="font-bold text-slate-800 text-sm hidden sm:block">Vagas TI <span className="text-blue-600">Bauru</span></span>
+          </Link>
+
+          {/* Barra de busca central */}
+          <div className="relative flex-1 max-w-xl">
+            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+            <Input
+              ref={searchRef}
+              placeholder="Buscar título ou empresa…"
+              value={busca}
+              onChange={e => setBusca(e.target.value)}
+              onFocus={() => setMostrarHist(true)}
+              onBlur={() => setTimeout(() => setMostrarHist(false), 150)}
+              onKeyDown={e => { if (e.key === 'Enter' && busca.trim()) { salvarHistorico(busca); setMostrarHist(false); } }}
+              className="pl-9 pr-8 h-9 text-sm border-gray-200 rounded-xl w-full bg-slate-50 focus:bg-white"
+            />
+            {busca && (
+              <button onClick={() => setBusca('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700">
+                <XIcon className="h-3.5 w-3.5" />
               </button>
-              <button
-                onClick={async () => {
-                  pwaPrompt.prompt();
-                  const { outcome } = await pwaPrompt.userChoice;
-                  if (outcome === 'accepted') setPwaPrompt(null);
-                }}
-                className="px-4 py-1.5 bg-white text-blue-700 rounded-lg text-xs font-bold shadow-md hover:bg-blue-50 transition-all active:scale-95 flex items-center gap-1.5"
-              >
-                <DownloadIcon className="h-3.5 w-3.5" />
-                Instalar Aplicativo
-              </button>
+            )}
+            {mostrarHist && historicoBusca.length > 0 && !busca && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden">
+                <div className="px-3 py-2 flex items-center justify-between border-b border-gray-100">
+                  <span className="text-xs font-semibold text-gray-400 flex items-center gap-1.5"><HistoryIcon className="h-3 w-3" />Buscas recentes</span>
+                  <button onClick={() => { setHistoricoBusca([]); localStorage.removeItem(LS_HISTORICO); }} className="text-[10px] text-gray-400 hover:text-red-500">Limpar</button>
+                </div>
+                {historicoBusca.map(t => (
+                  <button key={t} onClick={() => { setBusca(t); setMostrarHist(false); }}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+                    <HistoryIcon className="h-3.5 w-3.5 text-gray-300" />{t}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Ações direita */}
+          <div className="flex items-center gap-1.5 ml-auto shrink-0">
+            {/* Filtros */}
+            <button
+              onClick={() => setFiltrosAbertos(v => !v)}
+              className={`h-9 flex items-center gap-1.5 px-3 rounded-xl border text-xs font-semibold transition-all ${
+                filtrosAbertos ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'
+              }`}
+            >
+              <SlidersHorizontalIcon className="h-3.5 w-3.5" />
+              <span className="hidden sm:block">Filtros</span>
+              {(filtro !== 'bauru' || senioridade !== 'todas' || modalidade || techFiltro || modoTrabalho) && (
+                <span className="h-2 w-2 rounded-full bg-blue-500" />
+              )}
+            </button>
+
+            {/* Atualizar */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button onClick={() => fetchVagas({ force: true })} disabled={isAtivo}
+                  className="h-9 w-9 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:border-slate-400 transition-all disabled:opacity-50">
+                  <RefreshCwIcon className={`h-4 w-4 ${isAtivo ? 'animate-spin' : ''}`} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent className="text-xs">Atualizar vagas</TooltipContent>
+            </Tooltip>
+
+            {/* Candidaturas */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link href="/candidaturas" className="relative h-9 w-9 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:border-indigo-300 hover:text-indigo-600 transition-all">
+                  <KanbanIcon className="h-4 w-4" />
+                  {kanban.size > 0 && (
+                    <span className="absolute -top-1 -right-1 h-4 w-4 bg-indigo-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                      {kanban.size > 9 ? '9+' : kanban.size}
+                    </span>
+                  )}
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent className="text-xs">Candidaturas</TooltipContent>
+            </Tooltip>
+
+            {/* Dark mode */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button onClick={() => setDarkMode(v => !v)}
+                  className="h-9 w-9 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:border-slate-400 transition-all">
+                  {darkMode ? <SunIcon className="h-4 w-4" /> : <MoonIcon className="h-4 w-4" />}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent className="text-xs">{darkMode ? 'Modo claro' : 'Modo escuro'}</TooltipContent>
+            </Tooltip>
+
+            {/* Avatar + Logout */}
+            {session?.user && (
+              <div className="flex items-center gap-2 pl-1.5 border-l border-slate-200">
+                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                  {session.user.name?.[0]?.toUpperCase() || 'U'}
+                </div>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button onClick={() => signOut({ callbackUrl: '/login' })}
+                      className="h-8 w-8 flex items-center justify-center rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all">
+                      <LogOutIcon className="h-4 w-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent className="text-xs">Sair</TooltipContent>
+                </Tooltip>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── Painel de Filtros (colapsável) ── */}
+        {filtrosAbertos && (
+          <div className="border-t border-slate-100 bg-slate-50">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-col gap-3">
+
+              {/* Linha 1: Local + Período */}
+              <div className="flex flex-wrap gap-2 items-center">
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider w-10">Local</span>
+                {[
+                  { id: 'todas',  label: 'Todas' },
+                  { id: 'bauru',  label: 'Bauru' },
+                  { id: 'regiao', label: 'Região' },
+                  { id: 'remoto', label: 'Remoto' },
+                ].map(f => (
+                  <PillBtn key={f.id} active={filtro === f.id} onClick={() => setFiltro(f.id)}>{f.label}</PillBtn>
+                ))}
+                <div className="h-5 w-px bg-gray-200 mx-1" />
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Período</span>
+                <Select value={periodo} onValueChange={setPeriodo}>
+                  <SelectTrigger className="h-7 text-xs border-gray-200 rounded-full w-36">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PERIODOS.map(p => <SelectItem key={p.id} value={p.id} className="text-xs">{p.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Linha 2: Nível + Contrato + Modo */}
+              <div className="flex flex-wrap gap-2 items-center">
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider w-10">Nível</span>
+                {[{id:'junior',label:'Júnior'},{id:'pleno',label:'Pleno'},{id:'senior',label:'Sênior'}].map(s => (
+                  <PillBtn key={s.id} active={senioridade === s.id} onClick={() => setSenioridade(senioridade === s.id ? 'todas' : s.id)}
+                    activeClass="bg-violet-600 text-white border-violet-600">{s.label}</PillBtn>
+                ))}
+                <div className="h-5 w-px bg-gray-200 mx-1" />
+                {[{id:'clt',label:'CLT'},{id:'pj',label:'PJ'},{id:'estagio',label:'Estágio'}].map(m => (
+                  <PillBtn key={m.id} active={modalidade === m.id} onClick={() => setModalidade(modalidade === m.id ? null : m.id)}
+                    activeClass="bg-emerald-600 text-white border-emerald-600">{m.label}</PillBtn>
+                ))}
+                <div className="h-5 w-px bg-gray-200 mx-1" />
+                {[
+                  {id:'presencial',label:'Presencial',icon:<MonitorIcon className="h-3 w-3" />},
+                  {id:'hibrido',label:'Híbrido',icon:<CarIcon className="h-3 w-3" />},
+                  {id:'remoto',label:'Remoto',icon:<WifiIcon className="h-3 w-3" />},
+                ].map(m => (
+                  <PillBtn key={m.id} active={modoTrabalho === m.id} onClick={() => setModoTrabalho(modoTrabalho === m.id ? null : m.id)}
+                    activeClass="bg-sky-600 text-white border-sky-600">{m.icon}{m.label}</PillBtn>
+                ))}
+
+                {(filtro !== 'bauru' || senioridade !== 'todas' || modalidade || techFiltro || modoTrabalho || busca) && (
+                  <button onClick={limparFiltros}
+                    className="inline-flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-semibold border border-red-200 bg-red-50 text-red-500 hover:bg-red-100 transition-all ml-auto">
+                    <FilterXIcon className="h-3.5 w-3.5" />Limpar
+                  </button>
+                )}
+              </div>
+
+              {/* Pills de tecnologia */}
+              {!loading && topTechs.length > 0 && (
+                <div className="flex gap-1.5 overflow-x-auto pb-0.5" style={{ scrollbarWidth: 'none' }}>
+                  {topTechs.slice(0, 10).map(([label, count]) => (
+                    <button key={label}
+                      onClick={() => setTechFiltro(prev => prev === label ? null : label)}
+                      className={`flex-shrink-0 inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full border transition-all ${
+                        techFiltro === label ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+                      }`}>
+                      {label} <span className="opacity-50">{count}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
-          <button
-            onClick={() => setDismissedBanner(true)}
-            className="absolute top-1/2 -translate-y-1/2 right-3 text-white/60 hover:text-white transition-colors"
-            title="Fechar"
-          >
-            <XIcon className="h-4 w-4" />
-          </button>
+        )}
+      </header>
+
+      {/* ── Hero Banner ── */}
+      <div className="header-gradient text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                Vagas de TI em <span className="text-blue-200">Bauru</span>
+              </h1>
+              <p className="text-blue-100/80 text-sm mt-1">
+                {loading
+                  ? <>Buscando vagas<LoadingDots /></>
+                  : hora
+                  ? `Atualizado ${hora} · ${vagas.length} vagas encontradas`
+                  : 'Pronto'}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              {novosCount > 0 && !loading && (
+                <span className="flex items-center gap-1.5 rounded-full bg-green-400/20 border border-green-300/40 text-green-100 text-xs font-bold px-3 py-1.5">
+                  <BellIcon className="h-3.5 w-3.5" />
+                  {novosCount} nova{novosCount > 1 ? 's' : ''}
+                </span>
+              )}
+              <PlataformaButtons />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Subheader: vista + ordenação ── */}
+      <div className="bg-white border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="h-11 flex items-center justify-between gap-3">
+            {/* Vista */}
+            <div className="flex rounded-lg border border-gray-200 overflow-hidden">
+              {[
+                { label: 'Grade',    icon: <LayoutGridIcon className="h-3.5 w-3.5" />, active: vista === 'grade' && tamanho === 'normal',    fn: () => { setVista('grade'); setTamanho('normal'); } },
+                { label: 'Compacto', icon: <SparklesIcon className="h-3.5 w-3.5" />,  active: vista === 'grade' && tamanho === 'compacto', fn: () => { setVista('grade'); setTamanho('compacto'); } },
+                { label: 'Lista',    icon: <ListIcon className="h-3.5 w-3.5" />,       active: vista === 'lista',                            fn: () => setVista('lista') },
+              ].map((v, i) => (
+                <button key={v.label} onClick={v.fn}
+                  className={`flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-semibold transition-colors ${i > 0 ? 'border-l border-gray-200' : ''} ${v.active ? 'bg-gray-900 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>
+                  {v.icon}<span className="hidden sm:block">{v.label}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Resultado + ordenação */}
+            {!loading && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-500">
+                  <strong className="text-gray-900">{vagasOrdenadas.length}</strong> vaga{vagasOrdenadas.length !== 1 ? 's' : ''}
+                  {techFiltro && <span className="ml-1.5 text-[11px] bg-blue-50 text-blue-700 border border-blue-200 rounded-full px-2 py-0.5 font-semibold">{techFiltro} <button onClick={() => setTechFiltro(null)} className="ml-0.5 text-blue-400">✕</button></span>}
+                </span>
+                <Select value={ordem} onValueChange={setOrdem}>
+                  <SelectTrigger className="h-7 w-36 text-xs gap-1 border-gray-200 rounded-lg">
+                    <ArrowUpDownIcon className="h-3.5 w-3.5 text-gray-400" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="data" className="text-xs">Mais recente</SelectItem>
+                    <SelectItem value="empresa" className="text-xs">Empresa A–Z</SelectItem>
+                    <SelectItem value="titulo" className="text-xs">Título A–Z</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button onClick={exportarCSV}
+                      className="h-7 w-7 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-400 hover:text-gray-700 hover:border-gray-400 transition-all">
+                      <DownloadIcon className="h-3.5 w-3.5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent className="text-xs">Exportar CSV</TooltipContent>
+                </Tooltip>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {pwaPrompt && !pwaInstalled && !dismissedBanner && (
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-2.5 px-4 relative">
+          <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+            <p className="text-sm font-medium flex items-center gap-2"><DownloadIcon className="h-4 w-4" />Instale o app para receber alertas de vagas!</p>
+            <div className="flex items-center gap-2">
+              <button onClick={async () => { pwaPrompt.prompt(); const { outcome } = await pwaPrompt.userChoice; if (outcome === 'accepted') setPwaPrompt(null); }}
+                className="px-3 py-1 bg-white text-blue-700 rounded-lg text-xs font-bold">Instalar</button>
+              <button onClick={() => setDismissedBanner(true)} className="text-white/60 hover:text-white"><XIcon className="h-4 w-4" /></button>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* ── Header ── */}
-      <header className="header-gradient text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-7 pb-6">
-          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-5">
-            <div>
+      {/* ── Conteúdo ── */}
+      <header className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+        <div>
+          <div>
               <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight leading-none flex items-center gap-3">
                 <Logo />
                 Vagas
@@ -1209,8 +1479,7 @@ export default function Home() {
               </Button>
             </div>
           </div>
-        </div>
-      </header>
+        </header>
 
       {/* ── Barra de filtros ── */}
       <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-[0_1px_0_0_#e2e8f0,0_2px_8px_rgba(15,23,42,0.04)]">
@@ -1279,59 +1548,61 @@ export default function Home() {
           {filtrosVisiveis && (
             <>
               {/* ── Linha 1: Localidade + Fonte + Favoritas ── */}
-              <div className="flex flex-nowrap gap-1.5 items-center overflow-x-auto pb-0.5 no-scrollbar [&>*]:shrink-0">
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mr-0.5">Local</span>
+              <div className="flex flex-nowrap gap-2 items-center overflow-x-auto pb-0.5 no-scrollbar [&>*]:shrink-0">
+                <span className="text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200/50 px-2.5 py-0.5 rounded-lg uppercase tracking-wide mr-1 shadow-2xs">Local</span>
                 {[
                   { id: 'todas',  label: 'Todas',  fn: _ => true },
                   { id: 'bauru',  label: 'Bauru',  fn: v => tipoLocalidade(v.local) === 'bauru' },
                   { id: 'regiao', label: 'Região', fn: v => ['bauru','regiao'].includes(tipoLocalidade(v.local)) },
                   { id: 'remoto', label: 'Remoto', fn: v => tipoLocalidade(v.local) === 'remoto' },
                 ].map(f => (
-                  <PillBtn key={f.id} active={filtro === f.id} onClick={() => setFiltro(f.id)}>
-                    {f.label} <span className="opacity-50 text-[10px]">{contar(f.fn)}</span>
+                  <PillBtn key={f.id} active={filtro === f.id} onClick={() => setFiltro(f.id)}
+                    activeClass="bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-transparent shadow-blue-500/25">
+                    {f.label} <span className="opacity-60 text-[10px] ml-0.5">{contar(f.fn)}</span>
                   </PillBtn>
                 ))}
 
-                <div className="h-5 w-px bg-gray-200 mx-1" />
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mr-0.5">Fonte</span>
+                <div className="h-5 w-px bg-slate-200/60 mx-1" />
+                <span className="text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200/50 px-2.5 py-0.5 rounded-lg uppercase tracking-wide mr-1 shadow-2xs">Fonte</span>
 
                 {Object.entries(FONTE_CONFIG).map(([f, cfg]) => {
                   const n = fontes[f] || 0;
                   if (n === 0 && !loading) return null;
                   return (
-                    <PillBtn key={f} active={filtro === f} onClick={() => setFiltro(filtro === f ? 'bauru' : f)}>
-                      {cfg.label} {!loading && <span className="opacity-50 text-[10px]">{n}</span>}
+                    <PillBtn key={f} active={filtro === f} onClick={() => setFiltro(filtro === f ? 'bauru' : f)}
+                      activeClass="bg-gradient-to-r from-indigo-650 to-blue-600 text-white border-transparent shadow-indigo-500/20">
+                      {cfg.label} {!loading && <span className="opacity-60 text-[10px] ml-0.5">{n}</span>}
                     </PillBtn>
                   );
                 })}
 
-                <div className="h-5 w-px bg-gray-200 mx-1" />
+                <div className="h-5 w-px bg-slate-200/60 mx-1" />
 
                 <PillBtn active={filtro === 'favoritas'} onClick={() => setFiltro(filtro === 'favoritas' ? 'bauru' : 'favoritas')}
-                  activeClass="bg-rose-500 text-white border-rose-500"
-                  className={filtro !== 'favoritas' ? 'hover:border-rose-300 hover:text-rose-500' : ''}>
+                  activeClass="bg-gradient-to-r from-rose-500 to-pink-600 text-white border-transparent shadow-rose-500/20"
+                  className={filtro !== 'favoritas' ? 'hover:border-rose-350 hover:text-rose-600' : ''}>
                   <HeartIcon className="h-3.5 w-3.5" />
                   Favoritas
-                  {favoritas.size > 0 && <span className="opacity-70 text-[10px]">{favoritas.size}</span>}
+                  {favoritas.size > 0 && <span className="opacity-80 text-[10px] ml-0.5">{favoritas.size}</span>}
                 </PillBtn>
               </div>
 
-              {/* ── Linha 2: Nível + Contrato + Modo de trabalho + Empresa + Limpar ── */}
-              <div className="flex flex-nowrap gap-1.5 items-center overflow-x-auto pb-0.5 no-scrollbar [&>*]:shrink-0">
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mr-0.5">Nível</span>
+              {/* ── Linha 2: Nível + Contrato + Regime + Empresa + Limpar ── */}
+              <div className="flex flex-nowrap gap-2 items-center overflow-x-auto pb-0.5 no-scrollbar [&>*]:shrink-0">
+                <span className="text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200/50 px-2.5 py-0.5 rounded-lg uppercase tracking-wide mr-1 shadow-2xs">Nível</span>
                 {[
                   { id: 'junior', label: 'Júnior' },
                   { id: 'pleno',  label: 'Pleno'  },
                   { id: 'senior', label: 'Sênior' },
                 ].map(s => (
                   <PillBtn key={s.id} active={senioridade === s.id} onClick={() => setSenioridade(senioridade === s.id ? 'todas' : s.id)}
-                    activeClass="bg-violet-600 text-white border-violet-600">
+                    activeClass="bg-gradient-to-r from-violet-600 to-indigo-600 text-white border-transparent shadow-violet-500/25">
                     {s.label}
                   </PillBtn>
                 ))}
 
-                <div className="h-5 w-px bg-gray-200 mx-1" />
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mr-0.5">Contrato</span>
+                <div className="h-5 w-px bg-slate-200/60 mx-1" />
+                <span className="text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200/50 px-2.5 py-0.5 rounded-lg uppercase tracking-wide mr-1 shadow-2xs">Contrato</span>
 
                 {[
                   { id: 'clt',     label: 'CLT'     },
@@ -1340,13 +1611,13 @@ export default function Home() {
                   { id: 'trainee', label: 'Trainee' },
                 ].map(m => (
                   <PillBtn key={m.id} active={modalidade === m.id} onClick={() => setModalidade(modalidade === m.id ? null : m.id)}
-                    activeClass="bg-emerald-600 text-white border-emerald-600">
+                    activeClass="bg-gradient-to-r from-emerald-600 to-teal-600 text-white border-transparent shadow-emerald-500/25">
                     {m.label}
                   </PillBtn>
                 ))}
 
-                <div className="h-5 w-px bg-gray-200 mx-1" />
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mr-0.5">Regime</span>
+                <div className="h-5 w-px bg-slate-200/60 mx-1" />
+                <span className="text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200/50 px-2.5 py-0.5 rounded-lg uppercase tracking-wide mr-1 shadow-2xs">Regime</span>
 
                 {[
                   { id: 'presencial', label: 'Presencial', icon: <MonitorIcon className="h-3 w-3" /> },
@@ -1354,16 +1625,16 @@ export default function Home() {
                   { id: 'remoto',     label: 'Remoto',     icon: <WifiIcon className="h-3 w-3" />    },
                 ].map(m => (
                   <PillBtn key={m.id} active={modoTrabalho === m.id} onClick={() => setModoTrabalho(modoTrabalho === m.id ? null : m.id)}
-                    activeClass="bg-sky-600 text-white border-sky-600">
+                    activeClass="bg-gradient-to-r from-sky-500 to-blue-600 text-white border-transparent shadow-blue-500/25">
                     {m.icon}
                     {m.label}
                   </PillBtn>
                 ))}
 
-                <div className="h-5 w-px bg-gray-200 mx-1" />
+                <div className="h-5 w-px bg-slate-200/60 mx-1" />
 
                 <div className="relative">
-                  <Building2Icon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-gray-400 pointer-events-none" />
+                  <Building2Icon className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
                   <input
                     type="text"
                     placeholder="Empresa…"
@@ -1388,42 +1659,42 @@ export default function Home() {
               </div>
 
               {/* ── Linha 3: Visualização + Extras + Navegação ── */}
-              <div className="flex flex-nowrap gap-1.5 items-center overflow-x-auto pb-0.5 no-scrollbar [&>*]:shrink-0">
+              <div className="flex flex-nowrap gap-2 items-center overflow-x-auto pb-0.5 no-scrollbar [&>*]:shrink-0">
 
                 {/* Visualização */}
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mr-0.5">Ver</span>
-                <div className="flex rounded-xl border border-gray-200 overflow-hidden">
+                <span className="text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200/50 px-2.5 py-0.5 rounded-lg uppercase tracking-wide mr-1 shadow-2xs">Ver</span>
+                <div className="flex rounded-xl border border-slate-200/60 overflow-hidden bg-white shadow-2xs">
                   {[
                     { label: 'Grade',    icon: <LayoutGridIcon className="h-3.5 w-3.5" />, active: vista === 'grade' && tamanho === 'normal',    fn: () => { setVista('grade'); setTamanho('normal'); } },
                     { label: 'Compacto', icon: <SparklesIcon className="h-3.5 w-3.5" />,  active: vista === 'grade' && tamanho === 'compacto', fn: () => { setVista('grade'); setTamanho('compacto'); } },
                     { label: 'Lista',    icon: <ListIcon className="h-3.5 w-3.5" />,       active: vista === 'lista',                             fn: () => setVista('lista') },
                   ].map((v, i) => (
                     <button key={v.label} onClick={v.fn}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold transition-colors ${i > 0 ? 'border-l border-gray-200' : ''} ${v.active ? 'bg-gray-900 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>
+                      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold transition-all duration-150 ${i > 0 ? 'border-l border-slate-200/60' : ''} ${v.active ? 'bg-slate-900 text-white shadow-inner' : 'bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
                       {v.icon}
                       {v.label}
                     </button>
                   ))}
                 </div>
 
-                <div className="h-5 w-px bg-gray-200 mx-1" />
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mr-0.5">Extras</span>
+                <div className="h-5 w-px bg-slate-200/60 mx-1" />
+                <span className="text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200/50 px-2.5 py-0.5 rounded-lg uppercase tracking-wide mr-1 shadow-2xs">Extras</span>
 
                 <PillBtn active={somenteNovas} onClick={() => setSomenteNovas(v => !v)}
-                  activeClass="bg-green-600 text-white border-green-600">
+                  activeClass="bg-gradient-to-r from-emerald-500 to-green-600 text-white border-transparent shadow-emerald-500/20">
                   <SparklesIcon className="h-3.5 w-3.5" />
                   Novas
                 </PillBtn>
 
                 <PillBtn active={naoVisitadas} onClick={() => setNaoVisitadas(v => !v)}
-                  activeClass="bg-slate-700 text-white border-slate-700">
+                  activeClass="bg-gradient-to-r from-slate-700 to-slate-800 text-white border-transparent shadow-slate-700/20">
                   <EyeOffIcon className="h-3.5 w-3.5" />
                   Não vistas
                 </PillBtn>
 
                 <PillBtn active={pinarFavoritas} onClick={() => setPinarFavoritas(v => !v)}
-                  activeClass="bg-rose-500 text-white border-rose-500"
-                  className="hover:border-rose-300 hover:text-rose-400">
+                  activeClass="bg-gradient-to-r from-rose-500 to-pink-600 text-white border-transparent shadow-rose-500/20"
+                  className="hover:border-rose-350 hover:text-rose-500">
                   <HeartIcon className="h-3.5 w-3.5" />
                   Fixar fav.
                 </PillBtn>
