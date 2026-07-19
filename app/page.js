@@ -1,4 +1,4 @@
-// Sistema de Vagas de TI em Bauru
+﻿// Sistema de Vagas de TI em Bauru
 // Criado por Daniel Ortega Pereira
 // https://github.com/dnlortega/vagas-linkedin
 
@@ -288,7 +288,6 @@ function LoadingBar({ visible }) {
         onTransitionEnd={() => setDone(false)}
       />
     </div>
-    </div>
   );
 }
 
@@ -338,7 +337,6 @@ function PlataformaButtons() {
           <TooltipContent side="bottom" className="text-xs">{p.label}</TooltipContent>
         </Tooltip>
       ))}
-    </div>
     </div>
   );
 }
@@ -620,7 +618,6 @@ function VagaCard({ vaga, isNovo, isFavorita, ehDuplicata, foiVisitada, noKanban
         )}
       </div>
     </div>
-    </div>
   );
 }
 
@@ -664,7 +661,6 @@ function VagaCardSkeleton({ index = 0, vista = 'grade' }) {
         </div>
         <div className="px-5 pb-5"><div className="h-9 w-full rounded-xl shimmer" /></div>
       </div>
-    </div>
     </div>
   );
 }
