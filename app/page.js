@@ -24,11 +24,12 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import VagaModal from './components/VagaModal';
 
 // ─── Constantes ──────────────────────────────────────────────────────────────
 
-const CIDADES = ['bauru', 'agudos', 'lençóis', 'lencois', 'botucatu', 'jaú', 'jau', 'pederneiras'];
+const CIDADES = ['agudos', 'bauru', 'botucatu', 'jau', 'jaú', 'lencois', 'lençóis', 'pederneiras'];
 const LS_KEY      = 'vagas_ids_vistos';
 const LS_FAV      = 'vagas_favoritas';
 const LS_KANBAN   = 'vagas_kanban';
@@ -80,23 +81,23 @@ const PLATAFORMAS = [
 ];
 
 const TECHS = [
-  { label: 'React',      regex: /\breact\b/i,                          color: 'bg-cyan-100 text-cyan-700 border-cyan-200'       },
-  { label: 'Vue',        regex: /\bvue\.?js\b/i,                       color: 'bg-green-100 text-green-700 border-green-200'    },
+  { label: '.NET/C#',    regex: /\bc#\b|\.net\b/i,                     color: 'bg-purple-100 text-purple-700 border-purple-200' },
   { label: 'Angular',    regex: /\bangular\b/i,                        color: 'bg-red-100 text-red-700 border-red-200'          },
-  { label: 'Node.js',    regex: /\bnode\.?js\b/i,                      color: 'bg-green-100 text-green-600 border-green-200'    },
-  { label: 'Python',     regex: /\bpython\b/i,                         color: 'bg-blue-100 text-blue-700 border-blue-200'       },
+  { label: 'AWS',        regex: /\baws\b|\bamazon web\b/i,             color: 'bg-amber-100 text-amber-700 border-amber-200'    },
+  { label: 'DevOps',     regex: /\bdevops\b/i,                         color: 'bg-rose-100 text-rose-700 border-rose-200'       },
+  { label: 'Docker',     regex: /\bdocker\b|\bkubernetes\b|\bk8s\b/i,  color: 'bg-sky-100 text-sky-700 border-sky-200'         },
+  { label: 'Flutter',    regex: /\bflutter\b|\bdart\b/i,               color: 'bg-cyan-100 text-cyan-600 border-cyan-200'       },
   { label: 'Java',       regex: /\bjava\b(?!script)/i,                 color: 'bg-orange-100 text-orange-700 border-orange-200' },
   { label: 'JavaScript', regex: /\bjavascript\b|\bjs\b/i,              color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
-  { label: 'TypeScript', regex: /\btypescript\b|\bts\b/i,              color: 'bg-blue-100 text-blue-600 border-blue-200'       },
-  { label: 'PHP',        regex: /\bphp\b/i,                            color: 'bg-indigo-100 text-indigo-700 border-indigo-200' },
-  { label: '.NET/C#',    regex: /\bc#\b|\.net\b/i,                     color: 'bg-purple-100 text-purple-700 border-purple-200' },
-  { label: 'SQL',        regex: /\bsql\b|\bmysql\b|\bpostgres\b/i,     color: 'bg-slate-100 text-slate-700 border-slate-200'    },
-  { label: 'Power BI',   regex: /power\s*bi|\bpowerbi\b/i,             color: 'bg-yellow-100 text-yellow-800 border-yellow-300' },
-  { label: 'AWS',        regex: /\baws\b|\bamazon web\b/i,             color: 'bg-amber-100 text-amber-700 border-amber-200'    },
-  { label: 'Docker',     regex: /\bdocker\b|\bkubernetes\b|\bk8s\b/i,  color: 'bg-sky-100 text-sky-700 border-sky-200'         },
-  { label: 'DevOps',     regex: /\bdevops\b/i,                         color: 'bg-rose-100 text-rose-700 border-rose-200'       },
-  { label: 'Flutter',    regex: /\bflutter\b|\bdart\b/i,               color: 'bg-cyan-100 text-cyan-600 border-cyan-200'       },
   { label: 'Kotlin',     regex: /\bkotlin\b|\bandroid\b/i,             color: 'bg-violet-100 text-violet-700 border-violet-200' },
+  { label: 'Node.js',    regex: /\bnode\.?js\b/i,                      color: 'bg-green-100 text-green-600 border-green-200'    },
+  { label: 'PHP',        regex: /\bphp\b/i,                            color: 'bg-indigo-100 text-indigo-700 border-indigo-200' },
+  { label: 'Power BI',   regex: /power\s*bi|\bpowerbi\b/i,             color: 'bg-yellow-100 text-yellow-800 border-yellow-300' },
+  { label: 'Python',     regex: /\bpython\b/i,                         color: 'bg-blue-100 text-blue-700 border-blue-200'       },
+  { label: 'React',      regex: /\breact\b/i,                          color: 'bg-cyan-100 text-cyan-700 border-cyan-200'       },
+  { label: 'SQL',        regex: /\bsql\b|\bmysql\b|\bpostgres\b/i,     color: 'bg-slate-100 text-slate-700 border-slate-200'    },
+  { label: 'TypeScript', regex: /\btypescript\b|\bts\b/i,              color: 'bg-blue-100 text-blue-600 border-blue-200'       },
+  { label: 'Vue',        regex: /\bvue\.?js\b/i,                       color: 'bg-green-100 text-green-700 border-green-200'    },
 ];
 
 // ─── Debounce hook ───────────────────────────────────────────────────────────
@@ -1083,7 +1084,6 @@ export default function Home() {
       .sort((a, b) => b.items.length - a.items.length);
   }, [vagasOrdenadas, agrupar]);
 
-  // Computar top techs e top empresas para stats
   const topTechs = useMemo(() => {
     const map = new Map();
     vagas.forEach(v => detectarTechs(v.titulo).forEach(t => map.set(t.label, (map.get(t.label) || 0) + 1)));
@@ -1106,265 +1106,350 @@ export default function Home() {
   }
 
   const { data: session } = useSession();
-  const [filtrosAbertos, setFiltrosAbertos] = useState(false);
 
-  return (
-    <div className="min-h-screen bg-[#f0f4f8]">
-      <LoadingBar visible={isAtivo} />
+  const renderFiltros = () => {
+    const temFiltrosAtivos = filtro !== 'bauru' || senioridade !== 'todas' || modalidade || techFiltro || modoTrabalho || busca || somenteNovas || naoVisitadas || empresaBusca || periodo !== 'todos';
 
-      {/* ── Topo Fixo: Logo + busca + avatar ── */}
-      <header className="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-3">
-
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 shrink-0">
-            <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center shadow">
-              <BriefcaseIcon className="h-4 w-4 text-white" />
-            </div>
-            <span className="font-bold text-slate-800 text-sm hidden sm:block">Vagas TI <span className="text-blue-600">Bauru</span></span>
-          </Link>
-
-          {/* Barra de busca central */}
-          <div className="relative flex-1 max-w-xl">
-            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-            <Input
-              ref={searchRef}
-              placeholder="Buscar título ou empresa…"
-              value={busca}
-              onChange={e => setBusca(e.target.value)}
-              onFocus={() => setMostrarHist(true)}
-              onBlur={() => setTimeout(() => setMostrarHist(false), 150)}
-              onKeyDown={e => { if (e.key === 'Enter' && busca.trim()) { salvarHistorico(busca); setMostrarHist(false); } }}
-              className="pl-9 pr-8 h-9 text-sm border-gray-200 rounded-xl w-full bg-slate-50 focus:bg-white"
-            />
-            {busca && (
-              <button onClick={() => setBusca('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700">
-                <XIcon className="h-3.5 w-3.5" />
+    return (
+      <div className="flex flex-col gap-4">
+        <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-xs">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Pesquisa</h2>
+            {temFiltrosAtivos && (
+              <button onClick={limparFiltros} className="text-[10px] text-red-500 hover:text-red-600 font-bold flex items-center gap-1 transition-colors">
+                <FilterXIcon className="h-3 w-3" /> Limpar
               </button>
             )}
-            {mostrarHist && historicoBusca.length > 0 && !busca && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden">
-                <div className="px-3 py-2 flex items-center justify-between border-b border-gray-100">
-                  <span className="text-xs font-semibold text-gray-400 flex items-center gap-1.5"><HistoryIcon className="h-3 w-3" />Buscas recentes</span>
-                  <button onClick={() => { setHistoricoBusca([]); localStorage.removeItem(LS_HISTORICO); }} className="text-[10px] text-gray-400 hover:text-red-500">Limpar</button>
-                </div>
-                {historicoBusca.map(t => (
-                  <button key={t} onClick={() => { setBusca(t); setMostrarHist(false); }}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
-                    <HistoryIcon className="h-3.5 w-3.5 text-gray-300" />{t}
-                  </button>
-                ))}
-              </div>
+          </div>
+          <div className="relative">
+            <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-450 pointer-events-none" />
+            <Input
+              ref={searchRef}
+              placeholder="Buscar título, empresa..."
+              value={busca}
+              onChange={e => setBusca(e.target.value)}
+              className="pl-8.5 pr-8 h-9 text-xs border-slate-200 rounded-xl bg-slate-50/50 focus:bg-white"
+            />
+            {busca && (
+              <button onClick={() => setBusca('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700">
+                <XIcon className="h-3 w-3" />
+              </button>
             )}
           </div>
+          <div className="mt-3 flex flex-col gap-1">
+            <span className="text-[9px] font-bold text-slate-400 uppercase">Período</span>
+            <Select value={periodo} onValueChange={setPeriodo}>
+              <SelectTrigger className="h-8 text-xs border-slate-200 rounded-xl bg-slate-50/50">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PERIODOS.map(p => <SelectItem key={p.id} value={p.id} className="text-xs">{p.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
 
-          {/* Ações direita */}
-          <div className="flex items-center gap-1.5 ml-auto shrink-0">
-            {/* Filtros */}
-            <button
-              onClick={() => setFiltrosAbertos(v => !v)}
-              className={`h-9 flex items-center gap-1.5 px-3 rounded-xl border text-xs font-semibold transition-all ${
-                filtrosAbertos ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'
-              }`}
-            >
-              <SlidersHorizontalIcon className="h-3.5 w-3.5" />
-              <span className="hidden sm:block">Filtros</span>
-              {(filtro !== 'bauru' || senioridade !== 'todas' || modalidade || techFiltro || modoTrabalho) && (
-                <span className="h-2 w-2 rounded-full bg-blue-500" />
+        <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-xs flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Local</span>
+            <div className="flex flex-wrap gap-1">
+              {[
+                { id: 'todas',  label: 'Todas',  fn: _ => true },
+                { id: 'bauru',  label: 'Bauru',  fn: v => tipoLocalidade(v.local) === 'bauru' },
+                { id: 'regiao', label: 'Região', fn: v => ['bauru','regiao'].includes(tipoLocalidade(v.local)) },
+                { id: 'remoto', label: 'Remoto', fn: v => tipoLocalidade(v.local) === 'remoto' },
+              ].map(f => (
+                <PillBtn key={f.id} active={filtro === f.id} onClick={() => setFiltro(f.id)}
+                  activeClass="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white border-transparent">
+                  {f.label} <span className="opacity-60 text-[9px] ml-0.5">{contar(f.fn)}</span>
+                </PillBtn>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Fonte</span>
+            <div className="flex flex-wrap gap-1">
+              {Object.entries(FONTE_CONFIG).map(([f, cfg]) => {
+                const n = fontes[f] || 0;
+                if (n === 0 && !loading) return null;
+                return (
+                  <PillBtn key={f} active={filtro === f} onClick={() => setFiltro(filtro === f ? 'bauru' : f)}
+                    activeClass="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white border-transparent">
+                    {cfg.label} {!loading && <span className="opacity-60 text-[9px] ml-0.5">{n}</span>}
+                  </PillBtn>
+                );
+              })}
+              <PillBtn active={filtro === 'favoritas'} onClick={() => setFiltro(filtro === 'favoritas' ? 'bauru' : 'favoritas')}
+                activeClass="bg-gradient-to-r from-rose-500 to-rose-600 text-white border-transparent"
+                className={filtro !== 'favoritas' ? 'hover:border-rose-300 hover:text-rose-600' : ''}>
+                <HeartIcon className="h-3 w-3" />
+                Favoritas
+                {favoritas.size > 0 && <span className="opacity-80 text-[9px] ml-0.5">{favoritas.size}</span>}
+              </PillBtn>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Nível</span>
+            <div className="flex flex-wrap gap-1">
+              {[
+                { id: 'junior', label: 'Júnior' },
+                { id: 'pleno',  label: 'Pleno'  },
+                { id: 'senior', label: 'Sênior' },
+              ].map(s => (
+                <PillBtn key={s.id} active={senioridade === s.id} onClick={() => setSenioridade(senioridade === s.id ? 'todas' : s.id)}
+                  activeClass="bg-gradient-to-r from-violet-600 to-violet-700 text-white border-transparent">
+                  {s.label}
+                </PillBtn>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Regime</span>
+            <div className="flex flex-wrap gap-1">
+              {[
+                { id: 'presencial', label: 'Presencial', icon: <MonitorIcon className="h-3 w-3" /> },
+                { id: 'hibrido',    label: 'Híbrido',    icon: <CarIcon className="h-3 w-3" />     },
+                { id: 'remoto',     label: 'Remoto',     icon: <WifiIcon className="h-3 w-3" />    },
+              ].map(m => (
+                <PillBtn key={m.id} active={modoTrabalho === m.id} onClick={() => setModoTrabalho(modoTrabalho === m.id ? null : m.id)}
+                  activeClass="bg-gradient-to-r from-sky-500 to-blue-600 text-white border-transparent">
+                  {m.icon}
+                  {m.label}
+                </PillBtn>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Contrato</span>
+            <div className="flex flex-wrap gap-1">
+              {[
+                { id: 'clt',     label: 'CLT'     },
+                { id: 'pj',      label: 'PJ'      },
+                { id: 'estagio', label: 'Estágio' },
+                { id: 'trainee', label: 'Trainee' },
+              ].map(m => (
+                <PillBtn key={m.id} active={modalidade === m.id} onClick={() => setModalidade(modalidade === m.id ? null : m.id)}
+                  activeClass="bg-gradient-to-r from-emerald-600 to-teal-600 text-white border-transparent">
+                  {m.label}
+                </PillBtn>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Empresa</span>
+            <div className="relative">
+              <Building2Icon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Filtrar empresa..."
+                value={empresaBusca}
+                onChange={e => setEmpresaBusca(e.target.value)}
+                className="pl-8 pr-7 h-8.5 text-xs border border-slate-200 rounded-xl bg-slate-50/50 focus:outline-none focus:bg-white focus:border-indigo-400 w-full transition-all"
+              />
+              {empresaBusca && (
+                <button onClick={() => setEmpresaBusca('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700">
+                  <XIcon className="h-3 w-3" />
+                </button>
               )}
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-xs flex flex-col gap-1.5">
+          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Preferências</span>
+          <PillBtn active={somenteNovas} onClick={() => setSomenteNovas(v => !v)} className="w-full justify-start"
+            activeClass="bg-gradient-to-r from-indigo-650 to-indigo-750 text-white border-transparent">
+            <SparklesIcon className="h-3.5 w-3.5" /> Apenas Novas
+          </PillBtn>
+          <PillBtn active={naoVisitadas} onClick={() => setNaoVisitadas(v => !v)} className="w-full justify-start"
+            activeClass="bg-gradient-to-r from-indigo-650 to-indigo-750 text-white border-transparent">
+            <EyeOffIcon className="h-3.5 w-3.5" /> Não Visitadas
+          </PillBtn>
+          <PillBtn active={pinarFavoritas} onClick={() => setPinarFavoritas(v => !v)} className="w-full justify-start"
+            activeClass="bg-gradient-to-r from-rose-500 to-rose-600 text-white border-transparent shadow-rose-500/15">
+            <HeartIcon className="h-3.5 w-3.5" /> Fixar Favoritas
+          </PillBtn>
+        </div>
+
+        <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-xs flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Filtros Salvos</span>
+            <button onClick={salvarFiltroAtual} className="text-[9px] text-indigo-600 hover:text-indigo-700 font-semibold flex items-center gap-0.5">
+              <BookmarkIcon className="h-3 w-3" /> Salvar atual
+            </button>
+          </div>
+          {filtrosSalvos.length === 0 ? (
+            <p className="text-[10px] text-slate-400 italic">Nenhum filtro salvo ainda.</p>
+          ) : (
+            <div className="flex flex-col gap-1.5 max-h-36 overflow-y-auto no-scrollbar">
+              {filtrosSalvos.map(f => (
+                <div key={f.nome} className="flex items-center justify-between gap-1 p-1.5 bg-slate-50 border border-slate-100 rounded-xl group hover:border-slate-200 transition-all">
+                  <button onClick={() => restaurarFiltro(f)} className="flex-1 text-left text-xs text-slate-700 font-semibold truncate hover:text-indigo-600 transition-colors">{f.nome}</button>
+                  <button onClick={() => removerFiltroSalvo(f.nome)} className="text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
+                    <XIcon className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className={`min-h-screen bg-slate-50/60 text-slate-800 antialiased transition-colors ${darkMode ? 'dark bg-slate-950 text-slate-100' : ''}`}>
+      <LoadingBar visible={isAtivo} />
+
+      <header className="sticky top-0 z-35 w-full border-b border-slate-200/50 bg-white/80 backdrop-blur-md dark:bg-slate-900/80 dark:border-slate-800/50">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
+          <Link href="/" className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-650 shadow-md shadow-indigo-200/50">
+              <BriefcaseIcon className="h-4.5 w-4.5 text-white" />
+            </div>
+            <div className="flex flex-col">
+              <span className="font-extrabold text-slate-800 dark:text-white text-sm leading-none">Vagas TI</span>
+              <span className="text-[10px] text-indigo-600 font-bold tracking-wide mt-0.5">Bauru & Região</span>
+            </div>
+          </Link>
+
+          <div className="flex items-center gap-2.5">
+            <Link href="/candidaturas" className="relative inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-650 hover:border-indigo-350 hover:text-indigo-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 hover:dark:text-indigo-400 hover:dark:border-indigo-800 transition-all shadow-2xs">
+              <KanbanIcon className="h-3.5 w-3.5 text-slate-400" />
+              <span className="hidden sm:inline">Candidaturas</span>
+              {kanban.size > 0 && (
+                <span className="h-4 w-4 rounded-full bg-indigo-650 text-white text-[9px] font-bold flex items-center justify-center">
+                  {kanban.size}
+                </span>
+              )}
+            </Link>
+
+            <Link href="/perfil" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-650 hover:border-indigo-350 hover:text-indigo-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 hover:dark:text-indigo-400 hover:dark:border-indigo-800 transition-all shadow-2xs">
+              <AwardIcon className="h-3.5 w-3.5 text-slate-400" />
+              <span className="hidden sm:inline">Perfil</span>
+            </Link>
+
+            <div className="h-5 w-px bg-slate-200 dark:bg-slate-800 mx-1" />
+
+            <button onClick={() => setDarkMode(v => !v)} className="p-2 rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-750 transition-all">
+              {darkMode ? <SunIcon className="h-4 w-4" /> : <MoonIcon className="h-4 w-4" />}
             </button>
 
-            {/* Atualizar */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button onClick={() => fetchVagas({ force: true })} disabled={isAtivo}
-                  className="h-9 w-9 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:border-slate-400 transition-all disabled:opacity-50">
-                  <RefreshCwIcon className={`h-4 w-4 ${isAtivo ? 'animate-spin' : ''}`} />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent className="text-xs">Atualizar vagas</TooltipContent>
-            </Tooltip>
-
-            {/* Candidaturas */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Link href="/candidaturas" className="relative h-9 w-9 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:border-indigo-300 hover:text-indigo-600 transition-all">
-                  <KanbanIcon className="h-4 w-4" />
-                  {kanban.size > 0 && (
-                    <span className="absolute -top-1 -right-1 h-4 w-4 bg-indigo-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                      {kanban.size > 9 ? '9+' : kanban.size}
-                    </span>
-                  )}
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent className="text-xs">Candidaturas</TooltipContent>
-            </Tooltip>
-
-            {/* Dark mode */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button onClick={() => setDarkMode(v => !v)}
-                  className="h-9 w-9 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:border-slate-400 transition-all">
-                  {darkMode ? <SunIcon className="h-4 w-4" /> : <MoonIcon className="h-4 w-4" />}
-                </button>
-              </TooltipTrigger>
-              <TooltipContent className="text-xs">{darkMode ? 'Modo claro' : 'Modo escuro'}</TooltipContent>
-            </Tooltip>
-
-            {/* Avatar + Logout */}
             {session?.user && (
-              <div className="flex items-center gap-2 pl-1.5 border-l border-slate-200">
-                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+              <div className="flex items-center gap-2 pl-1.5 border-l border-slate-200 dark:border-slate-800">
+                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-650 flex items-center justify-center text-white text-xs font-bold shadow-sm">
                   {session.user.name?.[0]?.toUpperCase() || 'U'}
                 </div>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button onClick={() => signOut({ callbackUrl: '/login' })}
-                      className="h-8 w-8 flex items-center justify-center rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all">
-                      <LogOutIcon className="h-4 w-4" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent className="text-xs">Sair</TooltipContent>
-                </Tooltip>
+                <button onClick={() => signOut({ callbackUrl: '/login' })} className="p-2 rounded-xl text-slate-450 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all" title="Sair">
+                  <LogOutIcon className="h-4 w-4" />
+                </button>
               </div>
             )}
           </div>
         </div>
+      </header>
 
-        {/* ── Painel de Filtros (colapsável) ── */}
-        {filtrosAbertos && (
-          <div className="border-t border-slate-100 bg-slate-50">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-col gap-3">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8 items-start">
+          
+          <aside className="hidden lg:flex flex-col gap-4 sticky top-22 max-h-[calc(100vh-7rem)] overflow-y-auto no-scrollbar pb-6 pr-1">
+            {renderFiltros()}
+          </aside>
 
-              {/* Linha 1: Local + Período */}
-              <div className="flex flex-wrap gap-2 items-center">
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider w-10">Local</span>
-                {[
-                  { id: 'todas',  label: 'Todas' },
-                  { id: 'bauru',  label: 'Bauru' },
-                  { id: 'regiao', label: 'Região' },
-                  { id: 'remoto', label: 'Remoto' },
-                ].map(f => (
-                  <PillBtn key={f.id} active={filtro === f.id} onClick={() => setFiltro(f.id)}>{f.label}</PillBtn>
-                ))}
-                <div className="h-5 w-px bg-gray-200 mx-1" />
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Período</span>
-                <Select value={periodo} onValueChange={setPeriodo}>
-                  <SelectTrigger className="h-7 text-xs border-gray-200 rounded-full w-36">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PERIODOS.map(p => <SelectItem key={p.id} value={p.id} className="text-xs">{p.label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+          <div className="flex-1 min-w-0 flex flex-col gap-4">
+            
+            <div className="lg:hidden flex items-center justify-between p-3.5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-150 dark:border-slate-800 shadow-2xs gap-3">
+              <div className="relative flex-1">
+                <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+                <Input
+                  placeholder="Buscar vagas..."
+                  value={busca}
+                  onChange={e => setBusca(e.target.value)}
+                  className="pl-8.5 h-9 text-xs border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-950/50 w-full"
+                />
               </div>
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-9 gap-1.5 rounded-xl text-xs font-semibold shadow-2xs">
+                    <SlidersHorizontalIcon className="h-3.5 w-3.5 text-slate-500" />
+                    Filtros
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-[300px] p-5 overflow-y-auto dark:bg-slate-900 dark:border-slate-800">
+                  <SheetHeader className="mb-4">
+                    <SheetTitle className="text-left font-bold text-slate-800 dark:text-white text-base">Filtros de Vagas</SheetTitle>
+                  </SheetHeader>
+                  {renderFiltros()}
+                </SheetContent>
+              </Sheet>
+            </div>
 
-              {/* Linha 2: Nível + Contrato + Modo */}
-              <div className="flex flex-wrap gap-2 items-center">
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider w-10">Nível</span>
-                {[{id:'junior',label:'Júnior'},{id:'pleno',label:'Pleno'},{id:'senior',label:'Sênior'}].map(s => (
-                  <PillBtn key={s.id} active={senioridade === s.id} onClick={() => setSenioridade(senioridade === s.id ? 'todas' : s.id)}
-                    activeClass="bg-violet-600 text-white border-violet-600">{s.label}</PillBtn>
-                ))}
-                <div className="h-5 w-px bg-gray-200 mx-1" />
-                {[{id:'clt',label:'CLT'},{id:'pj',label:'PJ'},{id:'estagio',label:'Estágio'}].map(m => (
-                  <PillBtn key={m.id} active={modalidade === m.id} onClick={() => setModalidade(modalidade === m.id ? null : m.id)}
-                    activeClass="bg-emerald-600 text-white border-emerald-600">{m.label}</PillBtn>
-                ))}
-                <div className="h-5 w-px bg-gray-200 mx-1" />
-                {[
-                  {id:'presencial',label:'Presencial',icon:<MonitorIcon className="h-3 w-3" />},
-                  {id:'hibrido',label:'Híbrido',icon:<CarIcon className="h-3 w-3" />},
-                  {id:'remoto',label:'Remoto',icon:<WifiIcon className="h-3 w-3" />},
-                ].map(m => (
-                  <PillBtn key={m.id} active={modoTrabalho === m.id} onClick={() => setModoTrabalho(modoTrabalho === m.id ? null : m.id)}
-                    activeClass="bg-sky-600 text-white border-sky-600">{m.icon}{m.label}</PillBtn>
-                ))}
+            <div className="relative rounded-3xl overflow-hidden border border-indigo-100 dark:border-indigo-950/30 bg-gradient-to-r from-indigo-650 via-indigo-700 to-purple-800 text-white p-6 sm:p-7 shadow-sm">
+              <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h1 className="text-xl sm:text-2xl font-black tracking-tight leading-none">Catálogo de Vagas TI</h1>
+                  <p className="text-indigo-100/90 text-xs mt-1.5">
+                    {loading ? <>Analisando portais de tecnologia<LoadingDots /></> : hora ? `Banco atualizado ${hora} · ${vagas.length} vagas catalogadas` : 'Pronto'}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  {novosCount > 0 && !loading && (
+                    <span className="relative flex items-center gap-1 bg-green-400/20 border border-green-300/45 text-green-100 text-[10px] font-bold px-2.5 py-1 rounded-full shadow-xs">
+                      <BellIcon className="h-3 w-3" /> {novosCount} novas
+                      <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-green-400 animate-ping" />
+                    </span>
+                  )}
+                  <Button variant="secondary" size="sm" onClick={() => fetchVagas({ force: true })} disabled={isAtivo}
+                    className="h-8.5 gap-1.5 bg-white text-indigo-700 hover:bg-indigo-50 font-bold text-xs transition-all rounded-xl shadow-xs">
+                    <RefreshCwIcon className={`h-3.5 w-3.5 ${isAtivo ? 'animate-spin' : ''}`} />
+                    {isAtivo ? 'Atualizando...' : 'Atualizar'}
+                  </Button>
+                </div>
+              </div>
+              <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl pointer-events-none" />
+            </div>
 
-                {(filtro !== 'bauru' || senioridade !== 'todas' || modalidade || techFiltro || modoTrabalho || busca) && (
-                  <button onClick={limparFiltros}
-                    className="inline-flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-semibold border border-red-200 bg-red-50 text-red-500 hover:bg-red-100 transition-all ml-auto">
-                    <FilterXIcon className="h-3.5 w-3.5" />Limpar
-                  </button>
+            <div className="flex flex-wrap items-center justify-between gap-3 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-150 dark:border-slate-800 shadow-2xs">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-1.5">Portais de Origem:</span>
+                <PlataformaButtons />
+              </div>
+              <PWAInstallBtn prompt={pwaPrompt} setPrompt={setPwaPrompt} installed={pwaInstalled} />
+            </div>
+
+            <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-150 dark:border-slate-800 shadow-2xs gap-3 flex-wrap">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                  Resultados: <strong className="text-slate-850 dark:text-white font-bold">{vagasOrdenadas.length}</strong> vagas
+                </span>
+                {techFiltro && (
+                  <span className="inline-flex items-center gap-1 text-[10px] bg-indigo-55 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-900 rounded-full px-2.5 py-0.5 font-bold">
+                    {techFiltro} <button onClick={() => setTechFiltro(null)} className="hover:text-indigo-900 ml-0.5">✕</button>
+                  </span>
                 )}
               </div>
 
-              {/* Pills de tecnologia */}
-              {!loading && topTechs.length > 0 && (
-                <div className="flex gap-1.5 overflow-x-auto pb-0.5" style={{ scrollbarWidth: 'none' }}>
-                  {topTechs.slice(0, 10).map(([label, count]) => (
-                    <button key={label}
-                      onClick={() => setTechFiltro(prev => prev === label ? null : label)}
-                      className={`flex-shrink-0 inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full border transition-all ${
-                        techFiltro === label ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
-                      }`}>
-                      {label} <span className="opacity-50">{count}</span>
+              <div className="flex items-center gap-2.5">
+                <div className="flex rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-950/50 p-0.5">
+                  {[
+                    { id: 'grade',    icon: <LayoutGridIcon className="h-3.5 w-3.5" />, active: vista === 'grade' && tamanho === 'normal',    fn: () => { setVista('grade'); setTamanho('normal'); } },
+                    { id: 'compacto', icon: <SparklesIcon className="h-3.5 w-3.5" />,  active: vista === 'grade' && tamanho === 'compacto', fn: () => { setVista('grade'); setTamanho('compacto'); } },
+                    { id: 'lista',    icon: <ListIcon className="h-3.5 w-3.5" />,       active: vista === 'lista',                             fn: () => setVista('lista') },
+                  ].map((v) => (
+                    <button key={v.id} onClick={v.fn}
+                      className={`p-1.5 rounded-lg transition-all ${v.active ? 'bg-white dark:bg-slate-800 text-slate-800 dark:text-white shadow-sm' : 'text-slate-450 hover:text-slate-600'}`}>
+                      {v.icon}
                     </button>
                   ))}
                 </div>
-              )}
-            </div>
-          </div>
-        )}
-      </header>
 
-      {/* ── Hero Banner ── */}
-      <div className="header-gradient text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-                Vagas de TI em <span className="text-blue-200">Bauru</span>
-              </h1>
-              <p className="text-blue-100/80 text-sm mt-1">
-                {loading
-                  ? <>Buscando vagas<LoadingDots /></>
-                  : hora
-                  ? `Atualizado ${hora} · ${vagas.length} vagas encontradas`
-                  : 'Pronto'}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              {novosCount > 0 && !loading && (
-                <span className="flex items-center gap-1.5 rounded-full bg-green-400/20 border border-green-300/40 text-green-100 text-xs font-bold px-3 py-1.5">
-                  <BellIcon className="h-3.5 w-3.5" />
-                  {novosCount} nova{novosCount > 1 ? 's' : ''}
-                </span>
-              )}
-              <PlataformaButtons />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Subheader: vista + ordenação ── */}
-      <div className="bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="h-11 flex items-center justify-between gap-3">
-            {/* Vista */}
-            <div className="flex rounded-lg border border-gray-200 overflow-hidden">
-              {[
-                { label: 'Grade',    icon: <LayoutGridIcon className="h-3.5 w-3.5" />, active: vista === 'grade' && tamanho === 'normal',    fn: () => { setVista('grade'); setTamanho('normal'); } },
-                { label: 'Compacto', icon: <SparklesIcon className="h-3.5 w-3.5" />,  active: vista === 'grade' && tamanho === 'compacto', fn: () => { setVista('grade'); setTamanho('compacto'); } },
-                { label: 'Lista',    icon: <ListIcon className="h-3.5 w-3.5" />,       active: vista === 'lista',                            fn: () => setVista('lista') },
-              ].map((v, i) => (
-                <button key={v.label} onClick={v.fn}
-                  className={`flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-semibold transition-colors ${i > 0 ? 'border-l border-gray-200' : ''} ${v.active ? 'bg-gray-900 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>
-                  {v.icon}<span className="hidden sm:block">{v.label}</span>
-                </button>
-              ))}
-            </div>
-
-            {/* Resultado + ordenação */}
-            {!loading && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500">
-                  <strong className="text-gray-900">{vagasOrdenadas.length}</strong> vaga{vagasOrdenadas.length !== 1 ? 's' : ''}
-                  {techFiltro && <span className="ml-1.5 text-[11px] bg-blue-50 text-blue-700 border border-blue-200 rounded-full px-2 py-0.5 font-semibold">{techFiltro} <button onClick={() => setTechFiltro(null)} className="ml-0.5 text-blue-400">✕</button></span>}
-                </span>
                 <Select value={ordem} onValueChange={setOrdem}>
-                  <SelectTrigger className="h-7 w-36 text-xs gap-1 border-gray-200 rounded-lg">
-                    <ArrowUpDownIcon className="h-3.5 w-3.5 text-gray-400" />
+                  <SelectTrigger className="h-8.5 text-xs w-32 border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 shadow-2xs">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -1373,341 +1458,20 @@ export default function Home() {
                     <SelectItem value="titulo" className="text-xs">Título A–Z</SelectItem>
                   </SelectContent>
                 </Select>
+
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <button onClick={exportarCSV}
-                      className="h-7 w-7 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-400 hover:text-gray-700 hover:border-gray-400 transition-all">
-                      <DownloadIcon className="h-3.5 w-3.5" />
+                    <button onClick={exportarCSV} className="h-8.5 w-8.5 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-450 hover:text-slate-750 dark:bg-slate-800 dark:border-slate-700 hover:dark:text-white transition-all shadow-2xs">
+                      <DownloadIcon className="h-4 w-4" />
                     </button>
                   </TooltipTrigger>
                   <TooltipContent className="text-xs">Exportar CSV</TooltipContent>
                 </Tooltip>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
 
-      {pwaPrompt && !pwaInstalled && !dismissedBanner && (
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-2.5 px-4 relative">
-          <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
-            <p className="text-sm font-medium flex items-center gap-2"><DownloadIcon className="h-4 w-4" />Instale o app para receber alertas de vagas!</p>
-            <div className="flex items-center gap-2">
-              <button onClick={async () => { pwaPrompt.prompt(); const { outcome } = await pwaPrompt.userChoice; if (outcome === 'accepted') setPwaPrompt(null); }}
-                className="px-3 py-1 bg-white text-blue-700 rounded-lg text-xs font-bold">Instalar</button>
-              <button onClick={() => setDismissedBanner(true)} className="text-white/60 hover:text-white"><XIcon className="h-4 w-4" /></button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── Conteúdo ── */}
-      <header className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-        <div>
-          <div>
-              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight leading-none flex items-center gap-3">
-                <Logo />
-                Vagas
-                <span className="font-light opacity-60 ml-1 text-2xl">Bauru</span>
-              </h1>
-              <p className="text-blue-100/80 text-sm mt-2 flex items-center gap-1">
-                {loading
-                  ? <>Buscando vagas<LoadingDots /></>
-                  : hora
-                  ? `Atualizado ${hora} · ${vagas.length} vagas encontradas`
-                  : 'Pronto'}
-              </p>
-
-              {!loading && Object.keys(fontes).length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {Object.entries(fontes).map(([f, n]) => n > 0 && (
-                    <Tooltip key={f}>
+                {session?.user && (
+                  <>
+                    <Tooltip>
                       <TooltipTrigger asChild>
-                        <span className="inline-flex items-center rounded-full bg-white/15 border border-white/25 px-2.5 py-1 text-[11px] font-semibold text-white/90 cursor-default hover:bg-white/25 transition-colors">
-                          {FONTE_CONFIG[f]?.label || f}: {n}
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent>{n} vagas de {FONTE_CONFIG[f]?.label || f}</TooltipContent>
-                    </Tooltip>
-                  ))}
-                </div>
-              )}
-
-              <PlataformaButtons />
-            </div>
-
-            <div className="flex items-center gap-2 self-start">
-              {novosCount > 0 && !loading && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="relative inline-flex items-center gap-1.5 rounded-full bg-green-400/20 border border-green-300/40 text-green-100 text-xs font-bold px-3 py-1.5 cursor-default">
-                      <BellIcon className="h-3.5 w-3.5" />
-                      {novosCount} nova{novosCount > 1 ? 's' : ''}
-                      <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-green-400 animate-ping" />
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>{novosCount} vaga{novosCount > 1 ? 's novas' : ' nova'} desde a última visita</TooltipContent>
-                </Tooltip>
-              )}
-
-              <PWAInstallBtn prompt={pwaPrompt} setPrompt={setPwaPrompt} installed={pwaInstalled} />
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button onClick={ativarNotificacoes}
-                    className="p-2 rounded-xl bg-white/10 border border-white/20 text-white/80 hover:bg-white/20 transition-all">
-                    <BellIcon className="h-4 w-4" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>Ativar notificações</TooltipContent>
-              </Tooltip>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button onClick={() => setDarkMode(v => !v)}
-                    className="p-2 rounded-xl bg-white/10 border border-white/20 text-white/80 hover:bg-white/20 transition-all">
-                    {darkMode ? <SunIcon className="h-4 w-4" /> : <MoonIcon className="h-4 w-4" />}
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>{darkMode ? 'Modo claro' : 'Modo escuro'}</TooltipContent>
-              </Tooltip>
-
-              <Button variant="outline" size="sm" onClick={() => fetchVagas({ force: true })} disabled={isAtivo}
-                className="text-white border-white/30 bg-white/10 hover:bg-white/20 hover:text-white gap-2 font-semibold transition-all hover:scale-105 active:scale-95">
-                <RefreshCwIcon className={`h-4 w-4 ${isAtivo ? 'animate-spin' : ''}`} />
-                {isAtivo ? 'Carregando…' : 'Atualizar'}
-              </Button>
-            </div>
-          </div>
-        </header>
-
-      {/* ── Barra de filtros ── */}
-      <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-[0_1px_0_0_#e2e8f0,0_2px_8px_rgba(15,23,42,0.04)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-col gap-3">
-
-          {/* Busca + período */}
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-              <Input
-                ref={searchRef}
-                placeholder="Buscar título ou empresa… (use -palavra para excluir)"
-                value={busca}
-                onChange={e => setBusca(e.target.value)}
-                onFocus={() => setMostrarHist(true)}
-                onBlur={() => setTimeout(() => setMostrarHist(false), 150)}
-                onKeyDown={e => { if (e.key === 'Enter' && busca.trim()) { salvarHistorico(busca); setMostrarHist(false); } }}
-                className="pl-10 pr-8 h-9 text-sm border-gray-200 rounded-xl"
-              />
-              {busca && (
-                <button onClick={() => setBusca('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 transition-colors">
-                  <XIcon className="h-3.5 w-3.5" />
-                </button>
-              )}
-              {/* Histórico de buscas */}
-              {mostrarHist && historicoBusca.length > 0 && !busca && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden">
-                  <div className="px-3 py-2 flex items-center justify-between border-b border-gray-100">
-                    <span className="text-xs font-semibold text-gray-400 flex items-center gap-1.5"><HistoryIcon className="h-3 w-3" />Buscas recentes</span>
-                    <button onClick={() => { setHistoricoBusca([]); localStorage.removeItem(LS_HISTORICO); }} className="text-[10px] text-gray-400 hover:text-red-500">Limpar</button>
-                  </div>
-                  {historicoBusca.map(t => (
-                    <button key={t} onClick={() => { setBusca(t); setMostrarHist(false); }}
-                      className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2">
-                      <HistoryIcon className="h-3.5 w-3.5 text-gray-300 flex-shrink-0" />
-                      {t}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            <Select value={periodo} onValueChange={setPeriodo}>
-              <SelectTrigger className="w-42 h-9 text-sm border-gray-200 rounded-xl shrink-0">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PERIODOS.map(p => <SelectItem key={p.id} value={p.id} className="text-sm">{p.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => setFiltrosVisiveis(v => !v)}
-                  className={`h-9 w-9 rounded-xl border flex items-center justify-center transition-all shrink-0 ${
-                    filtrosVisiveis ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
-                  }`}
-                >
-                  <ChevronUpIcon className={`h-3.5 w-3.5 transition-transform duration-200 ${filtrosVisiveis ? '' : 'rotate-180'}`} />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent className="text-xs">{filtrosVisiveis ? 'Ocultar filtros' : 'Mostrar filtros'}</TooltipContent>
-            </Tooltip>
-          </div>
-
-          {/* Filtros */}
-          {filtrosVisiveis && (
-            <>
-              {/* ── Linha 1: Localidade + Fonte + Favoritas ── */}
-              <div className="flex flex-nowrap gap-2 items-center overflow-x-auto pb-0.5 no-scrollbar [&>*]:shrink-0">
-                <span className="text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200/50 px-2.5 py-0.5 rounded-lg uppercase tracking-wide mr-1 shadow-2xs">Local</span>
-                {[
-                  { id: 'todas',  label: 'Todas',  fn: _ => true },
-                  { id: 'bauru',  label: 'Bauru',  fn: v => tipoLocalidade(v.local) === 'bauru' },
-                  { id: 'regiao', label: 'Região', fn: v => ['bauru','regiao'].includes(tipoLocalidade(v.local)) },
-                  { id: 'remoto', label: 'Remoto', fn: v => tipoLocalidade(v.local) === 'remoto' },
-                ].map(f => (
-                  <PillBtn key={f.id} active={filtro === f.id} onClick={() => setFiltro(f.id)}
-                    activeClass="bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-transparent shadow-blue-500/25">
-                    {f.label} <span className="opacity-60 text-[10px] ml-0.5">{contar(f.fn)}</span>
-                  </PillBtn>
-                ))}
-
-                <div className="h-5 w-px bg-slate-200/60 mx-1" />
-                <span className="text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200/50 px-2.5 py-0.5 rounded-lg uppercase tracking-wide mr-1 shadow-2xs">Fonte</span>
-
-                {Object.entries(FONTE_CONFIG).map(([f, cfg]) => {
-                  const n = fontes[f] || 0;
-                  if (n === 0 && !loading) return null;
-                  return (
-                    <PillBtn key={f} active={filtro === f} onClick={() => setFiltro(filtro === f ? 'bauru' : f)}
-                      activeClass="bg-gradient-to-r from-indigo-650 to-blue-600 text-white border-transparent shadow-indigo-500/20">
-                      {cfg.label} {!loading && <span className="opacity-60 text-[10px] ml-0.5">{n}</span>}
-                    </PillBtn>
-                  );
-                })}
-
-                <div className="h-5 w-px bg-slate-200/60 mx-1" />
-
-                <PillBtn active={filtro === 'favoritas'} onClick={() => setFiltro(filtro === 'favoritas' ? 'bauru' : 'favoritas')}
-                  activeClass="bg-gradient-to-r from-rose-500 to-pink-600 text-white border-transparent shadow-rose-500/20"
-                  className={filtro !== 'favoritas' ? 'hover:border-rose-350 hover:text-rose-600' : ''}>
-                  <HeartIcon className="h-3.5 w-3.5" />
-                  Favoritas
-                  {favoritas.size > 0 && <span className="opacity-80 text-[10px] ml-0.5">{favoritas.size}</span>}
-                </PillBtn>
-              </div>
-
-              {/* ── Linha 2: Nível + Contrato + Regime + Empresa + Limpar ── */}
-              <div className="flex flex-nowrap gap-2 items-center overflow-x-auto pb-0.5 no-scrollbar [&>*]:shrink-0">
-                <span className="text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200/50 px-2.5 py-0.5 rounded-lg uppercase tracking-wide mr-1 shadow-2xs">Nível</span>
-                {[
-                  { id: 'junior', label: 'Júnior' },
-                  { id: 'pleno',  label: 'Pleno'  },
-                  { id: 'senior', label: 'Sênior' },
-                ].map(s => (
-                  <PillBtn key={s.id} active={senioridade === s.id} onClick={() => setSenioridade(senioridade === s.id ? 'todas' : s.id)}
-                    activeClass="bg-gradient-to-r from-violet-600 to-indigo-600 text-white border-transparent shadow-violet-500/25">
-                    {s.label}
-                  </PillBtn>
-                ))}
-
-                <div className="h-5 w-px bg-slate-200/60 mx-1" />
-                <span className="text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200/50 px-2.5 py-0.5 rounded-lg uppercase tracking-wide mr-1 shadow-2xs">Contrato</span>
-
-                {[
-                  { id: 'clt',     label: 'CLT'     },
-                  { id: 'pj',      label: 'PJ'      },
-                  { id: 'estagio', label: 'Estágio' },
-                  { id: 'trainee', label: 'Trainee' },
-                ].map(m => (
-                  <PillBtn key={m.id} active={modalidade === m.id} onClick={() => setModalidade(modalidade === m.id ? null : m.id)}
-                    activeClass="bg-gradient-to-r from-emerald-600 to-teal-600 text-white border-transparent shadow-emerald-500/25">
-                    {m.label}
-                  </PillBtn>
-                ))}
-
-                <div className="h-5 w-px bg-slate-200/60 mx-1" />
-                <span className="text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200/50 px-2.5 py-0.5 rounded-lg uppercase tracking-wide mr-1 shadow-2xs">Regime</span>
-
-                {[
-                  { id: 'presencial', label: 'Presencial', icon: <MonitorIcon className="h-3 w-3" /> },
-                  { id: 'hibrido',    label: 'Híbrido',    icon: <CarIcon className="h-3 w-3" />     },
-                  { id: 'remoto',     label: 'Remoto',     icon: <WifiIcon className="h-3 w-3" />    },
-                ].map(m => (
-                  <PillBtn key={m.id} active={modoTrabalho === m.id} onClick={() => setModoTrabalho(modoTrabalho === m.id ? null : m.id)}
-                    activeClass="bg-gradient-to-r from-sky-500 to-blue-600 text-white border-transparent shadow-blue-500/25">
-                    {m.icon}
-                    {m.label}
-                  </PillBtn>
-                ))}
-
-                <div className="h-5 w-px bg-slate-200/60 mx-1" />
-
-                <div className="relative">
-                  <Building2Icon className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
-                  <input
-                    type="text"
-                    placeholder="Empresa…"
-                    value={empresaBusca}
-                    onChange={e => setEmpresaBusca(e.target.value)}
-                    className="pl-7 pr-7 h-7 text-xs border border-gray-200 rounded-full bg-white focus:outline-none focus:border-blue-400 w-28 focus:w-36 transition-all"
-                  />
-                  {empresaBusca && (
-                    <button onClick={() => setEmpresaBusca('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700">
-                      <XIcon className="h-3 w-3" />
-                    </button>
-                  )}
-                </div>
-
-                {(filtro !== 'bauru' || senioridade !== 'todas' || modalidade || techFiltro || modoTrabalho || busca || somenteNovas || naoVisitadas || empresaBusca) && (
-                  <button onClick={limparFiltros}
-                    className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs font-semibold border border-red-200 bg-red-50 text-red-500 hover:bg-red-100 transition-all">
-                    <FilterXIcon className="h-3.5 w-3.5" />
-                    Limpar
-                  </button>
-                )}
-              </div>
-
-              {/* ── Linha 3: Visualização + Extras + Navegação ── */}
-              <div className="flex flex-nowrap gap-2 items-center overflow-x-auto pb-0.5 no-scrollbar [&>*]:shrink-0">
-
-                {/* Visualização */}
-                <span className="text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200/50 px-2.5 py-0.5 rounded-lg uppercase tracking-wide mr-1 shadow-2xs">Ver</span>
-                <div className="flex rounded-xl border border-slate-200/60 overflow-hidden bg-white shadow-2xs">
-                  {[
-                    { label: 'Grade',    icon: <LayoutGridIcon className="h-3.5 w-3.5" />, active: vista === 'grade' && tamanho === 'normal',    fn: () => { setVista('grade'); setTamanho('normal'); } },
-                    { label: 'Compacto', icon: <SparklesIcon className="h-3.5 w-3.5" />,  active: vista === 'grade' && tamanho === 'compacto', fn: () => { setVista('grade'); setTamanho('compacto'); } },
-                    { label: 'Lista',    icon: <ListIcon className="h-3.5 w-3.5" />,       active: vista === 'lista',                             fn: () => setVista('lista') },
-                  ].map((v, i) => (
-                    <button key={v.label} onClick={v.fn}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold transition-all duration-150 ${i > 0 ? 'border-l border-slate-200/60' : ''} ${v.active ? 'bg-slate-900 text-white shadow-inner' : 'bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
-                      {v.icon}
-                      {v.label}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="h-5 w-px bg-slate-200/60 mx-1" />
-                <span className="text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200/50 px-2.5 py-0.5 rounded-lg uppercase tracking-wide mr-1 shadow-2xs">Extras</span>
-
-                <PillBtn active={somenteNovas} onClick={() => setSomenteNovas(v => !v)}
-                  activeClass="bg-gradient-to-r from-emerald-500 to-green-600 text-white border-transparent shadow-emerald-500/20">
-                  <SparklesIcon className="h-3.5 w-3.5" />
-                  Novas
-                </PillBtn>
-
-                <PillBtn active={naoVisitadas} onClick={() => setNaoVisitadas(v => !v)}
-                  activeClass="bg-gradient-to-r from-slate-700 to-slate-800 text-white border-transparent shadow-slate-700/20">
-                  <EyeOffIcon className="h-3.5 w-3.5" />
-                  Não vistas
-                </PillBtn>
-
-                <PillBtn active={pinarFavoritas} onClick={() => setPinarFavoritas(v => !v)}
-                  activeClass="bg-gradient-to-r from-rose-500 to-pink-600 text-white border-transparent shadow-rose-500/20"
-                  className="hover:border-rose-350 hover:text-rose-500">
-                  <HeartIcon className="h-3.5 w-3.5" />
-                  Fixar fav.
-                </PillBtn>
-
-                <select value={agrupar} onChange={e => setAgrupar(e.target.value)}
-                  className={`h-7 text-xs border rounded-full px-2.5 pr-6 appearance-none cursor-pointer transition-all ${agrupar !== 'nenhum' ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'}`}>
-                  <option value="nenhum">Agrupar…</option>
-                  <option value="empresa">Por empresa</option>
-                  <option value="fonte">Por fonte</option>
-                </select>
-
-                <Tooltip>
-                  <TooltipTrigger asChild>
                     <button onClick={() => { setMostrarStats(v => !v); if (mostrarTop) setMostrarTop(false); }}
                       className={`p-1.5 rounded-xl border transition-all ${mostrarStats ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-white text-gray-400 border-gray-200 hover:border-gray-400'}`}>
                       <BarChart2Icon className="h-3.5 w-3.5" />
@@ -1786,9 +1550,10 @@ export default function Home() {
                   <AwardIcon className="h-3.5 w-3.5" />
                   Perfil
                 </Link>
-              </div>
-            </>
-          )}
+              </>
+            )}
+          </div>
+        </div>
 
           {/* Top Tecnologias + Empresas */}
           {mostrarTop && !loading && (
@@ -1875,6 +1640,7 @@ export default function Home() {
             </div>
           )}
         </div>
+      </div>
       </div>
 
       {/* ── Conteúdo ── */}
