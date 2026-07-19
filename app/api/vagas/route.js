@@ -7,6 +7,7 @@ import * as cheerio from 'cheerio';
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import nodemailer from 'nodemailer';
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36';
 const HEADERS_HTML = { 'User-Agent': UA, 'Accept-Language': 'pt-BR,pt;q=0.9', Accept: 'text/html,*/*;q=0.8' };
@@ -593,6 +594,52 @@ ${listaTitulos}`;
             console.log(`[telegram] Notificação enviada sobre ${novasTI.length} vagas de TI.`);
           } catch (err) {
             console.error('[telegram] Erro ao enviar notificação:', err.message);
+          }
+        }
+
+        // 2.2 Notificações por E-mail (Nodemailer)
+        const emailUser = process.env.EMAIL_USER;
+        const emailPass = process.env.EMAIL_PASS;
+        if (emailUser && emailPass && novasTI.length > 0) {
+          try {
+            const transporter = nodemailer.createTransport({
+              service: 'gmail',
+              auth: { user: emailUser, pass: emailPass }
+            });
+            
+            const htmlVagas = novasTI.map(v => `
+              <div style="background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+                <h3 style="margin: 0 0 8px; font-size: 18px; color: #111;">${v.titulo}</h3>
+                <p style="margin: 0 0 4px; font-size: 14px; color: #444;"><strong>Empresa:</strong> ${v.empresa}</p>
+                <p style="margin: 0 0 16px; font-size: 14px; color: #666;"><strong>Local:</strong> ${v.local} • <strong>Fonte:</strong> ${v.fonte}</p>
+                <a href="${v.link}" style="background: #000; color: #fff; padding: 10px 16px; text-decoration: none; border-radius: 6px; font-weight: 500; display: inline-block;">Ver Detalhes e Candidatar-se</a>
+              </div>
+            `).join('');
+
+            const emailHtml = `
+              <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #fafafa; padding: 24px; color: #111;">
+                <div style="max-width: 600px; margin: 0 auto;">
+                  <h2 style="font-size: 24px; margin-bottom: 8px;">🚀 Novas Vagas de TI Encontradas</h2>
+                  <p style="color: #666; margin-bottom: 24px; font-size: 16px;">O seu radar encontrou <strong>${novasTI.length}</strong> novas oportunidades na área de TI hoje. Confira abaixo:</p>
+                  
+                  ${htmlVagas}
+                  
+                  <div style="text-align: center; margin-top: 32px; padding-top: 16px; border-top: 1px solid #eaeaea;">
+                    <p style="color: #888; font-size: 12px;">Este é um alerta automático do seu buscador de vagas.</p>
+                  </div>
+                </div>
+              </div>
+            `;
+
+            await transporter.sendMail({
+              from: '"Radar de Vagas TI" <' + emailUser + '>',
+              to: emailUser,
+              subject: \`🚨 \${novasTI.length} Novas Vagas de TI!\`,
+              html: emailHtml
+            });
+            console.log(\`[email] Notificação enviada para \${emailUser}.\`);
+          } catch (err) {
+            console.error('[email] Erro ao enviar e-mail:', err.message);
           }
         }
       } catch (err) {
