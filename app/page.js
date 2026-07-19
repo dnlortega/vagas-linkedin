@@ -667,26 +667,6 @@ function VagaCardSkeleton({ index = 0, vista = 'grade' }) {
 
 // ─── Página principal ─────────────────────────────────────────────────────────
 
-function BottomNav({ kanbanCount }) {
-  return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white/90 backdrop-blur-lg border-t border-slate-200 dark:bg-slate-900/90 dark:border-slate-800 z-50 flex items-center justify-around px-2 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
-      <Link href="/" className="flex flex-col items-center justify-center w-16 h-full gap-1 text-indigo-600 dark:text-indigo-400">
-        <BriefcaseIcon className="h-5 w-5" />
-        <span className="text-[10px] font-bold">Vagas</span>
-      </Link>
-      <Link href="/candidaturas" className="flex flex-col items-center justify-center w-16 h-full gap-1 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition-colors relative">
-        <KanbanIcon className="h-5 w-5" />
-        <span className="text-[10px] font-medium">Kanban</span>
-        {kanbanCount > 0 && <span className="absolute top-2 right-4 w-3.5 h-3.5 bg-indigo-600 text-[8px] text-white font-bold flex items-center justify-center rounded-full border border-white dark:border-slate-900">{kanbanCount}</span>}
-      </Link>
-      <Link href="/perfil" className="flex flex-col items-center justify-center w-16 h-full gap-1 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition-colors">
-        <AwardIcon className="h-5 w-5" />
-        <span className="text-[10px] font-medium">Perfil</span>
-      </Link>
-    </nav>
-  );
-}
-
 export default function Home() {
   const [vagas,        setVagas]        = useState([]);
   const [novasLinks,   setNovasLinks]   = useState(new Set());
@@ -732,6 +712,7 @@ export default function Home() {
   const [somenteTI,         setSomenteTI]         = useState(true);
   const [mostrarOpcoes,     setMostrarOpcoes]     = useState(false);
   const [mostrarFiltrosSidebar, setMostrarFiltrosSidebar] = useState(true);
+
   // Estados e Efeito para suporte a PWA (Instalação e Segundo Plano)
   const [pwaPrompt, setPwaPrompt] = useState(null);
   const [pwaInstalled, setPwaInstalled] = useState(false);
@@ -1131,290 +1112,226 @@ export default function Home() {
 
   const { data: session } = useSession();
 
-  const renderFiltros = () => {
-    const temFiltrosAtivos = filtro !== 'bauru' || senioridade !== 'todas' || modalidade || techFiltro || modoTrabalho || busca || somenteNovas || naoVisitadas || empresaBusca || periodo !== 'todos';
+  // ── Renderização ─────────────────────────────────────────────────────────────
 
-    return (
-      <div className="flex flex-col gap-4">
-        <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-xs">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Pesquisa</h2>
-            {temFiltrosAtivos && (
-              <button onClick={limparFiltros} className="text-[10px] text-red-500 hover:text-red-600 font-bold flex items-center gap-1 transition-colors">
-                <FilterXIcon className="h-3 w-3" /> Limpar
-              </button>
-            )}
-          </div>
-          <div className="relative">
-            <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-450 pointer-events-none" />
-            <Input
-              ref={searchRef}
-              placeholder="Buscar título, empresa..."
-              value={busca}
-              onChange={e => setBusca(e.target.value)}
-              className="pl-8.5 pr-8 h-9 text-xs border-slate-200 rounded-xl bg-slate-50/50 focus:bg-white"
-            />
-            {busca && (
-              <button onClick={() => setBusca('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700">
-                <XIcon className="h-3 w-3" />
-              </button>
-            )}
-          </div>
-          <div className="mt-3 flex flex-col gap-1">
-            <span className="text-[9px] font-bold text-slate-400 uppercase">Período</span>
-            <Select value={periodo} onValueChange={setPeriodo}>
-              <SelectTrigger className="h-8 text-xs border-slate-200 rounded-xl bg-slate-50/50">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PERIODOS.map(p => <SelectItem key={p.id} value={p.id} className="text-xs">{p.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+  const renderFiltrosSidebar = () => (
+    <div className="flex flex-col gap-3">
 
-        <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-xs flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Local</span>
-            <div className="flex flex-wrap gap-1">
-              {[
-                { id: 'todas',  label: 'Todas',  fn: _ => true },
-                { id: 'bauru',  label: 'Bauru',  fn: v => tipoLocalidade(v.local) === 'bauru' },
-                { id: 'regiao', label: 'Região', fn: v => ['bauru','regiao'].includes(tipoLocalidade(v.local)) },
-                { id: 'remoto', label: 'Remoto', fn: v => tipoLocalidade(v.local) === 'remoto' },
-              ].map(f => (
-                <PillBtn key={f.id} active={filtro === f.id} onClick={() => setFiltro(f.id)}
-                  activeClass="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white border-transparent">
-                  {f.label} <span className="opacity-60 text-[9px] ml-0.5">{contar(f.fn)}</span>
-                </PillBtn>
-              ))}
-            </div>
-          </div>
+      {/* Busca */}
+      <div className="relative">
+        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+        <input
+          ref={searchRef}
+          placeholder="Buscar vagas, empresas..."
+          value={busca}
+          onChange={e => setBusca(e.target.value)}
+          className="w-full h-10 pl-9 pr-8 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all"
+        />
+        {busca && (
+          <button onClick={() => setBusca('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700">
+            <XIcon className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
 
-          <div className="flex flex-col gap-1.5">
-            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Fonte</span>
-            <div className="flex flex-wrap gap-1">
-              {Object.entries(FONTE_CONFIG).map(([f, cfg]) => {
-                const n = fontes[f] || 0;
-                if (n === 0 && !loading) return null;
-                return (
-                  <PillBtn key={f} active={filtro === f} onClick={() => setFiltro(filtro === f ? 'bauru' : f)}
-                    activeClass="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white border-transparent">
-                    {cfg.label} {!loading && <span className="opacity-60 text-[9px] ml-0.5">{n}</span>}
-                  </PillBtn>
-                );
-              })}
-              <PillBtn active={filtro === 'favoritas'} onClick={() => setFiltro(filtro === 'favoritas' ? 'bauru' : 'favoritas')}
-                activeClass="bg-gradient-to-r from-rose-500 to-rose-600 text-white border-transparent"
-                className={filtro !== 'favoritas' ? 'hover:border-rose-300 hover:text-rose-600' : ''}>
-                <HeartIcon className="h-3 w-3" />
-                Favoritas
-                {favoritas.size > 0 && <span className="opacity-80 text-[9px] ml-0.5">{favoritas.size}</span>}
-              </PillBtn>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Nível</span>
-            <div className="flex flex-wrap gap-1">
-              {[
-                { id: 'junior', label: 'Júnior' },
-                { id: 'pleno',  label: 'Pleno'  },
-                { id: 'senior', label: 'Sênior' },
-              ].map(s => (
-                <PillBtn key={s.id} active={senioridade === s.id} onClick={() => setSenioridade(senioridade === s.id ? 'todas' : s.id)}
-                  activeClass="bg-gradient-to-r from-violet-600 to-violet-700 text-white border-transparent">
-                  {s.label}
-                </PillBtn>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Regime</span>
-            <div className="flex flex-wrap gap-1">
-              {[
-                { id: 'presencial', label: 'Presencial', icon: <MonitorIcon className="h-3 w-3" /> },
-                { id: 'hibrido',    label: 'Híbrido',    icon: <CarIcon className="h-3 w-3" />     },
-                { id: 'remoto',     label: 'Remoto',     icon: <WifiIcon className="h-3 w-3" />    },
-              ].map(m => (
-                <PillBtn key={m.id} active={modoTrabalho === m.id} onClick={() => setModoTrabalho(modoTrabalho === m.id ? null : m.id)}
-                  activeClass="bg-gradient-to-r from-sky-500 to-blue-600 text-white border-transparent">
-                  {m.icon}
-                  {m.label}
-                </PillBtn>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Contrato</span>
-            <div className="flex flex-wrap gap-1">
-              {[
-                { id: 'clt',     label: 'CLT'     },
-                { id: 'pj',      label: 'PJ'      },
-                { id: 'estagio', label: 'Estágio' },
-                { id: 'trainee', label: 'Trainee' },
-              ].map(m => (
-                <PillBtn key={m.id} active={modalidade === m.id} onClick={() => setModalidade(modalidade === m.id ? null : m.id)}
-                  activeClass="bg-gradient-to-r from-emerald-600 to-teal-600 text-white border-transparent">
-                  {m.label}
-                </PillBtn>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Empresa</span>
-            <div className="relative">
-              <Building2Icon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
-              <input
-                type="text"
-                placeholder="Filtrar empresa..."
-                value={empresaBusca}
-                onChange={e => setEmpresaBusca(e.target.value)}
-                className="pl-8 pr-7 h-8.5 text-xs border border-slate-200 rounded-xl bg-slate-50/50 focus:outline-none focus:bg-white focus:border-indigo-400 w-full transition-all"
-              />
-              {empresaBusca && (
-                <button onClick={() => setEmpresaBusca('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700">
-                  <XIcon className="h-3 w-3" />
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-xs flex flex-col gap-1.5">
-          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Preferências</span>
-          <PillBtn active={somenteNovas} onClick={() => setSomenteNovas(v => !v)} className="w-full justify-start"
-            activeClass="bg-gradient-to-r from-indigo-650 to-indigo-750 text-white border-transparent">
-            <SparklesIcon className="h-3.5 w-3.5" /> Apenas Novas
-          </PillBtn>
-          <PillBtn active={naoVisitadas} onClick={() => setNaoVisitadas(v => !v)} className="w-full justify-start"
-            activeClass="bg-gradient-to-r from-indigo-650 to-indigo-750 text-white border-transparent">
-            <EyeOffIcon className="h-3.5 w-3.5" /> Não Visitadas
-          </PillBtn>
-          <PillBtn active={pinarFavoritas} onClick={() => setPinarFavoritas(v => !v)} className="w-full justify-start"
-            activeClass="bg-gradient-to-r from-rose-500 to-rose-600 text-white border-transparent shadow-rose-500/15">
-            <HeartIcon className="h-3.5 w-3.5" /> Fixar Favoritas
-          </PillBtn>
-        </div>
-
-        {/* Card de Tecnologias em Destaque */}
-        <div className="rounded-2xl border-2 border-indigo-100 bg-gradient-to-br from-indigo-50 to-purple-50 p-4 shadow-sm flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="h-6 w-6 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-sm">
-                <MonitorIcon className="h-3.5 w-3.5 text-white" />
-              </div>
-              <span className="text-xs font-extrabold text-indigo-800 uppercase tracking-wider">Filtrar por Tecnologia</span>
-            </div>
-            {techFiltro && (
-              <button onClick={() => setTechFiltro(null)} className="text-[10px] text-red-500 hover:text-red-600 font-bold flex items-center gap-1 transition-colors">
-                <XIcon className="h-3 w-3" /> Limpar
-              </button>
-            )}
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            {TECHS.map(t => {
-              const count = vagasFiltradas.filter(v => t.regex.test(v.titulo)).length;
-              if (count === 0 && !loading) return null;
-              const isActive = techFiltro === t.label;
-              return (
-                <button
-                  key={t.label}
-                  onClick={() => setTechFiltro(prev => prev === t.label ? null : t.label)}
-                  className={`inline-flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-bold border-2 transition-all duration-150 hover:scale-105 active:scale-95 shadow-sm ${
-                    isActive
-                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-indigo-200/60 shadow-md scale-105'
-                      : `${t.color} border-transparent hover:border-current hover:shadow-md`
-                  }`}
-                >
-                  {t.label}
-                  {!loading && <span className={`text-[9px] ml-0.5 font-semibold ${isActive ? 'opacity-80' : 'opacity-60'}`}>{count}</span>}
-                </button>
-              );
-            })}
-          </div>
-          {techFiltro && (
-            <div className="flex items-center gap-2 bg-indigo-600/10 border border-indigo-200 rounded-xl px-3 py-2">
-              <MonitorIcon className="h-3.5 w-3.5 text-indigo-600 shrink-0" />
-              <span className="text-xs font-bold text-indigo-700">Exibindo: <span className="text-indigo-900">{techFiltro}</span></span>
-            </div>
-          )}
-        </div>
-
-        <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-xs flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Filtros Salvos</span>
-            <button onClick={salvarFiltroAtual} className="text-[9px] text-indigo-600 hover:text-indigo-700 font-semibold flex items-center gap-0.5">
-              <BookmarkIcon className="h-3 w-3" /> Salvar atual
+      {/* Filtros Rápidos */}
+      <div>
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Localidade</p>
+        <div className="flex flex-col gap-1">
+          {[
+            { id: 'bauru',  label: 'Bauru',       icon: '📍', fn: v => tipoLocalidade(v.local) === 'bauru' },
+            { id: 'regiao', label: 'Região',       icon: '🗺️', fn: v => ['bauru','regiao'].includes(tipoLocalidade(v.local)) },
+            { id: 'remoto', label: 'Remoto',       icon: '🌐', fn: v => tipoLocalidade(v.local) === 'remoto' },
+            { id: 'todas',  label: 'Todas cidades',icon: '✦',  fn: _ => true },
+          ].map(f => (
+            <button key={f.id} onClick={() => setFiltro(f.id)}
+              className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-all text-left ${filtro === f.id ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200' : 'text-slate-600 hover:bg-slate-100'}`}>
+              <span className="text-base leading-none">{f.icon}</span>
+              <span className="flex-1">{f.label}</span>
+              <span className={`text-xs font-bold tabular-nums ${filtro === f.id ? 'text-indigo-200' : 'text-slate-400'}`}>{contar(f.fn)}</span>
             </button>
-          </div>
-          {filtrosSalvos.length === 0 ? (
-            <p className="text-[10px] text-slate-400 italic">Nenhum filtro salvo ainda.</p>
-          ) : (
-            <div className="flex flex-col gap-1.5 max-h-36 overflow-y-auto no-scrollbar">
-              {filtrosSalvos.map(f => (
-                <div key={f.nome} className="flex items-center justify-between gap-1 p-1.5 bg-slate-50 border border-slate-100 rounded-xl group hover:border-slate-200 transition-all">
-                  <button onClick={() => restaurarFiltro(f)} className="flex-1 text-left text-xs text-slate-700 font-semibold truncate hover:text-indigo-600 transition-colors">{f.nome}</button>
-                  <button onClick={() => removerFiltroSalvo(f.nome)} className="text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
-                    <XIcon className="h-3 w-3" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
+          ))}
         </div>
       </div>
-    );
-  };
+
+      {/* Tecnologias */}
+      <div>
+        <div className="flex items-center justify-between mb-2 px-1">
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tecnologia</p>
+          {techFiltro && <button onClick={() => setTechFiltro(null)} className="text-[10px] text-red-500 font-bold hover:text-red-700">Limpar</button>}
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {TECHS.map(t => {
+            const n = vagasFiltradas.filter(v => t.regex.test(v.titulo)).length;
+            if (n === 0 && !loading) return null;
+            const on = techFiltro === t.label;
+            return (
+              <button key={t.label} onClick={() => setTechFiltro(p => p === t.label ? null : t.label)}
+                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold border transition-all ${on ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : `${t.color} border-transparent hover:scale-105`}`}>
+                {t.label}
+                {!loading && <span className={`text-[9px] ${on ? 'opacity-70' : 'opacity-50'}`}>{n}</span>}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Nível */}
+      <div>
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Nível</p>
+        <div className="flex gap-1.5">
+          {[{id:'junior',label:'Júnior'},{id:'pleno',label:'Pleno'},{id:'senior',label:'Sênior'}].map(s => (
+            <button key={s.id} onClick={() => setSenioridade(p => p === s.id ? 'todas' : s.id)}
+              className={`flex-1 py-1.5 rounded-xl text-xs font-bold border transition-all ${senioridade === s.id ? 'bg-violet-600 text-white border-violet-600' : 'bg-white text-slate-600 border-slate-200 hover:border-violet-300'}`}>
+              {s.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Regime */}
+      <div>
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Regime</p>
+        <div className="flex gap-1.5">
+          {[{id:'presencial',label:'Presencial'},{id:'hibrido',label:'Híbrido'},{id:'remoto',label:'Remoto'}].map(m => (
+            <button key={m.id} onClick={() => setModoTrabalho(p => p === m.id ? null : m.id)}
+              className={`flex-1 py-1.5 rounded-xl text-xs font-bold border transition-all ${modoTrabalho === m.id ? 'bg-sky-600 text-white border-sky-600' : 'bg-white text-slate-600 border-slate-200 hover:border-sky-300'}`}>
+              {m.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Período */}
+      <div>
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Período</p>
+        <Select value={periodo} onValueChange={setPeriodo}>
+          <SelectTrigger className="h-9 text-xs border-slate-200 rounded-xl bg-white">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {PERIODOS.map(p => <SelectItem key={p.id} value={p.id} className="text-xs">{p.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Contrato */}
+      <div>
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Contrato</p>
+        <div className="flex flex-wrap gap-1.5">
+          {[{id:'clt',label:'CLT'},{id:'pj',label:'PJ'},{id:'estagio',label:'Estágio'},{id:'trainee',label:'Trainee'}].map(m => (
+            <button key={m.id} onClick={() => setModalidade(p => p === m.id ? null : m.id)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${modalidade === m.id ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-slate-600 border-slate-200 hover:border-emerald-300'}`}>
+              {m.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Preferências */}
+      <div className="flex flex-col gap-1.5">
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 px-1">Preferências</p>
+        {[
+          { label: '✨ Apenas Novas',   active: somenteNovas,  fn: () => setSomenteNovas(v => !v) },
+          { label: '👁 Não Visitadas',   active: naoVisitadas,  fn: () => setNaoVisitadas(v => !v) },
+          { label: '❤️ Fixar Favoritas', active: pinarFavoritas, fn: () => setPinarFavoritas(v => !v) },
+        ].map(p => (
+          <button key={p.label} onClick={p.fn}
+            className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm border transition-all text-left ${p.active ? 'bg-indigo-50 text-indigo-700 border-indigo-200 font-semibold' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}>
+            {p.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Limpar filtros */}
+      {(filtro !== 'bauru' || senioridade !== 'todas' || modalidade || techFiltro || modoTrabalho || busca || periodo !== '24h') && (
+        <button onClick={limparFiltros}
+          className="flex items-center justify-center gap-2 w-full py-2 rounded-xl text-xs font-bold text-red-500 border border-red-200 bg-red-50 hover:bg-red-100 transition-all">
+          <FilterXIcon className="h-3.5 w-3.5" /> Limpar todos os filtros
+        </button>
+      )}
+    </div>
+  );
 
   return (
-    <div className={`min-h-screen bg-slate-50/60 text-slate-800 antialiased transition-colors ${darkMode ? 'dark bg-slate-950 text-slate-100' : ''}`}>
+    <div className={`min-h-screen antialiased transition-colors ${darkMode ? 'dark bg-[#0d0d0d] text-white' : 'bg-[#f4f4f5] text-slate-900'}`}>
       <LoadingBar visible={isAtivo} />
 
-      <header className="sticky top-0 z-35 w-full border-b border-slate-200/50 bg-white/80 backdrop-blur-md dark:bg-slate-900/80 dark:border-slate-800/50">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-650 shadow-md shadow-indigo-200/50">
-              <BriefcaseIcon className="h-4.5 w-4.5 text-white" />
+      {/* ── Header ─────────────────────────────────────── */}
+      <header className="sticky top-0 z-40 w-full border-b border-black/5 dark:border-white/10 bg-white/80 dark:bg-[#111]/80 backdrop-blur-xl">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 flex h-14 items-center justify-between gap-4">
+
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2.5 shrink-0">
+            <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md shadow-indigo-500/30">
+              <BriefcaseIcon className="h-4 w-4 text-white" />
             </div>
-            <div className="flex flex-col">
-              <span className="font-extrabold text-slate-800 dark:text-white text-sm leading-none">Vagas TI</span>
-              <span className="text-[10px] text-indigo-600 font-bold tracking-wide mt-0.5">Bauru & Região</span>
+            <div className="hidden sm:flex flex-col leading-none">
+              <span className="text-sm font-black text-slate-900 dark:text-white">Vagas TI</span>
+              <span className="text-[10px] text-indigo-500 font-bold tracking-wide">Bauru & Região</span>
             </div>
           </Link>
 
-          <div className="flex items-center gap-2.5">
-            <Link href="/candidaturas" className="hidden md:inline-flex relative items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-650 hover:border-indigo-350 hover:text-indigo-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 hover:dark:text-indigo-400 hover:dark:border-indigo-800 transition-all shadow-2xs">
-              <KanbanIcon className="h-3.5 w-3.5 text-slate-400" />
-              <span>Candidaturas</span>
-              {kanban.size > 0 && (
-                <span className="h-4 w-4 rounded-full bg-indigo-650 text-white text-[9px] font-bold flex items-center justify-center">
-                  {kanban.size}
-                </span>
-              )}
-            </Link>
+          {/* Busca central — desktop */}
+          <div className="hidden md:flex flex-1 max-w-sm relative">
+            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+            <input
+              ref={searchRef}
+              value={busca}
+              onChange={e => setBusca(e.target.value)}
+              placeholder="Buscar vagas... (pressione /)"
+              className="w-full h-9 pl-9 pr-4 text-sm bg-slate-100 dark:bg-white/10 border border-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 focus:bg-white dark:focus:bg-white/20 transition-all"
+            />
+          </div>
 
-            <Link href="/perfil" className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-650 hover:border-indigo-350 hover:text-indigo-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 hover:dark:text-indigo-400 hover:dark:border-indigo-800 transition-all shadow-2xs">
-              <AwardIcon className="h-3.5 w-3.5 text-slate-400" />
-              <span>Perfil</span>
-            </Link>
-
-            <div className="h-5 w-px bg-slate-200 dark:bg-slate-800 mx-1" />
-
-            <button onClick={() => setDarkMode(v => !v)} className="p-2 rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-750 transition-all">
-              {darkMode ? <SunIcon className="h-4 w-4" /> : <MoonIcon className="h-4 w-4" />}
+          {/* Ações header */}
+          <div className="flex items-center gap-2">
+            {/* Botão Somente TI */}
+            <button onClick={() => setSomenteTI(v => !v)}
+              className={`hidden sm:inline-flex items-center gap-1.5 h-8 px-3 rounded-xl text-xs font-bold border transition-all ${somenteTI ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm shadow-indigo-200' : 'bg-white dark:bg-white/10 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/20 hover:border-indigo-300'}`}>
+              <MonitorIcon className="h-3.5 w-3.5" />
+              Somente TI
             </button>
 
+            {novosCount > 0 && !loading && (
+              <span className="relative hidden sm:flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 bg-green-100 text-green-700 border border-green-200 rounded-full">
+                <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-green-500 animate-ping" />
+                <BellIcon className="h-3 w-3" /> {novosCount} novas
+              </span>
+            )}
+
+            <button onClick={() => fetchVagas({ force: true })} disabled={isAtivo}
+              className="h-8 w-8 flex items-center justify-center rounded-xl bg-white dark:bg-white/10 border border-slate-200 dark:border-white/20 text-slate-500 dark:text-slate-300 hover:border-indigo-300 hover:text-indigo-600 transition-all">
+              <RefreshCwIcon className={`h-3.5 w-3.5 ${isAtivo ? 'animate-spin' : ''}`} />
+            </button>
+
+            <button onClick={() => setDarkMode(v => !v)}
+              className="h-8 w-8 flex items-center justify-center rounded-xl bg-white dark:bg-white/10 border border-slate-200 dark:border-white/20 text-slate-500 dark:text-slate-300 hover:border-slate-300 transition-all">
+              {darkMode ? <SunIcon className="h-3.5 w-3.5" /> : <MoonIcon className="h-3.5 w-3.5" />}
+            </button>
+
+            <div className="hidden md:flex items-center gap-1.5 border-l border-slate-200 dark:border-white/10 pl-2 ml-1">
+              <Link href="/candidaturas"
+                className="relative h-8 px-2.5 flex items-center gap-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 transition-all">
+                <KanbanIcon className="h-3.5 w-3.5" />
+                Kanban
+                {kanban.size > 0 && <span className="absolute -top-1 -right-1 h-4 w-4 bg-indigo-600 text-white text-[9px] font-bold flex items-center justify-center rounded-full">{kanban.size}</span>}
+              </Link>
+              <Link href="/perfil"
+                className="h-8 px-2.5 flex items-center gap-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 transition-all">
+                <AwardIcon className="h-3.5 w-3.5" />
+                Perfil
+              </Link>
+            </div>
+
             {session?.user && (
-              <div className="flex items-center gap-2 pl-1.5 border-l border-slate-200 dark:border-slate-800">
-                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-650 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+              <div className="flex items-center gap-1.5 border-l border-slate-200 dark:border-white/10 pl-2 ml-1">
+                <div className="h-7 w-7 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
                   {session.user.name?.[0]?.toUpperCase() || 'U'}
                 </div>
-                <button onClick={() => signOut({ callbackUrl: '/login' })} className="p-2 rounded-xl text-slate-450 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all" title="Sair">
-                  <LogOutIcon className="h-4 w-4" />
+                <button onClick={() => signOut({ callbackUrl: '/login' })}
+                  className="h-8 w-8 flex items-center justify-center rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all">
+                  <LogOutIcon className="h-3.5 w-3.5" />
                 </button>
               </div>
             )}
@@ -1422,111 +1339,112 @@ export default function Home() {
         </div>
       </header>
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-6 pb-24 md:pb-6">
-        <div className={`grid grid-cols-1 ${mostrarFiltrosSidebar ? 'lg:grid-cols-[280px_1fr]' : ''} gap-8 items-start`}>
-          
-          {mostrarFiltrosSidebar && (
-            <aside className="hidden lg:flex flex-col gap-4 sticky top-22 max-h-[calc(100vh-7rem)] overflow-y-auto no-scrollbar pb-6 pr-1">
-              {renderFiltros()}
-            </aside>
-          )}
+      {/* ── Busca sticky mobile ─────────────────────────── */}
+      <div className="md:hidden sticky top-14 z-30 bg-[#f4f4f5]/95 dark:bg-[#0d0d0d]/95 backdrop-blur-md border-b border-black/5 dark:border-white/10 px-4 py-2.5 flex items-center gap-2">
+        <div className="flex-1 relative">
+          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+          <input
+            value={busca}
+            onChange={e => setBusca(e.target.value)}
+            placeholder="Buscar vagas..."
+            className="w-full h-9 pl-9 pr-4 text-sm bg-white dark:bg-white/10 border border-slate-200 dark:border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all"
+          />
+        </div>
+        <Sheet>
+          <SheetTrigger className="h-9 w-9 flex items-center justify-center rounded-xl bg-white dark:bg-white/10 border border-slate-200 dark:border-white/20 text-slate-600 dark:text-slate-300 shrink-0">
+            <SlidersHorizontalIcon className="h-4 w-4" />
+          </SheetTrigger>
+          <SheetContent side="left" className="w-[310px] p-5 overflow-y-auto bg-white dark:bg-[#111] dark:border-white/10">
+            <SheetHeader className="mb-5">
+              <SheetTitle className="font-black text-base text-left">Filtros</SheetTitle>
+            </SheetHeader>
+            {renderFiltrosSidebar()}
+          </SheetContent>
+        </Sheet>
+        <button onClick={() => setSomenteTI(v => !v)}
+          className={`h-9 px-3 flex items-center gap-1 rounded-xl text-xs font-bold border transition-all shrink-0 ${somenteTI ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white dark:bg-white/10 text-slate-600 border-slate-200 dark:border-white/20'}`}>
+          <MonitorIcon className="h-3.5 w-3.5" />
+          <span className="hidden xs:inline">TI</span>
+        </button>
+      </div>
 
-          <div className="flex-1 min-w-0 flex flex-col gap-4">
-            
-            <div className="lg:hidden sticky top-[64px] z-30 flex items-center justify-between p-3.5 bg-white/95 backdrop-blur-md dark:bg-slate-900/95 rounded-b-2xl border-b border-x border-slate-150 dark:border-slate-800 shadow-sm gap-3 -mx-4 sm:mx-0 sm:rounded-2xl sm:border-t mb-2 transition-all">
-              <div className="relative flex-1">
-                <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-                <Input
-                  placeholder="Buscar vagas..."
-                  value={busca}
-                  onChange={e => setBusca(e.target.value)}
-                  className="pl-9 h-10 text-sm border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-950/50 w-full rounded-xl"
-                />
-              </div>
-              <Sheet>
-                <SheetTrigger className="h-10 px-3 inline-flex shrink-0 items-center justify-center gap-2 rounded-xl text-xs font-bold shadow-sm bg-white border border-slate-200 text-slate-700 hover:bg-slate-50">
-                  <SlidersHorizontalIcon className="h-4 w-4 text-indigo-600" />
-                  Filtros
-                </SheetTrigger>
-                <SheetContent side="left" className="w-[300px] p-5 overflow-y-auto dark:bg-slate-900 dark:border-slate-800">
-                  <SheetHeader className="mb-4">
-                    <SheetTitle className="text-left font-bold text-slate-800 dark:text-white text-base">Filtros de Vagas</SheetTitle>
-                  </SheetHeader>
-                  {renderFiltros()}
-                </SheetContent>
-              </Sheet>
+      {/* ── Layout Principal ────────────────────────────── */}
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-5 pb-24 md:pb-8">
+        <div className="flex gap-6 items-start">
+
+          {/* Sidebar */}
+          <aside className="hidden lg:flex shrink-0 w-64 flex-col gap-4 sticky top-20">
+            <div className="bg-white dark:bg-[#111] rounded-2xl border border-black/5 dark:border-white/10 p-4 shadow-sm">
+              {renderFiltrosSidebar()}
             </div>
+          </aside>
 
-            <div className="relative rounded-3xl overflow-hidden border border-indigo-100 dark:border-indigo-950/30 bg-gradient-to-r from-indigo-650 via-indigo-700 to-purple-800 text-white p-6 sm:p-7 shadow-sm">
-              <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          {/* Conteúdo */}
+          <div className="flex-1 min-w-0 flex flex-col gap-4">
+
+            {/* Banner principal */}
+            <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-700 text-white p-5 sm:p-6 shadow-lg shadow-indigo-500/20">
+              <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNCI+PHBhdGggZD0iTTM2IDM0djZoNnYtNmgtNnptNiA2djZoNnYtNmgtNnptLTEyIDBoNnY2aC02di02em0xMiAwaDZ2Nmgtdi02eiIvPjwvZz48L2c+PC9zdmc+')] opacity-60" />
+              <div className="relative flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
                 <div>
-                  <h1 className="text-xl sm:text-2xl font-black tracking-tight leading-none">Catálogo de Vagas TI</h1>
-                  <p className="text-indigo-100/90 text-xs mt-1.5">
-                    {loading ? <>Analisando portais de tecnologia<LoadingDots /></> : hora ? `Banco atualizado ${hora} · ${vagas.length} vagas catalogadas` : 'Pronto'}
+                  <h1 className="text-xl sm:text-2xl font-black tracking-tight">Catálogo de Vagas TI</h1>
+                  <p className="text-indigo-200 text-xs mt-1">
+                    {loading ? <>Buscando em todos os portais<LoadingDots /></> : hora ? `Atualizado ${hora} · ${vagas.length} vagas no banco` : 'Pronto'}
                   </p>
                 </div>
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-2 flex-wrap">
                   {novosCount > 0 && !loading && (
-                    <span className="relative flex items-center gap-1 bg-green-400/20 border border-green-300/45 text-green-100 text-[10px] font-bold px-2.5 py-1 rounded-full shadow-xs">
-                      <BellIcon className="h-3 w-3" /> {novosCount} novas
-                      <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-green-400 animate-ping" />
+                    <span className="flex items-center gap-1 bg-white/15 backdrop-blur-sm border border-white/25 text-[11px] font-bold px-3 py-1.5 rounded-full">
+                      <BellIcon className="h-3 w-3" /> {novosCount} novas vagas
                     </span>
                   )}
-                  <Button variant="secondary" size="sm" onClick={() => fetchVagas({ force: true })} disabled={isAtivo}
-                    className="h-8.5 gap-1.5 bg-white text-indigo-700 hover:bg-indigo-50 font-bold text-xs transition-all rounded-xl shadow-xs">
-                    <RefreshCwIcon className={`h-3.5 w-3.5 ${isAtivo ? 'animate-spin' : ''}`} />
-                    {isAtivo ? 'Atualizando...' : 'Atualizar'}
-                  </Button>
-                </div>
-              </div>
-              <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl pointer-events-none" />
-            </div>
-
-            <div className="flex flex-wrap items-center justify-between gap-3 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-150 dark:border-slate-800 shadow-2xs">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-1.5">Portais de Origem:</span>
-                <PlataformaButtons />
-              </div>
-              <PWAInstallBtn prompt={pwaPrompt} setPrompt={setPwaPrompt} installed={pwaInstalled} />
-            </div>
-
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-150 dark:border-slate-800 shadow-2xs gap-4">
-              <div className="flex items-center justify-between sm:justify-start gap-4">
-                <div className="flex flex-col gap-1">
-                  <span className="text-sm text-slate-500 dark:text-slate-400 font-medium">
-                    Resultados: <strong className="text-slate-850 dark:text-white font-bold">{vagasOrdenadas.length}</strong> vagas
-                  </span>
                   <div className="flex flex-wrap gap-1.5">
-                    {techFiltro && (
-                      <span className="inline-flex items-center gap-1 text-[10px] bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-900 rounded-full px-2.5 py-0.5 font-bold">
-                        {techFiltro} <button onClick={() => setTechFiltro(null)} className="hover:text-indigo-900 ml-0.5">✕</button>
-                      </span>
-                    )}
+                    {Object.entries(fontes).filter(([,n]) => n > 0).slice(0, 5).map(([fonte]) => (
+                      <img key={fonte} src={`https://www.google.com/s2/favicons?domain=${FONTE_CONFIG[fonte] ? (() => { const m = {linkedin:'linkedin.com',vagasbauru:'vagasbauru.com.br',indeed:'indeed.com',vagascom:'vagas.com.br',ciee:'ciee.org.br',catho:'catho.com.br',empregoscom:'empregos.com.br',querovagastech:'querovagastech.com.br'}; return m[fonte]||''; })() : ''}&sz=32`}
+                        alt={fonte} width={18} height={18} className="rounded-md bg-white/20 p-0.5"
+                        onError={e => { e.currentTarget.style.display='none'; }} />
+                    ))}
                   </div>
                 </div>
-                <div className="hidden lg:flex items-center ml-2 border-l border-slate-200 dark:border-slate-700 pl-4">
-                  <button onClick={() => setMostrarFiltrosSidebar(v => !v)} className={`text-xs font-semibold flex items-center gap-1.5 transition-colors ${mostrarFiltrosSidebar ? 'text-indigo-600 hover:text-indigo-800' : 'text-slate-500 hover:text-slate-800'}`}>
-                    <FilterXIcon className="h-4 w-4" />
-                    {mostrarFiltrosSidebar ? 'Ocultar Filtros' : 'Exibir Filtros'}
-                  </button>
-                </div>
               </div>
+            </div>
 
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-hide shrink-0">
-                <button
-                  onClick={() => setSomenteTI(v => !v)}
-                  className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-xl text-xs font-bold border transition-all shadow-sm ${
-                    somenteTI 
-                      ? 'bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700' 
-                      : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300 hover:text-indigo-600'
-                  }`}
-                >
-                  <MonitorIcon className="h-3.5 w-3.5" />
-                  Somente TI
-                </button>
-
+            {/* Barra de controles */}
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  <strong className="text-slate-900 dark:text-white text-base tabular-nums">{vagasOrdenadas.length}</strong>
+                  {' '}vaga{vagasOrdenadas.length !== 1 ? 's' : ''}
+                </span>
+                {/* Tags de filtros ativos */}
+                {techFiltro && (
+                  <span className="inline-flex items-center gap-1 text-xs bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 rounded-full px-2.5 py-1 font-semibold">
+                    {techFiltro} <button onClick={() => setTechFiltro(null)} className="hover:text-red-500 ml-0.5"><XIcon className="h-3 w-3" /></button>
+                  </span>
+                )}
+                {busca && (
+                  <span className="inline-flex items-center gap-1 text-xs bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 rounded-full px-2.5 py-1 font-semibold">
+                    "{busca}" <button onClick={() => setBusca('')} className="hover:text-red-500 ml-0.5"><XIcon className="h-3 w-3" /></button>
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                {/* Visualização */}
+                <div className="flex rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-0.5">
+                  {[
+                    { id: 'grade',    icon: <LayoutGridIcon className="h-3.5 w-3.5" />, active: vista === 'grade' && tamanho === 'normal',    fn: () => { setVista('grade'); setTamanho('normal'); } },
+                    { id: 'compacto', icon: <SparklesIcon className="h-3.5 w-3.5" />,  active: vista === 'grade' && tamanho === 'compacto', fn: () => { setVista('grade'); setTamanho('compacto'); } },
+                    { id: 'lista',    icon: <ListIcon className="h-3.5 w-3.5" />,       active: vista === 'lista',                             fn: () => setVista('lista') },
+                  ].map(v => (
+                    <button key={v.id} onClick={v.fn}
+                      className={`p-1.5 rounded-lg transition-all ${v.active ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-700 dark:hover:text-white'}`}>
+                      {v.icon}
+                    </button>
+                  ))}
+                </div>
+                {/* Ordenação */}
                 <Select value={ordem} onValueChange={setOrdem}>
-                  <SelectTrigger className="h-9 sm:h-8.5 text-xs w-[130px] sm:w-[120px] shrink-0 border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 shadow-2xs">
+                  <SelectTrigger className="h-8 text-xs w-[130px] border-slate-200 dark:border-white/10 rounded-xl bg-white dark:bg-white/5 shadow-none">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -1535,388 +1453,160 @@ export default function Home() {
                     <SelectItem value="titulo" className="text-xs">Título A–Z</SelectItem>
                   </SelectContent>
                 </Select>
-
-                {/* Botão Mais Opções */}
-                <div className="relative shrink-0">
-                  <button onClick={() => setMostrarOpcoes(v => !v)}
-                    className={`h-9 sm:h-8.5 px-3 flex items-center justify-center rounded-xl border transition-all shadow-2xs text-xs font-semibold gap-1.5 ${mostrarOpcoes ? 'bg-slate-100 text-slate-800 border-slate-300' : 'border-slate-200 bg-white text-slate-600 hover:text-slate-900'}`}>
-                    <LayoutGridIcon className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Opções</span>
-                  </button>
-                  {mostrarOpcoes && (
-                    <div className="absolute right-0 top-11 w-[240px] bg-white border border-slate-200 rounded-2xl shadow-xl z-50 p-2 flex flex-col gap-1" onMouseLeave={() => setMostrarOpcoes(false)}>
-                      <p className="px-2 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Visualização</p>
-                      <div className="flex rounded-lg border border-slate-200 bg-slate-50 p-0.5 mb-2 mx-1">
-                        {[
-                          { id: 'grade',    icon: <LayoutGridIcon className="h-3.5 w-3.5" />, label: 'Grade', active: vista === 'grade' && tamanho === 'normal',    fn: () => { setVista('grade'); setTamanho('normal'); } },
-                          { id: 'compacto', icon: <SparklesIcon className="h-3.5 w-3.5" />,  label: 'Compacto', active: vista === 'grade' && tamanho === 'compacto', fn: () => { setVista('grade'); setTamanho('compacto'); } },
-                          { id: 'lista',    icon: <ListIcon className="h-3.5 w-3.5" />,       label: 'Lista', active: vista === 'lista',                             fn: () => setVista('lista') },
-                        ].map((v) => (
-                          <button key={v.id} onClick={v.fn} title={v.label}
-                            className={`flex-1 flex items-center justify-center p-1.5 rounded-md transition-all ${v.active ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-450 hover:text-slate-600'}`}>
-                            {v.icon}
-                          </button>
-                        ))}
-                      </div>
-
-                      <div className="h-px bg-slate-100 my-1 mx-1" />
-                      <p className="px-2 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Ações Avançadas</p>
-                      
-                      <button onClick={exportarCSV} className="flex items-center gap-2 w-full text-left px-2 py-1.5 text-xs text-slate-600 hover:bg-slate-50 rounded-lg">
-                        <DownloadIcon className="h-3.5 w-3.5 text-slate-400" /> Exportar CSV
-                      </button>
-                      <button onClick={salvarFiltroAtual} className="flex items-center gap-2 w-full text-left px-2 py-1.5 text-xs text-slate-600 hover:bg-slate-50 rounded-lg">
-                        <BookmarkIcon className="h-3.5 w-3.5 text-slate-400" /> Salvar Filtros Atuais
-                      </button>
-                      {session?.user && (
-                        <>
-                          <button onClick={() => setMostrarStats(v => !v)} className={`flex items-center gap-2 w-full text-left px-2 py-1.5 text-xs hover:bg-slate-50 rounded-lg ${mostrarStats ? 'text-blue-600 font-semibold bg-blue-50/50' : 'text-slate-600'}`}>
-                            <BarChart2Icon className="h-3.5 w-3.5" /> Estatísticas
-                          </button>
-                          <button onClick={() => setMostrarTop(v => !v)} className={`flex items-center gap-2 w-full text-left px-2 py-1.5 text-xs hover:bg-slate-50 rounded-lg ${mostrarTop ? 'text-amber-600 font-semibold bg-amber-50/50' : 'text-slate-600'}`}>
-                            <TrophyIcon className="h-3.5 w-3.5" /> Top Techs e Empresas
-                          </button>
-                        </>
-                      )}
-                      <button onClick={() => setSilencioso(v => !v)} className={`flex items-center gap-2 w-full text-left px-2 py-1.5 text-xs hover:bg-slate-50 rounded-lg ${silencioso ? 'text-rose-600 font-semibold' : 'text-slate-600'}`}>
-                        <BellOffIcon className="h-3.5 w-3.5" /> {silencioso ? 'Desativar Silencioso' : 'Modo Silencioso'}
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {filtrosSalvos.length > 0 && (
-                  <div className="relative shrink-0">
-                    <button onClick={() => setMostrarSalvos(v => !v)}
-                      className="h-9 sm:h-8.5 px-2.5 flex items-center justify-center rounded-xl border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 transition-all shadow-2xs text-xs font-semibold gap-1.5">
-                      <BookmarkIcon className="h-3.5 w-3.5" />
-                      Salvos ({filtrosSalvos.length})
+                {/* Exportar */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button onClick={exportarCSV}
+                      className="h-8 w-8 flex items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-500 hover:text-slate-800 dark:hover:text-white hover:border-slate-300 transition-all">
+                      <DownloadIcon className="h-3.5 w-3.5" />
                     </button>
-                    {mostrarSalvos && (
-                      <div className="absolute right-0 top-11 bg-white border border-gray-200 rounded-2xl shadow-xl z-50 w-52 overflow-hidden" onMouseLeave={() => setMostrarSalvos(false)}>
-                        <p className="px-3 py-2 text-[11px] font-bold text-gray-400 border-b border-gray-100">Filtros salvos</p>
-                        {filtrosSalvos.map(f => (
-                          <div key={f.nome} className="flex items-center gap-1 px-3 py-2 hover:bg-gray-50 group">
-                            <button onClick={() => restaurarFiltro(f)} className="flex-1 text-left text-xs text-gray-700 font-medium truncate">{f.nome}</button>
-                            <button onClick={() => removerFiltroSalvo(f.nome)} className="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
-                              <XIcon className="h-3 w-3" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
+                  </TooltipTrigger>
+                  <TooltipContent className="text-xs">Exportar CSV</TooltipContent>
+                </Tooltip>
               </div>
             </div>
-        </div>
 
-          {/* Top Tecnologias + Empresas */}
-          {mostrarTop && !loading && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-gray-100 animate-in fade-in-0 slide-in-from-top-2 duration-200">
-              <div>
-                <p className="text-xs font-bold text-gray-500 mb-2 flex items-center gap-1.5"><TrophyIcon className="h-3.5 w-3.5 text-amber-500" />Top Tecnologias</p>
-                <div className="flex flex-col gap-1.5">
-                  {topTechs.map(([label, count]) => (
-                    <button key={label} onClick={() => setTechFiltro(prev => prev === label ? null : label)}
-                      className={`flex items-center gap-2 group text-left rounded-lg px-3 py-2 transition-all border ${techFiltro === label ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-100 hover:border-gray-300'}`}>
-                      <div className="flex-1 bg-gray-200 rounded-full h-1.5 overflow-hidden">
-                        <div className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.min(100, (count / (topTechs[0]?.[1] || 1)) * 100)}%` }} />
-                      </div>
-                      <span className="text-xs font-semibold text-gray-700 w-20 truncate">{label}</span>
-                      <span className="text-xs font-bold text-gray-400">{count}</span>
-                    </button>
-                  ))}
+            {/* Notificações/Onboarding */}
+            {onboarding && (
+              <div className="flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-2xl">
+                <SparklesIcon className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-blue-900 dark:text-blue-300 mb-0.5">Bem-vindo ao Vagas TI Bauru! 👋</p>
+                  <p className="text-xs text-blue-700 dark:text-blue-400">Pressione <kbd className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded text-[10px] font-mono border border-blue-200 dark:border-blue-800">/</kbd> para buscar. Use <code className="bg-blue-100 dark:bg-blue-900 px-1 rounded text-[10px]">-palavra</code> para excluir termos.</p>
                 </div>
+                <button onClick={() => { setOnboarding(false); localStorage.setItem('onboarding_done', '1'); }}
+                  className="text-blue-400 hover:text-blue-700 shrink-0"><XIcon className="h-4 w-4" /></button>
               </div>
-              <div>
-                <p className="text-xs font-bold text-gray-500 mb-2 flex items-center gap-1.5"><TrophyIcon className="h-3.5 w-3.5 text-emerald-500" />Top Empresas</p>
-                <div className="flex flex-col gap-1.5">
-                  {topEmpresas.map(([empresa, count]) => (
-                    <button key={empresa} onClick={() => setBusca(prev => prev === empresa ? '' : empresa)}
-                      className="flex items-center gap-2 text-left rounded-lg px-3 py-2 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-all">
-                      <div className="flex-1 bg-gray-200 rounded-full h-1.5 overflow-hidden">
-                        <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${Math.min(100, (count / (topEmpresas[0]?.[1] || 1)) * 100)}%` }} />
-                      </div>
-                      <span className="text-xs font-semibold text-gray-700 w-28 truncate">{empresa}</span>
-                      <span className="text-xs font-bold text-gray-400">{count}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
+            )}
 
-          {/* Pills de tecnologia (top 10) */}
-          {!loading && topTechs.length > 0 && (
-            <div className="flex gap-1.5 overflow-x-auto pb-0.5 pt-1" style={{ scrollbarWidth: 'none' }}>
-              {topTechs.slice(0, 10).map(([label, count]) => (
-                <button key={label}
-                  onClick={() => setTechFiltro(prev => prev === label ? null : label)}
-                  className={`flex-shrink-0 inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full border transition-all ${
-                    techFiltro === label ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
-                  }`}>
-                  {label} <span className="opacity-50 text-[10px]">{count}</span>
+            {error && (
+              <div className="flex items-center justify-between p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 rounded-2xl text-sm text-red-700 dark:text-red-400">
+                <span>Erro ao carregar: {error}</span>
+                <button onClick={() => fetchVagas()} className="text-xs font-bold underline hover:no-underline">Tentar novamente</button>
+              </div>
+            )}
+
+            {/* Vagas ocultadas */}
+            {ocultas.size > 0 && (
+              <div className="flex items-center gap-2 text-xs text-slate-500">
+                <EyeOffIcon className="h-3.5 w-3.5" />
+                <span>{ocultas.size} vaga{ocultas.size > 1 ? 's ocultadas' : ' ocultada'}</span>
+                <button onClick={() => { setOcultas(new Set()); localStorage.removeItem(LS_OCULTAS); toast.success('Vagas restauradas'); }}
+                  className="text-indigo-500 hover:text-indigo-700 font-semibold transition-colors">
+                  mostrar todas
                 </button>
-              ))}
-              {techFiltro && (
-                <button onClick={() => setTechFiltro(null)} className="flex-shrink-0 text-[11px] text-red-400 hover:text-red-600 px-2 font-medium">✕</button>
-              )}
-            </div>
-          )}
-
-          {/* Stats */}
-          {mostrarStats && !loading && (
-            <div className="pt-2 border-t border-gray-100 animate-in fade-in-0 slide-in-from-top-2 duration-200 flex flex-col gap-3">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {[
-                  { label: 'Total',      value: vagas.length - ocultas.size,                                                color: 'text-gray-900'    },
-                  { label: 'Bauru',      value: vagas.filter(v => tipoLocalidade(v.local) === 'bauru').length,               color: 'text-blue-600'    },
-                  { label: 'Remoto',     value: vagas.filter(v => tipoLocalidade(v.local) === 'remoto').length,              color: 'text-emerald-600' },
-                  { label: 'Ocultadas',  value: ocultas.size,                                                                color: 'text-gray-400'    },
-                  { label: 'Júnior',     value: vagas.filter(v => detectSenioridade(v.titulo) === 'junior').length,          color: 'text-yellow-600'  },
-                  { label: 'Pleno',      value: vagas.filter(v => detectSenioridade(v.titulo) === 'pleno').length,           color: 'text-cyan-600'    },
-                  { label: 'Sênior',     value: vagas.filter(v => detectSenioridade(v.titulo) === 'senior').length,          color: 'text-violet-600'  },
-                  { label: 'Duplicadas', value: duplicatas.size,                                                             color: 'text-orange-500'  },
-                ].map(s => (
-                  <div key={s.label} className="flex items-center justify-between bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5">
-                    <span className="text-sm text-gray-500">{s.label}</span>
-                    <span className={`text-lg font-bold ${s.color}`}>{s.value}</span>
-                  </div>
-                ))}
               </div>
+            )}
 
-              {/* Gráfico vagas por dia */}
-              {vagas.some(v => v.data) && (
-                <div className="pt-2 border-t border-gray-100">
-                  <p className="text-xs font-bold text-gray-500 mb-2">Vagas publicadas — últimos 7 dias</p>
-                  <VagasPorDia vagas={vagas} />
+            {/* Grid de vagas */}
+            {(() => {
+              const gridClass = vista === 'lista'
+                ? 'flex flex-col gap-2'
+                : tamanho === 'compacto'
+                ? 'grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3'
+                : 'grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4';
+
+              const renderCard = (v, i) => (
+                <VagaCard
+                  key={v.link}
+                  vaga={v}
+                  isNovo={novasLinks.has(v.link)}
+                  isFavorita={favoritas.has(v.link)}
+                  ehDuplicata={duplicatas.has(v.link)}
+                  foiVisitada={visitadas.has(v.link)}
+                  noKanban={kanban.has(v.link)}
+                  onOpen={abrirVaga}
+                  onToggleFav={toggleFavorita}
+                  onOcultar={ocultarVaga}
+                  onKanban={adicionarKanbanRapido}
+                  onEmpresaClick={emp => { setBusca(emp); salvarHistorico(emp); }}
+                  onTechClick={tech => setTechFiltro(p => p === tech ? null : tech)}
+                  busca={busca}
+                  vista={vista}
+                  tamanho={tamanho}
+                  index={i}
+                />
+              );
+
+              const emptyState = (
+                <div className="col-span-full py-24 text-center">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white dark:bg-white/10 border border-black/5 dark:border-white/10 mb-4 shadow-sm">
+                    <BriefcaseIcon className="h-8 w-8 text-slate-300 dark:text-slate-600" />
+                  </div>
+                  <p className="font-bold text-slate-800 dark:text-white text-lg">Nenhuma vaga encontrada</p>
+                  <p className="text-sm text-slate-400 mt-1">Tente outros filtros ou amplie o período</p>
+                  <button onClick={limparFiltros} className="mt-4 px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 transition-all">
+                    Limpar filtros
+                  </button>
                 </div>
-              )}
-            </div>
-          )}
+              );
+
+              if (loading) return (
+                <div>
+                  <CenteredLoader />
+                  <div key={gridKey} className={gridClass}>
+                    {Array.from({ length: 6 }).map((_, i) => <VagaCardSkeleton key={i} index={i} vista={vista} />)}
+                  </div>
+                </div>
+              );
+
+              if (agrupar !== 'nenhum' && gruposVagas) {
+                if (vagasOrdenadas.length === 0) return <div className={gridClass}>{emptyState}</div>;
+                return (
+                  <div className="flex flex-col gap-8">
+                    {gruposVagas.map(({ key, label, items }) => (
+                      <div key={key}>
+                        <div className="flex items-center gap-3 mb-3">
+                          <span className="h-px flex-1 bg-slate-200 dark:bg-white/10" />
+                          <span className="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                            <LayersIcon className="h-3.5 w-3.5" />{label} <span className="font-normal opacity-60">({items.length})</span>
+                          </span>
+                          <span className="h-px flex-1 bg-slate-200 dark:bg-white/10" />
+                        </div>
+                        <div key={`${gridKey}-${key}`} className={gridClass}>{items.map(renderCard)}</div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              }
+
+              if (vagasOrdenadas.length === 0 && !error) return <div className={gridClass}>{emptyState}</div>;
+
+              return (
+                <div key={`${gridKey}-${filterKey}`} className={`${gridClass} fade-slide-up`}>
+                  {vagasOrdenadas.map(renderCard)}
+                </div>
+              );
+            })()}
+          </div>
         </div>
       </div>
-      </div>
 
-      {/* ── Conteúdo ── */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-
-        {/* Onboarding */}
-        {onboarding && (
-          <div className="mb-5 p-5 bg-blue-50 border border-blue-100 rounded-2xl flex items-start gap-4 animate-in fade-in-0 slide-in-from-top-2 duration-500">
-            <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
-              <SparklesIcon className="h-5 w-5 text-blue-600" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-blue-900 mb-1">Bem-vindo ao Vagas TI Bauru! 👋</p>
-              <p className="text-sm text-blue-700 leading-relaxed">
-                Filtre por localidade, senioridade, modalidade e tecnologia. Favorite vagas com ❤️ e acompanhe no{' '}
-                <Link href="/candidaturas" className="font-bold underline">Kanban</Link>.{' '}
-                Pressione <kbd className="bg-blue-100 px-1.5 py-0.5 rounded text-xs font-mono border border-blue-200">/</kbd> para buscar,{' '}
-                <kbd className="bg-blue-100 px-1.5 py-0.5 rounded text-xs font-mono border border-blue-200">Esc</kbd> para limpar.
-                Use <code className="bg-blue-100 px-1 rounded text-xs">-palavra</code> para excluir termos da busca.
-              </p>
-            </div>
-            <button onClick={() => { setOnboarding(false); localStorage.setItem('onboarding_done', '1'); }}
-              className="text-blue-400 hover:text-blue-700 transition-colors p-1 flex-shrink-0">
-              <XIcon className="h-5 w-5" />
-            </button>
-          </div>
-        )}
-
-        {/* Retorno após ausência */}
-        {resumo && novosCount > 0 && (
-          <div className="mb-4 p-4 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-center gap-3 animate-in fade-in-0 slide-in-from-top-2 duration-500">
-            <ClockIcon className="h-5 w-5 text-emerald-600 flex-shrink-0" />
-            <p className="text-sm text-emerald-800 flex-1">
-              Você estava ausente por <strong>{resumo.horas}h</strong> — há{' '}
-              <strong>{novosCount} nova{novosCount > 1 ? 's vagas' : ' vaga'}</strong> desde a última visita!
-            </p>
-            <button onClick={() => setResumo(null)} className="text-emerald-400 hover:text-emerald-700 transition-colors">
-              <XIcon className="h-4 w-4" />
-            </button>
-          </div>
-        )}
-
-        {/* Vagas ocultadas */}
-        {ocultas.size > 0 && (
-          <div className="mb-4 flex items-center gap-2 text-sm text-gray-400">
-            <EyeOffIcon className="h-4 w-4" />
-            <span>{ocultas.size} vaga{ocultas.size > 1 ? 's ocultadas' : ' ocultada'}</span>
-            <button onClick={() => { setOcultas(new Set()); localStorage.removeItem(LS_OCULTAS); toast.success('Vagas restauradas'); }}
-              className="text-blue-500 hover:text-blue-700 underline transition-colors font-medium">
-              mostrar todas
-            </button>
-          </div>
-        )}
-
-        {/* Barra de resultados */}
-        {!loading && !error && (
-          <div className="flex items-center justify-between mb-5 animate-in fade-in-0 duration-300">
-            <div className="flex items-center flex-wrap gap-2 text-sm text-gray-500">
-              <span><strong key={vagasOrdenadas.length} className="text-gray-900 font-bold text-base count-up inline-block">{vagasOrdenadas.length}</strong>{' '}vaga{vagasOrdenadas.length !== 1 ? 's' : ''}</span>
-              {busca && (
-                <span className="flex items-center gap-1 bg-gray-100 rounded-lg px-2.5 py-1">
-                  "{busca}"
-                  <button onClick={() => setBusca('')} className="text-gray-400 hover:text-gray-700 ml-0.5"><XIcon className="h-3 w-3" /></button>
-                </span>
-              )}
-              {techFiltro && (
-                <span className="flex items-center gap-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg px-2.5 py-1 text-xs font-semibold">
-                  {techFiltro}
-                  <button onClick={() => setTechFiltro(null)} className="text-blue-400 hover:text-blue-700 ml-0.5"><XIcon className="h-3 w-3" /></button>
-                </span>
-              )}
-              {modalidade && (
-                <span className="flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg px-2.5 py-1 text-xs font-semibold">
-                  {modalidade.toUpperCase()}
-                  <button onClick={() => setModalidade(null)} className="text-emerald-400 hover:text-emerald-700 ml-0.5"><XIcon className="h-3 w-3" /></button>
-                </span>
-              )}
-              {novosCount > 0 && <span className="text-green-600 font-semibold">{novosCount} nova{novosCount > 1 ? 's' : ''} ✨</span>}
-            </div>
-            <div className="flex items-center gap-2">
-              <Select value={ordem} onValueChange={setOrdem}>
-                <SelectTrigger className="h-8 w-38 text-xs gap-1 border-gray-200 rounded-xl">
-                  <ArrowUpDownIcon className="h-3.5 w-3.5 text-gray-400" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="data"    className="text-sm">Mais recente</SelectItem>
-                  <SelectItem value="empresa" className="text-sm">Empresa A–Z</SelectItem>
-                  <SelectItem value="titulo"  className="text-sm">Título A–Z</SelectItem>
-                </SelectContent>
-              </Select>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button onClick={exportarCSV}
-                    className="h-8 w-8 flex items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 hover:text-gray-800 hover:border-gray-400 transition-all">
-                    <DownloadIcon className="h-4 w-4" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent className="text-xs">Exportar CSV</TooltipContent>
-              </Tooltip>
-            </div>
-          </div>
-        )}
-
-        {error && (
-          <Alert variant="destructive" className="mb-6">
-            <AlertDescription className="flex items-center justify-between">
-              <span>Erro ao carregar: {error}</span>
-              <Button variant="outline" size="sm" onClick={() => fetchVagas()}>Tentar novamente</Button>
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* Grid / Lista */}
-        {(() => {
-          const gridClass = vista === 'lista'
-            ? 'flex flex-col gap-2'
-            : tamanho === 'compacto'
-            ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3'
-            : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5';
-
-          const renderCard = (v, i) => (
-            <VagaCard
-              key={v.link}
-              vaga={v}
-              isNovo={novasLinks.has(v.link)}
-              isFavorita={favoritas.has(v.link)}
-              ehDuplicata={duplicatas.has(v.link)}
-              foiVisitada={visitadas.has(v.link)}
-              noKanban={kanban.has(v.link)}
-              onOpen={abrirVaga}
-              onToggleFav={toggleFavorita}
-              onOcultar={ocultarVaga}
-              onKanban={adicionarKanbanRapido}
-              onEmpresaClick={emp => { setBusca(emp); salvarHistorico(emp); }}
-              onTechClick={tech => setTechFiltro(prev => prev === tech ? null : tech)}
-              busca={busca}
-              vista={vista}
-              tamanho={tamanho}
-              index={i}
-            />
-          );
-
-          const emptyState = (
-            <div className="col-span-full py-32 text-center animate-in fade-in-0 zoom-in-95 duration-500">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-white shadow-sm border border-gray-100 mb-5">
-                <BriefcaseIcon className="h-10 w-10 text-gray-300" />
-              </div>
-              <p className="font-bold text-gray-800 text-xl">Nenhuma vaga encontrada</p>
-              <p className="text-base text-gray-400 mt-2">Tente outros filtros ou amplie o período</p>
-            </div>
-          );
-
-          if (loading) {
-            return (
-              <div>
-                <CenteredLoader />
-                <div key={gridKey} className={gridClass}>
-                  {Array.from({ length: vista === 'lista' ? 8 : 6 }).map((_, i) => <VagaCardSkeleton key={i} index={i} vista={vista} />)}
-                </div>
-              </div>
-            );
-          }
-
-          if (agrupar !== 'nenhum' && gruposVagas) {
-            if (vagasOrdenadas.length === 0) return <div className={gridClass}>{emptyState}</div>;
-            return (
-              <div className="flex flex-col gap-8">
-                {gruposVagas.map(({ key, label, items }) => (
-                  <div key={key}>
-                    <div className="flex items-center gap-3 mb-3">
-                      <span className="h-px flex-1 bg-gray-200" />
-                      <span className="text-sm font-bold text-gray-600 flex items-center gap-1.5">
-                        <LayersIcon className="h-3.5 w-3.5 text-gray-400" />
-                        {label} <span className="font-normal text-gray-400">({items.length})</span>
-                      </span>
-                      <span className="h-px flex-1 bg-gray-200" />
-                    </div>
-                    <div key={`${gridKey}-${key}`} className={gridClass}>
-                      {items.map(renderCard)}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            );
-          }
-
-          if (vagasOrdenadas.length === 0 && !error) {
-            return <div className={gridClass}>{emptyState}</div>;
-          }
-
-          return (
-            <div key={`${gridKey}-${filterKey}`} className={`${gridClass} fade-slide-up`}>
-              {vagasOrdenadas.map(renderCard)}
-            </div>
-          );
-        })()}
-      </main>
-
-      <footer className="text-center text-sm text-gray-400 py-12 border-t border-gray-100">
-        Vagas de{' '}
-        {['LinkedIn','VagasBauru','Indeed','Vagas.com','CIEE'].map((s, i, a) => (
-          <span key={s}><span className="font-medium text-gray-500">{s}</span>{i < a.length - 1 ? ', ' : ''}</span>
-        ))}
-        {' '}· Atualiza a cada 10 min · Pressione{' '}
-        <kbd className="bg-gray-100 px-1.5 py-0.5 rounded text-xs font-mono border">/</kbd> para buscar
-        <br />
-        {/* Criado por Daniel Ortega Pereira */}
-        <span className="mt-2 inline-block text-xs text-gray-300">
-          Criado por{' '}
-          <a
-            href="https://www.linkedin.com/in/daniel-op/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-gray-400 hover:text-blue-500 transition-colors font-medium"
-          >
-            Daniel Ortega Pereira
-          </a>
-        </span>
+      {/* ── Footer ─────────────────────────────────────── */}
+      <footer className="border-t border-black/5 dark:border-white/10 py-8 text-center text-xs text-slate-400 dark:text-slate-600">
+        Vagas de TI em Bauru · Atualização automática a cada 10 min ·{' '}
+        <a href="https://www.linkedin.com/in/daniel-op/" target="_blank" rel="noopener noreferrer"
+          className="hover:text-indigo-500 transition-colors font-medium">
+          Daniel Ortega Pereira
+        </a>
       </footer>
+
+      {/* ── Navegação Inferior Mobile ───────────────────── */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-[#111]/90 backdrop-blur-xl border-t border-black/5 dark:border-white/10 flex items-center justify-around h-16 px-2 safe-area-bottom">
+        <Link href="/" className="flex flex-col items-center justify-center gap-1 w-16 h-full text-indigo-600 dark:text-indigo-400">
+          <BriefcaseIcon className="h-5 w-5" />
+          <span className="text-[9px] font-bold">Vagas</span>
+        </Link>
+        <Link href="/candidaturas" className="relative flex flex-col items-center justify-center gap-1 w-16 h-full text-slate-500 dark:text-slate-400 hover:text-indigo-600 transition-colors">
+          <KanbanIcon className="h-5 w-5" />
+          <span className="text-[9px] font-medium">Kanban</span>
+          {kanban.size > 0 && <span className="absolute top-2.5 right-3 w-3.5 h-3.5 bg-indigo-600 text-[7px] text-white font-bold flex items-center justify-center rounded-full border-2 border-white dark:border-[#111]">{kanban.size}</span>}
+        </Link>
+        <Link href="/perfil" className="flex flex-col items-center justify-center gap-1 w-16 h-full text-slate-500 dark:text-slate-400 hover:text-indigo-600 transition-colors">
+          <AwardIcon className="h-5 w-5" />
+          <span className="text-[9px] font-medium">Perfil</span>
+        </Link>
+      </nav>
 
       <ScrollToTopButton />
 
@@ -1935,7 +1625,6 @@ export default function Home() {
           />
         );
       })()}
-      <BottomNav kanbanCount={kanban.size} />
     </div>
   );
 }
