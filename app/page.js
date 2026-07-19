@@ -1051,7 +1051,11 @@ export default function Home() {
     const matchNaoVis = !naoVisitadas  || !visitadas.has(v.link);
     const matchEmp    = !empresaBusca  || (v.empresa || '').toLowerCase().includes(empresaBusca.toLowerCase());
     const TI_REGEX    = /\b(desenvolvedor|programador|software|fullstack|full[- ]?stack|front[- ]?end|back[- ]?end|devops|sre|cloud|dados|data|bi\b|power\s?bi|analista|suporte|infra|dba|segurança|cyber|tecnologia|tech|sistemas|computação|c#|java|python|php|javascript|typescript|node)\b/i;
-    const matchTI     = !somenteTI || TI_REGEX.test(v.titulo) || detectarTechs(v.titulo).length > 0;
+    const EXCLUDE_TI_REGEX = /\b(fiscal|cont[áa]bil|contabilidade|financeiro|rh|recursos humanos|departamento pessoal|vendas|comercial|marketing|faturamento|tribut[áa]rio|cobran[çc]a|telemarketing|atendimento)\b/i;
+    const isTI = (TI_REGEX.test(v.titulo) || detectarTechs(v.titulo).length > 0) 
+                 && !EXCLUDE_TI_REGEX.test(v.titulo) 
+                 && !EXCLUDE_TI_REGEX.test(v.empresa || '');
+    const matchTI     = !somenteTI || isTI;
     return matchLoc && matchSen && matchMod && matchTech && matchWork && matchNova && matchNaoVis && matchEmp && matchTI && matchBusca(v, buscaDebounced) && matchPeriodo(v.data, periodo);
   }), [vagas, ocultas, filtro, favoritas, senioridade, modalidade, techFiltro, modoTrabalho, buscaDebounced, periodo, somenteNovas, naoVisitadas, novasLinks, visitadas, empresaBusca, somenteTI]);
 
