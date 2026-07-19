@@ -288,6 +288,7 @@ function LoadingBar({ visible }) {
         onTransitionEnd={() => setDone(false)}
       />
     </div>
+    </div>
   );
 }
 
@@ -337,6 +338,7 @@ function PlataformaButtons() {
           <TooltipContent side="bottom" className="text-xs">{p.label}</TooltipContent>
         </Tooltip>
       ))}
+    </div>
     </div>
   );
 }
@@ -618,6 +620,7 @@ function VagaCard({ vaga, isNovo, isFavorita, ehDuplicata, foiVisitada, noKanban
         )}
       </div>
     </div>
+    </div>
   );
 }
 
@@ -662,10 +665,31 @@ function VagaCardSkeleton({ index = 0, vista = 'grade' }) {
         <div className="px-5 pb-5"><div className="h-9 w-full rounded-xl shimmer" /></div>
       </div>
     </div>
+    </div>
   );
 }
 
 // ─── Página principal ─────────────────────────────────────────────────────────
+
+function BottomNav({ kanbanCount }) {
+  return (
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white/90 backdrop-blur-lg border-t border-slate-200 dark:bg-slate-900/90 dark:border-slate-800 z-50 flex items-center justify-around px-2 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+      <Link href="/" className="flex flex-col items-center justify-center w-16 h-full gap-1 text-indigo-600 dark:text-indigo-400">
+        <BriefcaseIcon className="h-5 w-5" />
+        <span className="text-[10px] font-bold">Vagas</span>
+      </Link>
+      <Link href="/candidaturas" className="flex flex-col items-center justify-center w-16 h-full gap-1 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition-colors relative">
+        <KanbanIcon className="h-5 w-5" />
+        <span className="text-[10px] font-medium">Kanban</span>
+        {kanbanCount > 0 && <span className="absolute top-2 right-4 w-3.5 h-3.5 bg-indigo-600 text-[8px] text-white font-bold flex items-center justify-center rounded-full border border-white dark:border-slate-900">{kanbanCount}</span>}
+      </Link>
+      <Link href="/perfil" className="flex flex-col items-center justify-center w-16 h-full gap-1 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition-colors">
+        <AwardIcon className="h-5 w-5" />
+        <span className="text-[10px] font-medium">Perfil</span>
+      </Link>
+    </nav>
+  );
+}
 
 export default function Home() {
   const [vagas,        setVagas]        = useState([]);
@@ -709,7 +733,9 @@ export default function Home() {
   const [filtrosSalvos,     setFiltrosSalvos]     = useState([]);
   const [mostrarSalvos,     setMostrarSalvos]     = useState(false);
   const [filtrosVisiveis,   setFiltrosVisiveis]   = useState(true);
-
+  const [somenteTI,         setSomenteTI]         = useState(true);
+  const [mostrarOpcoes,     setMostrarOpcoes]     = useState(false);
+  const [mostrarFiltrosSidebar, setMostrarFiltrosSidebar] = useState(true);
   // Estados e Efeito para suporte a PWA (Instalação e Segundo Plano)
   const [pwaPrompt, setPwaPrompt] = useState(null);
   const [pwaInstalled, setPwaInstalled] = useState(false);
@@ -1043,8 +1069,10 @@ export default function Home() {
     const matchNova   = !somenteNovas  || novasLinks.has(v.link);
     const matchNaoVis = !naoVisitadas  || !visitadas.has(v.link);
     const matchEmp    = !empresaBusca  || (v.empresa || '').toLowerCase().includes(empresaBusca.toLowerCase());
-    return matchLoc && matchSen && matchMod && matchTech && matchWork && matchNova && matchNaoVis && matchEmp && matchBusca(v, buscaDebounced) && matchPeriodo(v.data, periodo);
-  }), [vagas, ocultas, filtro, favoritas, senioridade, modalidade, techFiltro, modoTrabalho, buscaDebounced, periodo, somenteNovas, naoVisitadas, novasLinks, visitadas, empresaBusca]);
+    const TI_REGEX    = /\b(desenvolvedor|programador|software|fullstack|full[- ]?stack|front[- ]?end|back[- ]?end|devops|sre|cloud|dados|data|bi\b|power\s?bi|analista|suporte|infra|dba|segurança|cyber|tecnologia|tech|sistemas|computação|c#|java|python|php|javascript|typescript|node)\b/i;
+    const matchTI     = !somenteTI || TI_REGEX.test(v.titulo) || detectarTechs(v.titulo).length > 0;
+    return matchLoc && matchSen && matchMod && matchTech && matchWork && matchNova && matchNaoVis && matchEmp && matchTI && matchBusca(v, buscaDebounced) && matchPeriodo(v.data, periodo);
+  }), [vagas, ocultas, filtro, favoritas, senioridade, modalidade, techFiltro, modoTrabalho, buscaDebounced, periodo, somenteNovas, naoVisitadas, novasLinks, visitadas, empresaBusca, somenteTI]);
 
   const vagasOrdenadas = useMemo(() => {
     const sorted = [...vagasFiltradas].sort((a, b) => {
@@ -1276,6 +1304,50 @@ export default function Home() {
           </PillBtn>
         </div>
 
+        {/* Card de Tecnologias em Destaque */}
+        <div className="rounded-2xl border-2 border-indigo-100 bg-gradient-to-br from-indigo-50 to-purple-50 p-4 shadow-sm flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="h-6 w-6 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-sm">
+                <MonitorIcon className="h-3.5 w-3.5 text-white" />
+              </div>
+              <span className="text-xs font-extrabold text-indigo-800 uppercase tracking-wider">Filtrar por Tecnologia</span>
+            </div>
+            {techFiltro && (
+              <button onClick={() => setTechFiltro(null)} className="text-[10px] text-red-500 hover:text-red-600 font-bold flex items-center gap-1 transition-colors">
+                <XIcon className="h-3 w-3" /> Limpar
+              </button>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {TECHS.map(t => {
+              const count = vagasFiltradas.filter(v => t.regex.test(v.titulo)).length;
+              if (count === 0 && !loading) return null;
+              const isActive = techFiltro === t.label;
+              return (
+                <button
+                  key={t.label}
+                  onClick={() => setTechFiltro(prev => prev === t.label ? null : t.label)}
+                  className={`inline-flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-bold border-2 transition-all duration-150 hover:scale-105 active:scale-95 shadow-sm ${
+                    isActive
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-indigo-200/60 shadow-md scale-105'
+                      : `${t.color} border-transparent hover:border-current hover:shadow-md`
+                  }`}
+                >
+                  {t.label}
+                  {!loading && <span className={`text-[9px] ml-0.5 font-semibold ${isActive ? 'opacity-80' : 'opacity-60'}`}>{count}</span>}
+                </button>
+              );
+            })}
+          </div>
+          {techFiltro && (
+            <div className="flex items-center gap-2 bg-indigo-600/10 border border-indigo-200 rounded-xl px-3 py-2">
+              <MonitorIcon className="h-3.5 w-3.5 text-indigo-600 shrink-0" />
+              <span className="text-xs font-bold text-indigo-700">Exibindo: <span className="text-indigo-900">{techFiltro}</span></span>
+            </div>
+          )}
+        </div>
+
         <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-xs flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Filtros Salvos</span>
@@ -1319,9 +1391,9 @@ export default function Home() {
           </Link>
 
           <div className="flex items-center gap-2.5">
-            <Link href="/candidaturas" className="relative inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-650 hover:border-indigo-350 hover:text-indigo-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 hover:dark:text-indigo-400 hover:dark:border-indigo-800 transition-all shadow-2xs">
+            <Link href="/candidaturas" className="hidden md:inline-flex relative items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-650 hover:border-indigo-350 hover:text-indigo-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 hover:dark:text-indigo-400 hover:dark:border-indigo-800 transition-all shadow-2xs">
               <KanbanIcon className="h-3.5 w-3.5 text-slate-400" />
-              <span className="hidden sm:inline">Candidaturas</span>
+              <span>Candidaturas</span>
               {kanban.size > 0 && (
                 <span className="h-4 w-4 rounded-full bg-indigo-650 text-white text-[9px] font-bold flex items-center justify-center">
                   {kanban.size}
@@ -1329,9 +1401,9 @@ export default function Home() {
               )}
             </Link>
 
-            <Link href="/perfil" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-650 hover:border-indigo-350 hover:text-indigo-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 hover:dark:text-indigo-400 hover:dark:border-indigo-800 transition-all shadow-2xs">
+            <Link href="/perfil" className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-650 hover:border-indigo-350 hover:text-indigo-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 hover:dark:text-indigo-400 hover:dark:border-indigo-800 transition-all shadow-2xs">
               <AwardIcon className="h-3.5 w-3.5 text-slate-400" />
-              <span className="hidden sm:inline">Perfil</span>
+              <span>Perfil</span>
             </Link>
 
             <div className="h-5 w-px bg-slate-200 dark:bg-slate-800 mx-1" />
@@ -1354,31 +1426,31 @@ export default function Home() {
         </div>
       </header>
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8 items-start">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-6 pb-24 md:pb-6">
+        <div className={`grid grid-cols-1 ${mostrarFiltrosSidebar ? 'lg:grid-cols-[280px_1fr]' : ''} gap-8 items-start`}>
           
-          <aside className="hidden lg:flex flex-col gap-4 sticky top-22 max-h-[calc(100vh-7rem)] overflow-y-auto no-scrollbar pb-6 pr-1">
-            {renderFiltros()}
-          </aside>
+          {mostrarFiltrosSidebar && (
+            <aside className="hidden lg:flex flex-col gap-4 sticky top-22 max-h-[calc(100vh-7rem)] overflow-y-auto no-scrollbar pb-6 pr-1">
+              {renderFiltros()}
+            </aside>
+          )}
 
           <div className="flex-1 min-w-0 flex flex-col gap-4">
             
-            <div className="lg:hidden flex items-center justify-between p-3.5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-150 dark:border-slate-800 shadow-2xs gap-3">
+            <div className="lg:hidden sticky top-[64px] z-30 flex items-center justify-between p-3.5 bg-white/95 backdrop-blur-md dark:bg-slate-900/95 rounded-b-2xl border-b border-x border-slate-150 dark:border-slate-800 shadow-sm gap-3 -mx-4 sm:mx-0 sm:rounded-2xl sm:border-t mb-2 transition-all">
               <div className="relative flex-1">
-                <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+                <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
                 <Input
                   placeholder="Buscar vagas..."
                   value={busca}
                   onChange={e => setBusca(e.target.value)}
-                  className="pl-8.5 h-9 text-xs border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-950/50 w-full"
+                  className="pl-9 h-10 text-sm border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-950/50 w-full rounded-xl"
                 />
               </div>
               <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-9 gap-1.5 rounded-xl text-xs font-semibold shadow-2xs">
-                    <SlidersHorizontalIcon className="h-3.5 w-3.5 text-slate-500" />
-                    Filtros
-                  </Button>
+                <SheetTrigger className="h-10 px-3 inline-flex shrink-0 items-center justify-center gap-2 rounded-xl text-xs font-bold shadow-sm bg-white border border-slate-200 text-slate-700 hover:bg-slate-50">
+                  <SlidersHorizontalIcon className="h-4 w-4 text-indigo-600" />
+                  Filtros
                 </SheetTrigger>
                 <SheetContent side="left" className="w-[300px] p-5 overflow-y-auto dark:bg-slate-900 dark:border-slate-800">
                   <SheetHeader className="mb-4">
@@ -1422,34 +1494,43 @@ export default function Home() {
               <PWAInstallBtn prompt={pwaPrompt} setPrompt={setPwaPrompt} installed={pwaInstalled} />
             </div>
 
-            <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-150 dark:border-slate-800 shadow-2xs gap-3 flex-wrap">
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                  Resultados: <strong className="text-slate-850 dark:text-white font-bold">{vagasOrdenadas.length}</strong> vagas
-                </span>
-                {techFiltro && (
-                  <span className="inline-flex items-center gap-1 text-[10px] bg-indigo-55 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-900 rounded-full px-2.5 py-0.5 font-bold">
-                    {techFiltro} <button onClick={() => setTechFiltro(null)} className="hover:text-indigo-900 ml-0.5">✕</button>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-150 dark:border-slate-800 shadow-2xs gap-4">
+              <div className="flex items-center justify-between sm:justify-start gap-4">
+                <div className="flex flex-col gap-1">
+                  <span className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+                    Resultados: <strong className="text-slate-850 dark:text-white font-bold">{vagasOrdenadas.length}</strong> vagas
                   </span>
-                )}
+                  <div className="flex flex-wrap gap-1.5">
+                    {techFiltro && (
+                      <span className="inline-flex items-center gap-1 text-[10px] bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-900 rounded-full px-2.5 py-0.5 font-bold">
+                        {techFiltro} <button onClick={() => setTechFiltro(null)} className="hover:text-indigo-900 ml-0.5">✕</button>
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="hidden lg:flex items-center ml-2 border-l border-slate-200 dark:border-slate-700 pl-4">
+                  <button onClick={() => setMostrarFiltrosSidebar(v => !v)} className={`text-xs font-semibold flex items-center gap-1.5 transition-colors ${mostrarFiltrosSidebar ? 'text-indigo-600 hover:text-indigo-800' : 'text-slate-500 hover:text-slate-800'}`}>
+                    <FilterXIcon className="h-4 w-4" />
+                    {mostrarFiltrosSidebar ? 'Ocultar Filtros' : 'Exibir Filtros'}
+                  </button>
+                </div>
               </div>
 
-              <div className="flex items-center gap-2.5">
-                <div className="flex rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-950/50 p-0.5">
-                  {[
-                    { id: 'grade',    icon: <LayoutGridIcon className="h-3.5 w-3.5" />, active: vista === 'grade' && tamanho === 'normal',    fn: () => { setVista('grade'); setTamanho('normal'); } },
-                    { id: 'compacto', icon: <SparklesIcon className="h-3.5 w-3.5" />,  active: vista === 'grade' && tamanho === 'compacto', fn: () => { setVista('grade'); setTamanho('compacto'); } },
-                    { id: 'lista',    icon: <ListIcon className="h-3.5 w-3.5" />,       active: vista === 'lista',                             fn: () => setVista('lista') },
-                  ].map((v) => (
-                    <button key={v.id} onClick={v.fn}
-                      className={`p-1.5 rounded-lg transition-all ${v.active ? 'bg-white dark:bg-slate-800 text-slate-800 dark:text-white shadow-sm' : 'text-slate-450 hover:text-slate-600'}`}>
-                      {v.icon}
-                    </button>
-                  ))}
-                </div>
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-hide shrink-0">
+                <button
+                  onClick={() => setSomenteTI(v => !v)}
+                  className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-xl text-xs font-bold border transition-all shadow-sm ${
+                    somenteTI 
+                      ? 'bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700' 
+                      : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300 hover:text-indigo-600'
+                  }`}
+                >
+                  <MonitorIcon className="h-3.5 w-3.5" />
+                  Somente TI
+                </button>
 
                 <Select value={ordem} onValueChange={setOrdem}>
-                  <SelectTrigger className="h-8.5 text-xs w-32 border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 shadow-2xs">
+                  <SelectTrigger className="h-9 sm:h-8.5 text-xs w-[130px] sm:w-[120px] shrink-0 border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 shadow-2xs">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -1459,100 +1540,79 @@ export default function Home() {
                   </SelectContent>
                 </Select>
 
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button onClick={exportarCSV} className="h-8.5 w-8.5 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-450 hover:text-slate-750 dark:bg-slate-800 dark:border-slate-700 hover:dark:text-white transition-all shadow-2xs">
-                      <DownloadIcon className="h-4 w-4" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent className="text-xs">Exportar CSV</TooltipContent>
-                </Tooltip>
-
-                {session?.user && (
-                  <>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                    <button onClick={() => { setMostrarStats(v => !v); if (mostrarTop) setMostrarTop(false); }}
-                      className={`p-1.5 rounded-xl border transition-all ${mostrarStats ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-white text-gray-400 border-gray-200 hover:border-gray-400'}`}>
-                      <BarChart2Icon className="h-3.5 w-3.5" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent className="text-xs">Estatísticas</TooltipContent>
-                </Tooltip>
-
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button onClick={() => { setMostrarTop(v => !v); if (mostrarStats) setMostrarStats(false); }}
-                      className={`p-1.5 rounded-xl border transition-all ${mostrarTop ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-white text-gray-400 border-gray-200 hover:border-gray-400'}`}>
-                      <TrophyIcon className="h-3.5 w-3.5" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent className="text-xs">Top tecnologias e empresas</TooltipContent>
-                </Tooltip>
-
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button onClick={() => setSilencioso(v => !v)}
-                      className={`p-1.5 rounded-xl border transition-all ${silencioso ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-400 border-gray-200 hover:border-gray-400'}`}>
-                      <BellOffIcon className="h-3.5 w-3.5" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent className="text-xs">{silencioso ? 'Desativar silencioso' : 'Modo silencioso'}</TooltipContent>
-                </Tooltip>
-
-                <div className="relative">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button onClick={salvarFiltroAtual}
-                        className="p-1.5 rounded-xl border border-gray-200 bg-white text-gray-400 hover:border-amber-300 hover:text-amber-600 transition-all">
-                        <BookmarkIcon className="h-3.5 w-3.5" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent className="text-xs">Salvar filtros</TooltipContent>
-                  </Tooltip>
-                  {filtrosSalvos.length > 0 && (
-                    <button onClick={() => setMostrarSalvos(v => !v)}
-                      className="absolute -top-1.5 -right-1.5 h-4 w-4 bg-amber-400 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                      {filtrosSalvos.length}
-                    </button>
-                  )}
-                  {mostrarSalvos && (
-                    <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-2xl shadow-xl z-50 w-52 overflow-hidden" onMouseLeave={() => setMostrarSalvos(false)}>
-                      <p className="px-3 py-2 text-[11px] font-bold text-gray-400 border-b border-gray-100">Filtros salvos</p>
-                      {filtrosSalvos.map(f => (
-                        <div key={f.nome} className="flex items-center gap-1 px-3 py-2 hover:bg-gray-50 group">
-                          <button onClick={() => restaurarFiltro(f)} className="flex-1 text-left text-xs text-gray-700 font-medium truncate">{f.nome}</button>
-                          <button onClick={() => removerFiltroSalvo(f.nome)} className="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
-                            <XIcon className="h-3 w-3" />
+                {/* Botão Mais Opções */}
+                <div className="relative shrink-0">
+                  <button onClick={() => setMostrarOpcoes(v => !v)}
+                    className={`h-9 sm:h-8.5 px-3 flex items-center justify-center rounded-xl border transition-all shadow-2xs text-xs font-semibold gap-1.5 ${mostrarOpcoes ? 'bg-slate-100 text-slate-800 border-slate-300' : 'border-slate-200 bg-white text-slate-600 hover:text-slate-900'}`}>
+                    <LayoutGridIcon className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Opções</span>
+                  </button>
+                  {mostrarOpcoes && (
+                    <div className="absolute right-0 top-11 w-[240px] bg-white border border-slate-200 rounded-2xl shadow-xl z-50 p-2 flex flex-col gap-1" onMouseLeave={() => setMostrarOpcoes(false)}>
+                      <p className="px-2 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Visualização</p>
+                      <div className="flex rounded-lg border border-slate-200 bg-slate-50 p-0.5 mb-2 mx-1">
+                        {[
+                          { id: 'grade',    icon: <LayoutGridIcon className="h-3.5 w-3.5" />, label: 'Grade', active: vista === 'grade' && tamanho === 'normal',    fn: () => { setVista('grade'); setTamanho('normal'); } },
+                          { id: 'compacto', icon: <SparklesIcon className="h-3.5 w-3.5" />,  label: 'Compacto', active: vista === 'grade' && tamanho === 'compacto', fn: () => { setVista('grade'); setTamanho('compacto'); } },
+                          { id: 'lista',    icon: <ListIcon className="h-3.5 w-3.5" />,       label: 'Lista', active: vista === 'lista',                             fn: () => setVista('lista') },
+                        ].map((v) => (
+                          <button key={v.id} onClick={v.fn} title={v.label}
+                            className={`flex-1 flex items-center justify-center p-1.5 rounded-md transition-all ${v.active ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-450 hover:text-slate-600'}`}>
+                            {v.icon}
                           </button>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
+
+                      <div className="h-px bg-slate-100 my-1 mx-1" />
+                      <p className="px-2 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Ações Avançadas</p>
+                      
+                      <button onClick={exportarCSV} className="flex items-center gap-2 w-full text-left px-2 py-1.5 text-xs text-slate-600 hover:bg-slate-50 rounded-lg">
+                        <DownloadIcon className="h-3.5 w-3.5 text-slate-400" /> Exportar CSV
+                      </button>
+                      <button onClick={salvarFiltroAtual} className="flex items-center gap-2 w-full text-left px-2 py-1.5 text-xs text-slate-600 hover:bg-slate-50 rounded-lg">
+                        <BookmarkIcon className="h-3.5 w-3.5 text-slate-400" /> Salvar Filtros Atuais
+                      </button>
+                      {session?.user && (
+                        <>
+                          <button onClick={() => setMostrarStats(v => !v)} className={`flex items-center gap-2 w-full text-left px-2 py-1.5 text-xs hover:bg-slate-50 rounded-lg ${mostrarStats ? 'text-blue-600 font-semibold bg-blue-50/50' : 'text-slate-600'}`}>
+                            <BarChart2Icon className="h-3.5 w-3.5" /> Estatísticas
+                          </button>
+                          <button onClick={() => setMostrarTop(v => !v)} className={`flex items-center gap-2 w-full text-left px-2 py-1.5 text-xs hover:bg-slate-50 rounded-lg ${mostrarTop ? 'text-amber-600 font-semibold bg-amber-50/50' : 'text-slate-600'}`}>
+                            <TrophyIcon className="h-3.5 w-3.5" /> Top Techs e Empresas
+                          </button>
+                        </>
+                      )}
+                      <button onClick={() => setSilencioso(v => !v)} className={`flex items-center gap-2 w-full text-left px-2 py-1.5 text-xs hover:bg-slate-50 rounded-lg ${silencioso ? 'text-rose-600 font-semibold' : 'text-slate-600'}`}>
+                        <BellOffIcon className="h-3.5 w-3.5" /> {silencioso ? 'Desativar Silencioso' : 'Modo Silencioso'}
+                      </button>
                     </div>
                   )}
                 </div>
 
-                <div className="h-5 w-px bg-gray-200 mx-1" />
-
-                {/* Navegação */}
-                <Link href="/candidaturas"
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border bg-white text-xs font-semibold text-gray-600 border-gray-200 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50 transition-all relative">
-                  <KanbanIcon className="h-3.5 w-3.5" />
-                  Candidaturas
-                  {kanban.size > 0 && (
-                    <span className="h-4 w-4 bg-indigo-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                      {kanban.size > 9 ? '9+' : kanban.size}
-                    </span>
-                  )}
-                </Link>
-
-                <Link href="/perfil"
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border bg-white text-xs font-semibold text-gray-600 border-gray-200 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50 transition-all">
-                  <AwardIcon className="h-3.5 w-3.5" />
-                  Perfil
-                </Link>
-              </>
-            )}
-          </div>
+                {filtrosSalvos.length > 0 && (
+                  <div className="relative shrink-0">
+                    <button onClick={() => setMostrarSalvos(v => !v)}
+                      className="h-9 sm:h-8.5 px-2.5 flex items-center justify-center rounded-xl border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 transition-all shadow-2xs text-xs font-semibold gap-1.5">
+                      <BookmarkIcon className="h-3.5 w-3.5" />
+                      Salvos ({filtrosSalvos.length})
+                    </button>
+                    {mostrarSalvos && (
+                      <div className="absolute right-0 top-11 bg-white border border-gray-200 rounded-2xl shadow-xl z-50 w-52 overflow-hidden" onMouseLeave={() => setMostrarSalvos(false)}>
+                        <p className="px-3 py-2 text-[11px] font-bold text-gray-400 border-b border-gray-100">Filtros salvos</p>
+                        {filtrosSalvos.map(f => (
+                          <div key={f.nome} className="flex items-center gap-1 px-3 py-2 hover:bg-gray-50 group">
+                            <button onClick={() => restaurarFiltro(f)} className="flex-1 text-left text-xs text-gray-700 font-medium truncate">{f.nome}</button>
+                            <button onClick={() => removerFiltroSalvo(f.nome)} className="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
+                              <XIcon className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
         </div>
 
           {/* Top Tecnologias + Empresas */}
@@ -1879,6 +1939,7 @@ export default function Home() {
           />
         );
       })()}
+      <BottomNav kanbanCount={kanban.size} />
     </div>
   );
 }
