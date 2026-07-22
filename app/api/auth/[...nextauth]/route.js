@@ -1,5 +1,7 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import bcrypt from "bcryptjs";
+import prisma from "@/lib/prisma";
 
 export const runtime = "nodejs";
 
@@ -16,14 +18,21 @@ export const authOptions = {
           return null;
         }
 
-        const adminEmail = process.env.ADMIN_EMAIL || "admin@admin.com";
-        const adminPass = process.env.ADMIN_PASSWORD || "admin";
+        try {
+          const user = await prisma.usuario.findUnique({
+            where: { email: credentials.email }
+          });
 
-        if (credentials.email === adminEmail && credentials.password === adminPass) {
-          return { id: "1", name: "Administrador", email: credentials.email };
+          if (!user) return null;
+
+          const passwordsMatch = await bcrypt.compare(credentials.password, user.senha);
+          if (!passwordsMatch) return null;
+
+          return { id: user.id, name: user.nome, email: user.email };
+        } catch (err) {
+          console.error("[NextAuth] Erro:", err);
+          return null;
         }
-        
-        return null;
       }
     })
   ],
