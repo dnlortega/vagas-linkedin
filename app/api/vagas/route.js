@@ -13,7 +13,7 @@ const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
 const HEADERS_HTML = { 'User-Agent': UA, 'Accept-Language': 'pt-BR,pt;q=0.9', Accept: 'text/html,*/*;q=0.8' };
 const HEADERS_JSON = { 'User-Agent': UA, 'Accept-Language': 'pt-BR,pt;q=0.9', Accept: 'application/json' };
 
-const CIDADES = ['bauru'];
+const CIDADES = ['bauru', 'guarulhos', 'são paulo', 'sp'];
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
@@ -44,7 +44,7 @@ const TERMOS_LINKEDIN = [
 ];
 
 async function linkedinPagina(keyword, start) {
-  const url = `https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords=${encodeURIComponent(keyword)}&location=${encodeURIComponent('Bauru, São Paulo, Brasil')}&start=${start}&count=25`;
+  const url = `https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords=${encodeURIComponent(keyword)}&location=${encodeURIComponent('São Paulo, Brasil')}&start=${start}&count=25`;
   const resp = await fetchHtml(url, { headers: HEADERS_HTML, timeout: 12000 });
   const $ = cheerio.load(resp.data);
   const vagas = [];
@@ -643,10 +643,10 @@ ${listaTitulos}`;
             await transporter.sendMail({
               from: '"Radar de Vagas TI" <' + emailUser + '>',
               to: emailUser,
-              subject: \`🚨 \${novasTI.length} Novas Vagas de TI!\`,
+              subject: `🚨 ${novasTI.length} Novas Vagas de TI!`,
               html: emailHtml
             });
-            console.log(\`[email] Notificação enviada para \${emailUser}.\`);
+            console.log(`[email] Notificação enviada para ${emailUser}.`);
           } catch (err) {
             console.error('[email] Erro ao enviar e-mail:', err.message);
           }
