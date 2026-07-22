@@ -643,10 +643,10 @@ ${listaTitulos}`;
             await transporter.sendMail({
               from: '"Radar de Vagas TI" <' + emailUser + '>',
               to: emailUser,
-              subject: `🚨 ${novasTI.length} Novas Vagas de TI!`,
+              subject: '🚨 ' + novasTI.length + ' Novas Vagas de TI!',
               html: emailHtml
             });
-            console.log(`[email] Notificação enviada para ${emailUser}.`);
+            console.log('[email] Notificação enviada para ' + emailUser + '.');
           } catch (err) {
             console.error('[email] Erro ao enviar e-mail:', err.message);
           }
