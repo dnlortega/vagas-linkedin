@@ -36,7 +36,10 @@ export const authOptions = {
       }
     })
   ],
-  session: { strategy: "jwt" },
+  session: { 
+    strategy: "jwt",
+    maxAge: 365 * 24 * 60 * 60, // 1 ano para evitar deslogar com facilidade
+  },
   secret: process.env.NEXTAUTH_SECRET || "chave_secreta_padrao_para_desenvolvimento",
   pages: {
     signIn: "/login",
