@@ -69,6 +69,16 @@ async function fetchLinkedIn() {
         await sleep(300);
         const p2 = await linkedinPagina(termo, 25);
         todas.push(...p2);
+        if (p2.length >= 10) {
+          await sleep(300);
+          const p3 = await linkedinPagina(termo, 50);
+          todas.push(...p3);
+          if (p3.length >= 10) {
+            await sleep(300);
+            const p4 = await linkedinPagina(termo, 75);
+            todas.push(...p4);
+          }
+        }
       }
     } catch (err) {
       console.error(`[linkedin] "${termo}":`, err.message);
