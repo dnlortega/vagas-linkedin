@@ -40,7 +40,8 @@ const TERMOS_LINKEDIN = [
   'QA testes',            'segurança da informação', 'cloud computing',
   'banco de dados',       'data science',         'infraestrutura TI',
   'ti bauru',             'power bi',             'analista de dados',
-  'suporte de TI',        'DBA',                  'desenvolvimento analítico'
+  'suporte de TI',        'DBA',                  'desenvolvimento analítico',
+  'desenvolvimento',      'analista',             'analítico'
 ];
 
 async function linkedinPagina(keyword, start) {
@@ -568,11 +569,9 @@ async function buildData() {
 
         for (const lote of lotes) {
           const listaTitulos = lote.map((v, i) => `${i}::${v.titulo}::${v.empresa}`).join('\n');
-          const prompt = `Você é um classificador rigoroso de vagas de TI. Analise a lista de vagas abaixo no formato "ID::Titulo::Empresa".
-Retorne um array JSON contendo objetos apenas para as vagas que SÃO definitivamente da área de TI (Desenvolvimento, Infraestrutura, Suporte de TI, Dados, Segurança).
-Para cada vaga de TI, o objeto deve ter a propriedade "id" (número) e "competencias" (array de strings com as tecnologias e skills principais detectadas, ex: ["React", "Node.js", "AWS"]).
-IMPORTANTE: Ignore estritamente (não inclua no JSON) vagas de Contabilidade, Administrativo, Comercial, Vendas, RH, Motorista, Limpeza, etc.
-Exemplo de retorno: [{"id": 0, "competencias": ["Java", "Spring"]}, {"id": 3, "competencias": ["Suporte Técnico"]}]
+          const prompt = `Analise a lista de vagas abaixo no formato "ID::Titulo::Empresa".
+Retorne um array JSON contendo TODAS as vagas enviadas. Para cada vaga, defina o "id" (número), "isTI" (booleano true/false se é especificamente de Tecnologia da Informação/Desenvolvimento) e "competencias" (array de strings com as tecnologias, ferramentas ou skills principais detectadas, independentemente da área).
+Exemplo de retorno: [{"id": 0, "isTI": true, "competencias": ["Java", "Spring"]}, {"id": 3, "isTI": false, "competencias": ["Química", "Laboratório", "HPLC"]}]
 Lista de vagas:
 ${listaTitulos}`;
           
@@ -581,13 +580,18 @@ ${listaTitulos}`;
           if (text.startsWith('```json')) text = text.replace(/```json|```/g, '').trim();
           if (text.startsWith('```')) text = text.replace(/```/g, '').trim();
           
-          const vagasFiltradas = JSON.parse(text);
-          const mapTI = new Map(vagasFiltradas.map(v => [v.id, v.competencias]));
+          let vagasFiltradas = [];
+          try {
+            vagasFiltradas = JSON.parse(text);
+          } catch (e) { console.error('Erro de parse:', e, text); }
+          
+          const mapClassificadas = new Map(vagasFiltradas.map(v => [v.id, v]));
 
           for (let i = 0; i < lote.length; i++) {
-            if (mapTI.has(i)) {
-              lote[i].isTI = true;
-              lote[i].competencias = mapTI.get(i) || [];
+            const cls = mapClassificadas.get(i);
+            if (cls) {
+              lote[i].isTI = cls.isTI || false;
+              lote[i].competencias = cls.competencias || [];
             } else {
               lote[i].isTI = false;
               lote[i].competencias = [];

@@ -10,8 +10,9 @@ import {
   ArrowLeftIcon, PlusIcon, TrashIcon, PencilIcon, ClipboardCopyIcon,
   CheckIcon, UploadIcon, DownloadIcon, SearchIcon, XIcon, Award,
   ExternalLinkIcon, ChevronDownIcon, ChevronUpIcon, InfoIcon,
-  FileTextIcon, EyeIcon, ZapIcon, PrinterIcon, Trash2Icon,
+  FileTextIcon, EyeIcon, ZapIcon, PrinterIcon, Trash2Icon, BriefcaseIcon, TagIcon
 } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 
 const LS_CERTS = 'vagas_certificados';
 
@@ -375,6 +376,51 @@ export default function PerfilPage() {
   const [dark, setDark] = useState(false);
   const [colando, setColando] = useState(false);
   const fileRef = useRef();
+  
+  const { data: session } = useSession();
+  const [preferencias, setPreferencias] = useState([]);
+  const [novaPref, setNovaPref] = useState('');
+  const [salvandoPref, setSalvandoPref] = useState(false);
+
+  useEffect(() => {
+    if (session?.user) {
+      fetch('/api/perfil').then(r => r.json()).then(data => {
+        if (data.preferencias) setPreferencias(data.preferencias);
+      }).catch(e => console.error(e));
+    }
+  }, [session]);
+
+  async function salvarPreferencias(novas) {
+    if (!session?.user) return mostrarMsg('erro', 'Faça login para salvar preferências');
+    setSalvandoPref(true);
+    setPreferencias(novas);
+    try {
+      const res = await fetch('/api/perfil', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ preferencias: novas })
+      });
+      if (res.ok) mostrarMsg('ok', 'Preferências salvas com sucesso!');
+      else mostrarMsg('erro', 'Erro ao salvar preferências');
+    } catch {
+      mostrarMsg('erro', 'Erro de conexão');
+    } finally {
+      setSalvandoPref(false);
+    }
+  }
+
+  function addPref(e) {
+    e.preventDefault();
+    if (!novaPref.trim()) return;
+    const p = novaPref.trim();
+    if (preferencias.some(x => x.toLowerCase() === p.toLowerCase())) { setNovaPref(''); return; }
+    salvarPreferencias([...preferencias, p]);
+    setNovaPref('');
+  }
+
+  function remPref(p) {
+    salvarPreferencias(preferencias.filter(x => x !== p));
+  }
 
   useEffect(() => {
     try {
@@ -577,6 +623,48 @@ export default function PerfilPage() {
               {msg.texto}
             </div>
           )}
+
+          {/* Seção de Preferências de Vagas */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-5 space-y-4">
+            <div className="flex items-center gap-2 mb-2">
+              <BriefcaseIcon className="h-5 w-5 text-indigo-500" />
+              <h2 className="font-bold text-gray-900 dark:text-white">Minhas Preferências de Vaga</h2>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Adicione tecnologias e competências que você possui ou busca. O sistema usará isso para calcular a correspondência de vagas para você.
+            </p>
+            
+            {session?.user ? (
+              <>
+                <div className="flex flex-wrap gap-2">
+                  {preferencias.map((p, idx) => (
+                    <span key={idx} className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-xs font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1.5 border border-indigo-200 dark:border-indigo-800/50">
+                      <TagIcon className="h-3 w-3" /> {p}
+                      <button onClick={() => remPref(p)} className="hover:text-rose-500 transition-colors ml-1"><XIcon className="h-3 w-3" /></button>
+                    </span>
+                  ))}
+                </div>
+
+                <form onSubmit={addPref} className="flex gap-2 relative">
+                  <input value={novaPref} onChange={e => setNovaPref(e.target.value)} disabled={salvandoPref} placeholder="Ex: React, Node.js, AWS..."
+                    className="flex-1 text-sm border border-gray-200 dark:border-gray-600 rounded-xl px-3 py-2 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400 disabled:opacity-50" />
+                  <button type="submit" disabled={salvandoPref || !novaPref.trim()}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl px-4 py-2 transition-colors disabled:opacity-50">
+                    Adicionar
+                  </button>
+                </form>
+              </>
+            ) : (
+              <div className="mt-4 p-4 rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-900/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <p className="text-sm text-amber-800 dark:text-amber-200">
+                  Para configurar suas preferências e ver o <strong>"Match"</strong> automático, você precisa estar conectado à sua conta.
+                </p>
+                <Link href="/login" className="whitespace-nowrap px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold rounded-xl transition-colors">
+                  Fazer Login Agora
+                </Link>
+              </div>
+            )}
+          </div>
 
           {/* Formulário de adição/edição */}
           {(formAberto || editando) && (

@@ -394,7 +394,7 @@ function PillBtn({ active, onClick, children, activeClass = 'bg-indigo-600 text-
   );
 }
 
-function VagaCard({ vaga, isNovo, isFavorita, ehDuplicata, foiVisitada, noKanban, onOpen, onToggleFav, onOcultar, onEmpresaClick, onTechClick, onKanban, onReport, busca = '', vista = 'grade', tamanho = 'normal', index = 0 }) {
+function VagaCard({ vaga, isNovo, isFavorita, ehDuplicata, foiVisitada, noKanban, onOpen, onToggleFav, onOcultar, onEmpresaClick, onTechClick, onKanban, onReport, busca = '', vista = 'grade', tamanho = 'normal', index = 0, userPreferencias = [] }) {
   const tipo     = tipoLocalidade(vaga.local);
   const loc      = LOCALIDADE_CONFIG[tipo];
   const fonteCfg = FONTE_CONFIG[vaga.fonte] || { label: vaga.fonte, color: 'bg-gray-100 text-gray-600 border-gray-200' };
@@ -412,6 +412,8 @@ function VagaCard({ vaga, isNovo, isFavorita, ehDuplicata, foiVisitada, noKanban
 
   const TI_REGEX = /\b(desenvolvedor|programador|software|fullstack|full[- ]?stack|front[- ]?end|back[- ]?end|devops|sre|cloud|dados|data|bi\b|power\s?bi|analista.*(sistemas?|t\.?i\.?|dados|suporte|infra|seguran[çc]a)|engenheiro.*(software|dados|cloud)|arquiteto.*(t\.?i\.?|software|solu)|dba|suporte.*(t\.?i\.?|t[ée]cnico)|help.*desk|service.*desk|infra|segurança|cyber|tecnologia|tech|sistemas?|computação|c#|java|python|php|javascript|typescript|node)/i;
   const isTI = TI_REGEX.test(vaga.titulo);
+
+  const matchPref = userPreferencias.filter(p => techs.some(t => t.label.toLowerCase() === p.toLowerCase()) || vaga.titulo.toLowerCase().includes(p.toLowerCase()));
 
   if (vista === 'lista') {
     return (
@@ -437,6 +439,7 @@ function VagaCard({ vaga, isNovo, isFavorita, ehDuplicata, foiVisitada, noKanban
                   ✨ DESTAQUE TI
                 </span>
               )}
+              {matchPref.length > 0 && <span className="bg-emerald-100 text-emerald-700 text-[9px] font-bold px-1.5 py-0.5 rounded-md flex items-center gap-0.5 shadow-sm border border-emerald-200 cursor-help" title={`Match: ${matchPref.join(', ')}`}>🌟 MATCH ({matchPref.length})</span>}
               {senior && <span className={`text-[10px] font-semibold px-1.5 py-px rounded-md border ${senior === 'junior' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : senior === 'senior' ? 'bg-violet-50 text-violet-700 border-violet-200' : 'bg-cyan-50 text-cyan-700 border-cyan-200'}`}>{senior === 'junior' ? 'Jr' : senior === 'senior' ? 'Sr' : 'Pl'}</span>}
               {isNovo && <span className="bg-green-500 text-white text-[10px] font-bold px-2 py-px rounded-full">Novo</span>}
               {noKanban && <span className="bg-indigo-100 text-indigo-600 text-[10px] font-bold px-1.5 py-px rounded-md border border-indigo-200">📋</span>}
@@ -570,6 +573,11 @@ function VagaCard({ vaga, isNovo, isFavorita, ehDuplicata, foiVisitada, noKanban
                 ✨ Destaque TI
               </span>
             )}
+            {matchPref.length > 0 && (
+              <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ml-1.5 shadow-sm shadow-emerald-100 cursor-help" title={`Match: ${matchPref.join(', ')}`}>
+                🌟 Match ({matchPref.length})
+              </span>
+            )}
           </div>
         </div>
 
@@ -701,6 +709,15 @@ export default function Home() {
   const router = useRouter();
   const { data: session } = useSession();
 
+  const [userPreferencias, setUserPreferencias] = useState([]);
+  useEffect(() => {
+    if (session?.user) {
+      fetch('/api/perfil').then(r => r.json()).then(data => {
+        if (data.preferencias) setUserPreferencias(data.preferencias);
+      }).catch(() => {});
+    }
+  }, [session]);
+
   const [vagas,        setVagas]        = useState([]);
   const [novasLinks,   setNovasLinks]   = useState(new Set());
   const [loading,      setLoading]      = useState(true);
@@ -742,9 +759,17 @@ export default function Home() {
   const [filtrosSalvos,     setFiltrosSalvos]     = useState([]);
   const [mostrarSalvos,     setMostrarSalvos]     = useState(false);
   const [filtrosVisiveis,   setFiltrosVisiveis]   = useState(true);
-  const [somenteTI,         setSomenteTI]         = useState(true);
+  const [somenteTI,         setSomenteTI]         = useState(false);
   const [mostrarOpcoes,     setMostrarOpcoes]     = useState(false);
   const [mostrarFiltrosSidebar, setMostrarFiltrosSidebar] = useState(true);
+  const [linkedinStatus, setLinkedinStatus] = useState('loading');
+
+  const checarLinkedin = useCallback(() => {
+    setLinkedinStatus('loading');
+    fetch('/api/status').then(r => r.json()).then(data => setLinkedinStatus(data.status)).catch(() => setLinkedinStatus('OFF'));
+  }, []);
+
+  useEffect(() => { checarLinkedin(); }, [checarLinkedin]);
 
   // Estados e Efeito para suporte a PWA (Instalação e Segundo Plano)
   const [pwaPrompt, setPwaPrompt] = useState(null);
@@ -1365,6 +1390,19 @@ export default function Home() {
               </span>
             )}
 
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div onClick={checarLinkedin} className="hidden sm:flex items-center gap-1.5 h-8 px-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 cursor-pointer hover:bg-slate-50 transition-colors">
+                  <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">API LinkedIn</span>
+                  <div className={`h-2.5 w-2.5 rounded-full ${linkedinStatus === 'ON' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-pulse' : linkedinStatus === 'loading' ? 'bg-yellow-400' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]'}`} />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent className="text-xs">
+                {linkedinStatus === 'ON' ? 'LinkedIn respondendo normalmente' : linkedinStatus === 'loading' ? 'Testando conexão...' : 'LinkedIn bloqueou o robô ou está offline'}
+                <br /><span className="text-[9px] opacity-70">Clique para testar de novo</span>
+              </TooltipContent>
+            </Tooltip>
+
             <button onClick={() => fetchVagas({ force: true })} disabled={isAtivo}
               className="h-8 w-8 flex items-center justify-center rounded-xl bg-white dark:bg-white/10 border border-slate-200 dark:border-white/20 text-slate-500 dark:text-slate-300 hover:border-indigo-300 hover:text-indigo-600 transition-all">
               <RefreshCwIcon className={`h-3.5 w-3.5 ${isAtivo ? 'animate-spin' : ''}`} />
@@ -1391,9 +1429,9 @@ export default function Home() {
 
             {session?.user && (
               <div className="flex items-center gap-1.5 border-l border-slate-200 dark:border-white/10 pl-2 ml-1">
-                <div className="h-7 w-7 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
+                <Link href="/perfil" className="h-7 w-7 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold ring-2 ring-transparent hover:ring-indigo-300 transition-all cursor-pointer" title="Meu Perfil">
                   {session.user.name?.[0]?.toUpperCase() || 'U'}
-                </div>
+                </Link>
                 <button onClick={() => signOut({ callbackUrl: '/login' })}
                   className="h-8 w-8 flex items-center justify-center rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all">
                   <LogOutIcon className="h-3.5 w-3.5" />
@@ -1575,6 +1613,7 @@ export default function Home() {
                 <VagaCard
                   key={v.link}
                   vaga={v}
+                  userPreferencias={userPreferencias}
                   isNovo={novasLinks.has(v.link)}
                   isFavorita={favoritas.has(v.link)}
                   ehDuplicata={duplicatas.has(v.link)}

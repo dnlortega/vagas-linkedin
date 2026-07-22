@@ -28,5 +28,6 @@ model Usuario {
   nome      String
   email     String   @unique
   senha     String
-  createdAt DateTime @default(now())
+  createdAt    DateTime @default(now())
+  preferencias String[] @default([])
 }
