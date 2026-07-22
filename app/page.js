@@ -400,7 +400,15 @@ function VagaCard({ vaga, isNovo, isFavorita, ehDuplicata, foiVisitada, noKanban
   const fonteCfg = FONTE_CONFIG[vaga.fonte] || { label: vaga.fonte, color: 'bg-gray-100 text-gray-600 border-gray-200' };
   const dataRel  = formatData(vaga.data);
   const senior   = detectSenioridade(vaga.titulo);
-  const techs    = detectarTechs(vaga.titulo);
+  const techsRegex = detectarTechs(vaga.titulo);
+  const techsIA = (vaga.competencias || []).map(comp => {
+    const regexMatch = TECHS.find(t => t.label.toLowerCase() === comp.toLowerCase() || t.regex.test(comp));
+    return { label: comp, color: regexMatch ? regexMatch.color : 'bg-slate-100 text-slate-700 border-slate-200' };
+  });
+  const techsMap = new Map();
+  techsRegex.forEach(t => techsMap.set(t.label.toLowerCase(), t));
+  techsIA.forEach(t => techsMap.set(t.label.toLowerCase(), t));
+  const techs = Array.from(techsMap.values());
 
   const TI_REGEX = /\b(desenvolvedor|programador|software|fullstack|full[- ]?stack|front[- ]?end|back[- ]?end|devops|sre|cloud|dados|data|bi\b|power\s?bi|analista.*(sistemas?|t\.?i\.?|dados|suporte|infra|seguran[çc]a)|engenheiro.*(software|dados|cloud)|arquiteto.*(t\.?i\.?|software|solu)|dba|suporte.*(t\.?i\.?|t[ée]cnico)|help.*desk|service.*desk|infra|segurança|cyber|tecnologia|tech|sistemas?|computação|c#|java|python|php|javascript|typescript|node)/i;
   const isTI = TI_REGEX.test(vaga.titulo);

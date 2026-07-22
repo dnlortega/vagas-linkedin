@@ -559,9 +559,10 @@ async function buildData() {
         for (const lote of lotes) {
           const listaTitulos = lote.map((v, i) => `${i}::${v.titulo}::${v.empresa}`).join('\n');
           const prompt = `Você é um classificador rigoroso de vagas de TI. Analise a lista de vagas abaixo no formato "ID::Titulo::Empresa".
-Retorne um array JSON contendo APENAS os IDs numéricos das vagas que SÃO definitivamente da área de TI (Desenvolvimento, Infraestrutura, Suporte de TI, Dados, Segurança).
-IMPORTANTE: Ignore estritamente (não inclua o ID de) vagas de Contabilidade, Administrativo, Comercial, Vendas, RH, Motorista, Limpeza, etc., mesmo que tenham o termo "Analista" ou "Suporte".
-Exemplo de retorno: [0, 3, 4]
+Retorne um array JSON contendo objetos apenas para as vagas que SÃO definitivamente da área de TI (Desenvolvimento, Infraestrutura, Suporte de TI, Dados, Segurança).
+Para cada vaga de TI, o objeto deve ter a propriedade "id" (número) e "competencias" (array de strings com as tecnologias e skills principais detectadas, ex: ["React", "Node.js", "AWS"]).
+IMPORTANTE: Ignore estritamente (não inclua no JSON) vagas de Contabilidade, Administrativo, Comercial, Vendas, RH, Motorista, Limpeza, etc.
+Exemplo de retorno: [{"id": 0, "competencias": ["Java", "Spring"]}, {"id": 3, "competencias": ["Suporte Técnico"]}]
 Lista de vagas:
 ${listaTitulos}`;
           
@@ -570,9 +571,17 @@ ${listaTitulos}`;
           if (text.startsWith('```json')) text = text.replace(/```json|```/g, '').trim();
           if (text.startsWith('```')) text = text.replace(/```/g, '').trim();
           
-          const idsTI = JSON.parse(text);
+          const vagasFiltradas = JSON.parse(text);
+          const mapTI = new Map(vagasFiltradas.map(v => [v.id, v.competencias]));
+
           for (let i = 0; i < lote.length; i++) {
-            lote[i].isTI = idsTI.includes(i);
+            if (mapTI.has(i)) {
+              lote[i].isTI = true;
+              lote[i].competencias = mapTI.get(i) || [];
+            } else {
+              lote[i].isTI = false;
+              lote[i].competencias = [];
+            }
           }
         }
         console.log(`[ia] Classificadas ${novasParaIA.length} vagas usando Gemini.`);
@@ -660,6 +669,7 @@ ${listaTitulos}`;
           empresa: v.empresa,
           local: v.local,
           data: v.data || null,
+          ...(v.competencias ? { competencias: v.competencias } : {})
         },
         create: {
           titulo: v.titulo,
@@ -670,6 +680,7 @@ ${listaTitulos}`;
           termo: v.termo || 'geral',
           fonte: v.fonte,
           isTI: isTIPersist,
+          competencias: v.competencias || []
         },
       });
     }
