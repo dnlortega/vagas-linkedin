@@ -709,7 +709,7 @@ export default function Home() {
   const [filtro,       setFiltro]       = useState('bauru');
   const [senioridade,  setSenioridade]  = useState('todas');
   const [modalidade,   setModalidade]   = useState(null);
-  const [periodo,      setPeriodo]      = useState('24h');
+  const [periodo,      setPeriodo]      = useState('7d');
   const [busca,        setBusca]        = useState('');
   const [geradoEm,     setGeradoEm]     = useState(null);
   const [fontes,       setFontes]       = useState({});

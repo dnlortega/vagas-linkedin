@@ -40,7 +40,7 @@ const TERMOS_LINKEDIN = [
   'QA testes',            'segurança da informação', 'cloud computing',
   'banco de dados',       'data science',         'infraestrutura TI',
   'ti bauru',             'power bi',             'analista de dados',
-  'suporte de TI',        'DBA',
+  'suporte de TI',        'DBA',                  'desenvolvimento analítico'
 ];
 
 async function linkedinPagina(keyword, start) {
