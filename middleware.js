@@ -7,5 +7,5 @@ export const proxy = withAuth({
 });
 
 export const config = {
-  matcher: ["/((?!$|login|cadastro|api|_next/static|_next/image|favicon.ico|manifest.json|icon-192.png|icon-512.png).*)"],
+  matcher: ["/((?!$|login|cadastro|api|_next/static|_next/image|favicon.ico|manifest.json|icon-192.png|icon-512.png|perfil|candidaturas).*)"],
 };
