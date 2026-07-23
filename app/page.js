@@ -16,6 +16,9 @@ import { signOut, useSession } from 'next-auth/react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import VagaModal from './components/VagaModal';
 
 // Constants
@@ -270,16 +273,16 @@ export default function Home() {
   }
 
   const renderFiltrosSidebar = () => (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-5 py-2 px-1">
       {/* Busca */}
       <div className="relative">
         <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-        <input
+        <Input
           ref={searchRef}
           placeholder="Buscar vagas, empresas..."
           value={filtros.busca}
           onChange={e => filtros.setBusca(e.target.value)}
-          className="w-full h-10 pl-9 pr-8 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all"
+          className="pl-9 h-10 w-full bg-white dark:bg-slate-900"
         />
         {filtros.busca && (
           <button onClick={() => filtros.setBusca('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700">
@@ -288,31 +291,110 @@ export default function Home() {
         )}
       </div>
 
-      {/* Filtros Rápidos */}
-      <div>
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Localidade</p>
-        <div className="flex flex-col gap-1">
+      {/* Localidade */}
+      <div className="space-y-3">
+        <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wide">📍 Localidade</h3>
+        <div className="grid grid-cols-2 gap-2">
           {[
-            { id: 'bauru',  label: 'Bauru',       icon: '📍', fn: v => tipoLocalidade(v.local) === 'bauru' },
-            { id: 'regiao', label: 'Região',       icon: '🗺️', fn: v => ['bauru','regiao'].includes(tipoLocalidade(v.local)) },
-            { id: 'remoto', label: 'Remoto',       icon: '🌐', fn: v => tipoLocalidade(v.local) === 'remoto' },
-            { id: 'todas',  label: 'Todas cidades',icon: '✦',  fn: _ => true },
+            { id: 'bauru',  label: 'Bauru', fn: v => tipoLocalidade(v.local) === 'bauru' },
+            { id: 'regiao', label: 'Região', fn: v => ['bauru','regiao'].includes(tipoLocalidade(v.local)) },
+            { id: 'remoto', label: 'Remoto', fn: v => tipoLocalidade(v.local) === 'remoto' },
+            { id: 'todas',  label: 'Todas',  fn: _ => true },
           ].map(f => (
-            <button key={f.id} onClick={() => filtros.setFiltro(f.id)}
-              className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-all text-left ${filtros.filtro === f.id ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200' : 'text-slate-600 hover:bg-slate-100'}`}>
-              <span className="text-base leading-none">{f.icon}</span>
-              <span className="flex-1">{f.label}</span>
-              <span className={`text-xs font-bold tabular-nums ${filtros.filtro === f.id ? 'text-indigo-200' : 'text-slate-400'}`}>{contar(f.fn)}</span>
-            </button>
+            <Button
+              key={f.id}
+              variant={filtros.filtro === f.id ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => filtros.setFiltro(f.id)}
+              className="justify-between h-9 px-3 text-xs w-full bg-white dark:bg-slate-900 border-slate-200 shadow-sm"
+            >
+              {f.label}
+              <span className={`text-[10px] ml-1 ${filtros.filtro === f.id ? 'opacity-80' : 'text-slate-400'}`}>
+                {contar(f.fn)}
+              </span>
+            </Button>
           ))}
         </div>
       </div>
 
+      {/* Nível */}
+      <div className="space-y-3">
+        <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wide">📈 Nível</h3>
+        <div className="flex flex-wrap gap-2">
+          {[{id:'junior',label:'Júnior'},{id:'pleno',label:'Pleno'},{id:'senior',label:'Sênior'}].map(s => (
+            <Button
+              key={s.id}
+              variant={filtros.senioridade === s.id ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => filtros.setSenioridade(p => p === s.id ? 'todas' : s.id)}
+              className={`h-8 text-xs rounded-full bg-white shadow-sm ${filtros.senioridade === s.id ? 'bg-violet-600 hover:bg-violet-700 text-white border-violet-600' : ''}`}
+            >
+              {s.label}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      {/* Regime e Contrato */}
+      <div className="space-y-3">
+        <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wide">🏢 Regime & Contrato</h3>
+        <div className="flex flex-wrap gap-2">
+          {[{id:'presencial',label:'Presencial', type:'modoTrabalho'},{id:'hibrido',label:'Híbrido', type:'modoTrabalho'},{id:'remoto',label:'Remoto', type:'modoTrabalho'}, {id:'clt',label:'CLT', type:'modalidade'},{id:'pj',label:'PJ', type:'modalidade'},{id:'estagio',label:'Estágio', type:'modalidade'}].map(m => (
+            <Button
+              key={m.id}
+              variant={(m.type === 'modoTrabalho' ? filtros.modoTrabalho : filtros.modalidade) === m.id ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => {
+                if(m.type === 'modoTrabalho') filtros.setModoTrabalho(p => p === m.id ? null : m.id);
+                else filtros.setModalidade(p => p === m.id ? null : m.id);
+              }}
+              className="h-8 text-xs rounded-full bg-white shadow-sm"
+            >
+              {m.label}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      {/* Fonte e Período (Dropdowns) */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wide">🌐 Fonte</h3>
+          <Select value={filtros.fonteFiltro} onValueChange={filtros.setFonteFiltro}>
+            <SelectTrigger className="w-full h-9 text-xs bg-white shadow-sm">
+              <SelectValue placeholder="Todas" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todas">Todas</SelectItem>
+              {Object.entries(FONTE_CONFIG).map(([k, v]) => (
+                <SelectItem key={k} value={k}>{v.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div className="space-y-2">
+          <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wide">⏳ Período</h3>
+          <Select value={filtros.periodo} onValueChange={filtros.setPeriodo}>
+            <SelectTrigger className="w-full h-9 text-xs bg-white shadow-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PERIODOS.map(p => <SelectItem key={p.id} value={p.id} className="text-xs">{p.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
       {/* Tecnologias */}
-      <div>
-        <div className="flex items-center justify-between mb-2 px-1">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tecnologia</p>
-          {filtros.techFiltro && <button onClick={() => filtros.setTechFiltro(null)} className="text-[10px] text-red-500 font-bold hover:text-red-700">Limpar</button>}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wide">💻 Tecnologias</h3>
+          {filtros.techFiltro && (
+            <button onClick={() => filtros.setTechFiltro(null)} className="text-[10px] text-red-500 hover:underline">
+              Limpar
+            </button>
+          )}
         </div>
         <div className="flex flex-wrap gap-1.5">
           {TECHS.map(t => {
@@ -320,105 +402,49 @@ export default function Home() {
             if (n === 0 && !estado.loading) return null;
             const on = filtros.techFiltro === t.label;
             return (
-              <button key={t.label} onClick={() => filtros.setTechFiltro(p => p === t.label ? null : t.label)}
-                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold border transition-all ${on ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : `${t.color} border-transparent hover:scale-105`}`}>
-                {t.label}
-                {!estado.loading && <span className={`text-[9px] ${on ? 'opacity-70' : 'opacity-50'}`}>{n}</span>}
-              </button>
+              <Badge 
+                key={t.label} 
+                variant={on ? 'default' : 'outline'}
+                onClick={() => filtros.setTechFiltro(p => p === t.label ? null : t.label)}
+                className={`cursor-pointer transition-all border shadow-sm ${on ? 'bg-indigo-600 text-white' : 'bg-white hover:bg-slate-50 text-slate-700'}`}
+              >
+                {t.label} {!estado.loading && <span className="ml-1 opacity-50 text-[9px]">{n}</span>}
+              </Badge>
             );
           })}
         </div>
       </div>
 
-      {/* Nível */}
-      <div>
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Nível</p>
-        <div className="flex gap-1.5">
-          {[{id:'junior',label:'Júnior'},{id:'pleno',label:'Pleno'},{id:'senior',label:'Sênior'}].map(s => (
-            <button key={s.id} onClick={() => filtros.setSenioridade(p => p === s.id ? 'todas' : s.id)}
-              className={`flex-1 py-1.5 rounded-xl text-xs font-bold border transition-all ${filtros.senioridade === s.id ? 'bg-violet-600 text-white border-violet-600' : 'bg-white text-slate-600 border-slate-200 hover:border-violet-300'}`}>
-              {s.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Regime */}
-      <div>
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Fonte da Vaga</p>
-        <Select value={filtros.fonteFiltro} onValueChange={filtros.setFonteFiltro}>
-          <SelectTrigger className="w-full h-9 rounded-xl text-xs font-semibold bg-white">
-            <SelectValue placeholder="Todas as fontes" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todas">Todas as fontes</SelectItem>
-            {Object.entries(FONTE_CONFIG).map(([k, v]) => (
-              <SelectItem key={k} value={k}>{v.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Regime */}
-      <div>
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Regime</p>
-        <div className="flex gap-1.5">
-          {[{id:'presencial',label:'Presencial'},{id:'hibrido',label:'Híbrido'},{id:'remoto',label:'Remoto'}].map(m => (
-            <button key={m.id} onClick={() => filtros.setModoTrabalho(p => p === m.id ? null : m.id)}
-              className={`flex-1 py-1.5 rounded-xl text-xs font-bold border transition-all ${filtros.modoTrabalho === m.id ? 'bg-sky-600 text-white border-sky-600' : 'bg-white text-slate-600 border-slate-200 hover:border-sky-300'}`}>
-              {m.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Período */}
-      <div>
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Período</p>
-        <Select value={filtros.periodo} onValueChange={filtros.setPeriodo}>
-          <SelectTrigger className="h-9 text-xs border-slate-200 rounded-xl bg-white">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {PERIODOS.map(p => <SelectItem key={p.id} value={p.id} className="text-xs">{p.label}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Contrato */}
-      <div>
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Contrato</p>
-        <div className="flex flex-wrap gap-1.5">
-          {[{id:'clt',label:'CLT'},{id:'pj',label:'PJ'},{id:'estagio',label:'Estágio'},{id:'trainee',label:'Trainee'}].map(m => (
-            <button key={m.id} onClick={() => filtros.setModalidade(p => p === m.id ? null : m.id)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${filtros.modalidade === m.id ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-slate-600 border-slate-200 hover:border-emerald-300'}`}>
-              {m.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* Preferências */}
-      <div className="flex flex-col gap-1.5">
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 px-1">Preferências</p>
-        {[
-          { label: '✨ Apenas Novas',   active: filtros.somenteNovas,  fn: () => filtros.setSomenteNovas(v => !v) },
-          { label: '👁 Não Visitadas',   active: filtros.naoVisitadas,  fn: () => filtros.setNaoVisitadas(v => !v) },
-          { label: '❤️ Fixar Favoritas', active: filtros.pinarFavoritas, fn: () => filtros.setPinarFavoritas(v => !v) },
-        ].map(p => (
-          <button key={p.label} onClick={p.fn}
-            className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm border transition-all text-left ${p.active ? 'bg-indigo-50 text-indigo-700 border-indigo-200 font-semibold' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}>
-            {p.label}
-          </button>
-        ))}
+      <div className="space-y-3">
+        <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wide">⚙️ Preferências</h3>
+        <div className="flex flex-col gap-2">
+          {[
+            { label: '✨ Apenas Novas',   active: filtros.somenteNovas,  fn: () => filtros.setSomenteNovas(v => !v) },
+            { label: '👁 Não Visitadas',   active: filtros.naoVisitadas,  fn: () => filtros.setNaoVisitadas(v => !v) },
+            { label: '❤️ Fixar Favoritas', active: filtros.pinarFavoritas, fn: () => filtros.setPinarFavoritas(v => !v) },
+          ].map(p => (
+            <Button
+              key={p.label}
+              variant={p.active ? 'secondary' : 'outline'}
+              onClick={p.fn}
+              className={`justify-start h-9 text-xs font-medium bg-white shadow-sm ${p.active ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : ''}`}
+            >
+              {p.label}
+            </Button>
+          ))}
+        </div>
       </div>
 
       {/* Limpar filtros */}
       {(filtros.filtro !== 'bauru' || filtros.senioridade !== 'todas' || filtros.modalidade || filtros.techFiltro || filtros.modoTrabalho || filtros.busca || filtros.periodo !== '24h') && (
-        <button onClick={filtros.limparFiltros}
-          className="flex items-center justify-center gap-2 w-full py-2 rounded-xl text-xs font-bold text-red-500 border border-red-200 bg-red-50 hover:bg-red-100 transition-all">
-          <FilterXIcon className="h-3.5 w-3.5" /> Limpar todos os filtros
-        </button>
+        <Button 
+          variant="destructive" 
+          onClick={filtros.limparFiltros}
+          className="w-full mt-2 h-9 text-xs shadow-sm"
+        >
+          <FilterXIcon className="h-4 w-4 mr-2" /> Limpar todos os filtros
+        </Button>
       )}
     </div>
   );
