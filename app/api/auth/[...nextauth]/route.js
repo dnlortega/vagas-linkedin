@@ -1,50 +1,64 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
-
-export const runtime = "nodejs";
+import bcrypt from "bcryptjs";
 
 export const authOptions = {
   providers: [
     CredentialsProvider({
-      name: "credentials",
+      name: "Credenciais",
       credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Senha", type: "password" }
+        email: { label: "Email", type: "email", placeholder: "seu@email.com" },
+        senha: { label: "Senha", type: "password" }
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          return null;
+        if (!credentials?.email || !credentials?.senha) {
+          throw new Error("Email e senha são obrigatórios.");
         }
 
-        try {
-          const user = await prisma.usuario.findUnique({
-            where: { email: credentials.email }
-          });
+        const usuario = await prisma.usuario.findUnique({
+          where: { email: credentials.email }
+        });
 
-          if (!user) return null;
-
-          const passwordsMatch = await bcrypt.compare(credentials.password, user.senha);
-          if (!passwordsMatch) return null;
-
-          return { id: user.id, name: user.nome, email: user.email };
-        } catch (err) {
-          console.error("[NextAuth] Erro:", err);
-          return null;
+        if (!usuario) {
+          throw new Error("Usuário não encontrado.");
         }
+
+        const isPasswordValid = await bcrypt.compare(credentials.senha, usuario.senha);
+
+        if (!isPasswordValid) {
+          throw new Error("Senha incorreta.");
+        }
+
+        return {
+          id: usuario.id,
+          name: usuario.nome,
+          email: usuario.email,
+        };
       }
     })
   ],
-  session: { 
-    strategy: "jwt",
-    maxAge: 365 * 24 * 60 * 60, // 1 ano para evitar deslogar com facilidade
+  session: {
+    strategy: "jwt"
   },
-  secret: process.env.NEXTAUTH_SECRET || "chave_secreta_padrao_para_desenvolvimento",
   pages: {
     signIn: "/login",
   },
-  debug: process.env.NODE_ENV === "development",
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (token && session.user) {
+        session.user.id = token.id;
+      }
+      return session;
+    }
+  },
+  secret: process.env.NEXTAUTH_SECRET || "fallback_secret_for_development_only",
 };
 
 const handler = NextAuth(authOptions);

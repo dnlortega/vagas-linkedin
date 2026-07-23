@@ -7,6 +7,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import { ArrowLeftIcon, TrashIcon, ExternalLinkIcon, MapPinIcon, ClockIcon, DownloadIcon, StickyNoteIcon, BellIcon, UserIcon, DollarSignIcon, BarChart2Icon, ChevronDownIcon, ChevronUpIcon, TagIcon, XIcon, SearchIcon } from 'lucide-react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 const LS_KANBAN = 'vagas_kanban';
 
@@ -118,6 +121,9 @@ function StatsPanel({ vagas }) {
 }
 
 export default function Candidaturas() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  
   const [kanban,     setKanban]     = useState({});
   const [editNota,   setEditNota]   = useState(null);
   const [expandido,  setExpandido]  = useState(null);
@@ -126,25 +132,81 @@ export default function Candidaturas() {
   const [ordemKanban,  setOrdemKanban]  = useState('adicionado');
   const [dragLinkId,   setDragLinkId]   = useState(null);
   const [dragOverCol,  setDragOverCol]  = useState(null);
+  const [isLoading,    setIsLoading]    = useState(true);
 
   useEffect(() => {
-    try { setKanban(JSON.parse(localStorage.getItem(LS_KANBAN) || '{}')); } catch (_) {}
-  }, []);
+    if (status === 'unauthenticated') {
+      router.push('/login');
+      return;
+    }
+    
+    if (status === 'authenticated') {
+      carregarDoBanco();
+    }
+  }, [status]);
+
+  async function carregarDoBanco() {
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/kanban');
+      if (res.ok) {
+        const data = await res.json();
+        
+        // Sincronização inicial do LocalStorage
+        const localData = JSON.parse(localStorage.getItem(LS_KANBAN) || '{}');
+        if (Object.keys(localData).length > 0) {
+           toast.info('Sincronizando dados locais para a nuvem...');
+           await fetch('/api/kanban', {
+             method: 'POST',
+             headers: { 'Content-Type': 'application/json' },
+             body: JSON.stringify(Object.values(localData))
+           });
+           localStorage.removeItem(LS_KANBAN);
+           
+           // Recarrega apos sync
+           const res2 = await fetch('/api/kanban');
+           if (res2.ok) setKanban(await res2.json());
+        } else {
+           setKanban(data);
+        }
+      }
+    } catch (e) {
+      toast.error('Erro ao carregar candidaturas');
+    }
+    setIsLoading(false);
+  }
 
   function save(next) {
     setKanban(next);
-    localStorage.setItem(LS_KANBAN, JSON.stringify(next));
   }
 
-  function update(link, patch) {
-    save({ ...kanban, [link]: { ...kanban[link], ...patch } });
+  async function update(link, patch) {
+    const atualizada = { ...kanban[link], ...patch, vagaLink: link };
+    save({ ...kanban, [link]: atualizada });
+    
+    try {
+      await fetch('/api/kanban', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(atualizada)
+      });
+    } catch (e) {
+      toast.error('Erro ao salvar alteração');
+    }
   }
 
-  function remover(link) {
+  async function remover(link) {
     const next = { ...kanban };
     delete next[link];
     save(next);
     if (expandido === link) setExpandido(null);
+    
+    try {
+      await fetch(`/api/kanban?link=${encodeURIComponent(link)}`, { method: 'DELETE' });
+      toast.success('Candidatura removida');
+    } catch (e) {
+      toast.error('Erro ao remover');
+    }
   }
 
   function toggleEtiqueta(link, etId) {
@@ -232,8 +294,13 @@ export default function Candidaturas() {
         {/* Stats panel */}
         {mostrarStats && todasVagas.length > 0 && <StatsPanel vagas={todasVagas} />}
 
-        {/* Board vazio */}
-        {todasVagas.length === 0 ? (
+        {/* Board vazio / Loading */}
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-32 space-y-4">
+            <div className="h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-gray-500 font-medium">Carregando seu Kanban da nuvem...</p>
+          </div>
+        ) : todasVagas.length === 0 ? (
           <div className="text-center py-32">
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-white shadow-sm border border-gray-100 mb-5">
               <svg className="h-10 w-10 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">

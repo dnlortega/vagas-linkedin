@@ -24,10 +24,46 @@ model Vaga {
 }
 
 model Usuario {
+  id           String        @id @default(uuid())
+  nome         String
+  email        String        @unique
+  senha        String
+  createdAt    DateTime      @default(now())
+  preferencias String[]      @default([])
+  candidaturas Candidatura[]
+  vagasSalvas  VagaSalva[]
+}
+
+model Candidatura {
+  id           String   @id @default(uuid())
+  usuarioId    String
+  usuario      Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  vagaLink     String
+  titulo       String?
+  empresa      String?
+  local        String?
+  fonte        String?
+  status       String   @default("salvo") // salvo, candidatado, entrevista, rejeitado, arquivado
+  etiquetas    String[] @default([])
+  notas        String?
+  contatoRH    String?
+  salario      String?
+  prazo        String?
+  lembrete     String?
+  adicionadoEm DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([usuarioId, vagaLink])
+}
+
+model VagaSalva {
   id        String   @id @default(uuid())
-  nome      String
-  email     String   @unique
-  senha     String
-  createdAt    DateTime @default(now())
-  preferencias String[] @default([])
+  usuarioId String
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  vagaLink  String
+  oculta    Boolean  @default(false)
+  favorita  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@unique([usuarioId, vagaLink])
 }
