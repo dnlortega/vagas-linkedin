@@ -581,7 +581,7 @@ export default function Home() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-5 pb-24 md:pb-8">
         <div className="flex gap-6 items-start">
           <aside className="hidden lg:flex shrink-0 w-64 flex-col gap-4 sticky top-20">
-            <div className="bg-white dark:bg-[#111] rounded-2xl border border-black/5 dark:border-white/10 p-4 shadow-sm">
+            <div className="bg-white dark:bg-[#111] rounded-2xl border border-black/5 dark:border-white/10 p-4 shadow-sm max-h-[calc(100vh-6rem)] overflow-y-auto">
               {renderFiltrosSidebar()}
             </div>
           </aside>
