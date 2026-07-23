@@ -47,7 +47,7 @@ const TERMOS_LINKEDIN = [
 ];
 
 async function linkedinPagina(keyword, start) {
-  const url = `https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords=${encodeURIComponent(keyword)}&location=${encodeURIComponent('São Paulo, Brasil')}&start=${start}&count=25`;
+  const url = `https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords=${encodeURIComponent(keyword)}&location=${encodeURIComponent('Bauru, São Paulo, Brasil')}&start=${start}&count=25`;
   const resp = await fetchHtml(url, { headers: HEADERS_HTML, timeout: 12000 });
   const $ = cheerio.load(resp.data);
   const vagas = [];
