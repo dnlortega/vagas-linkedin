@@ -22,7 +22,7 @@ export default function LoginPage() {
     const res = await signIn("credentials", {
       redirect: false,
       email,
-      password: senha,
+      senha: senha,
     });
 
     if (res?.error) {
