@@ -6,7 +6,7 @@ import {
   DownloadIcon, XIcon, SparklesIcon,
   FilterXIcon, MonitorIcon, KanbanIcon,
   LayersIcon, InfoIcon, AwardIcon, LogOutIcon, SlidersHorizontalIcon,
-  LayoutGridIcon, ListIcon, BriefcaseIcon
+  LayoutGridIcon, ListIcon, BriefcaseIcon, EyeOffIcon
 } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
