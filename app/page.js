@@ -198,13 +198,9 @@ export default function Home() {
       filtros.filtro === 'favoritas'  ? estado.favoritas.has(v.link) :
       filtros.filtro === 'bauru'      ? tipo === 'bauru' :
       filtros.filtro === 'regiao'     ? (tipo === 'bauru' || tipo === 'regiao') :
-      filtros.filtro === 'remoto'     ? tipo === 'remoto' :
-      filtros.filtro === 'vagasbauru' ? v.fonte === 'vagasbauru' :
-      filtros.filtro === 'linkedin'   ? v.fonte === 'linkedin' :
-      filtros.filtro === 'indeed'     ? v.fonte === 'indeed' :
-      filtros.filtro === 'vagascom'   ? v.fonte === 'vagascom' :
-      filtros.filtro === 'ciee'       ? v.fonte === 'ciee' :
-      filtros.filtro === 'catho'      ? v.fonte === 'catho' : true;
+      filtros.filtro === 'remoto'     ? tipo === 'remoto' : true;
+      
+    const matchFonte = filtros.fonteFiltro === 'todas' || v.fonte === filtros.fonteFiltro;
     const matchSen  = filtros.senioridade === 'todas' || detectSenioridade(v.titulo) === filtros.senioridade;
     const matchMod  = !filtros.modalidade || detectarModalidade(v.titulo) === filtros.modalidade;
     const matchTech = !filtros.techFiltro || detectarTechs(v.titulo).some(t => t.label === filtros.techFiltro);
@@ -220,8 +216,8 @@ export default function Home() {
                  && !EXCLUDE_TI_REGEX.test(v.empresa || ''));
     
     const matchTI     = !filtros.somenteTI || isTI;
-    return matchLoc && matchSen && matchMod && matchTech && matchWork && matchNova && matchNaoVis && matchEmp && matchTI && matchBusca(v, buscaDebounced) && matchPeriodo(v.data, filtros.periodo);
-  }), [estado.vagas, estado.ocultas, filtros.filtro, estado.favoritas, filtros.senioridade, filtros.modalidade, filtros.techFiltro, filtros.modoTrabalho, buscaDebounced, filtros.periodo, filtros.somenteNovas, filtros.naoVisitadas, estado.novasLinks, estado.visitadas, filtros.empresaBusca, filtros.somenteTI]);
+    return matchLoc && matchFonte && matchSen && matchMod && matchTech && matchWork && matchNova && matchNaoVis && matchEmp && matchTI && matchBusca(v, buscaDebounced) && matchPeriodo(v.data, filtros.periodo);
+  }), [estado.vagas, estado.ocultas, filtros.filtro, filtros.fonteFiltro, estado.favoritas, filtros.senioridade, filtros.modalidade, filtros.techFiltro, filtros.modoTrabalho, buscaDebounced, filtros.periodo, filtros.somenteNovas, filtros.naoVisitadas, estado.novasLinks, estado.visitadas, filtros.empresaBusca, filtros.somenteTI]);
 
   const vagasOrdenadas = useMemo(() => {
     const sorted = [...vagasFiltradas].sort((a, b) => {
@@ -345,6 +341,22 @@ export default function Home() {
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Regime */}
+      <div>
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Fonte da Vaga</p>
+        <Select value={filtros.fonteFiltro} onValueChange={filtros.setFonteFiltro}>
+          <SelectTrigger className="w-full h-9 rounded-xl text-xs font-semibold bg-white">
+            <SelectValue placeholder="Todas as fontes" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todas">Todas as fontes</SelectItem>
+            {Object.entries(FONTE_CONFIG).map(([k, v]) => (
+              <SelectItem key={k} value={k}>{v.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Regime */}
