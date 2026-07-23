@@ -284,12 +284,25 @@ export default function Candidaturas() {
             >
               <DownloadIcon className="h-4 w-4" />
               Exportar CSV
-            </button>
+</button>
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+
+        {/* Banner de Dicas */}
+        {todasVagas.length > 0 && (
+          <div className="mb-6 p-4 bg-indigo-50/50 border border-indigo-100 rounded-2xl flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+            <div className="h-10 w-10 shrink-0 bg-indigo-100 text-indigo-500 rounded-xl flex items-center justify-center">
+              <span className="text-xl">💡</span>
+            </div>
+            <div className="text-sm text-indigo-900 leading-relaxed">
+              <strong>Dicas de uso:</strong> Você pode <b>arrastar as vagas</b> entre as colunas para atualizar rapidamente o status. 
+              Ao clicar em <b>Mais detalhes</b> no cartão, você consegue anotar o salário combinado, contato do RH e criar lembretes!
+            </div>
+          </div>
+        )}
 
         {/* Stats panel */}
         {mostrarStats && todasVagas.length > 0 && <StatsPanel vagas={todasVagas} />}
@@ -301,16 +314,24 @@ export default function Candidaturas() {
             <p className="text-gray-500 font-medium">Carregando seu Kanban da nuvem...</p>
           </div>
         ) : todasVagas.length === 0 ? (
-          <div className="text-center py-32">
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-white shadow-sm border border-gray-100 mb-5">
-              <svg className="h-10 w-10 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
-              </svg>
+          <div className="flex flex-col items-center justify-center py-20 text-center bg-white border border-gray-100 rounded-3xl shadow-sm px-6 max-w-2xl mx-auto mt-10">
+            <div className="w-20 h-20 bg-indigo-50 text-indigo-500 rounded-3xl flex items-center justify-center mb-6 shadow-inner">
+              <span className="text-3xl">🗂️</span>
             </div>
-            <p className="font-bold text-gray-800 text-xl">Nenhuma candidatura ainda</p>
-            <p className="text-base text-gray-400 mt-2 mb-6">Abra uma vaga e clique em "Ao quadro" para acompanhar</p>
-            <Link href="/" className="inline-flex items-center gap-2 bg-gray-900 text-white text-sm font-bold px-5 py-2.5 rounded-xl hover:bg-blue-600 transition-colors">
-              <ArrowLeftIcon className="h-4 w-4" /> Ver vagas
+            <h2 className="text-2xl font-black text-gray-800 tracking-tight">Seu Kanban está vazio</h2>
+            <p className="text-base text-gray-500 mt-4 leading-relaxed">
+              O Kanban é o seu espaço pessoal para organizar e acompanhar as vagas nas quais você se interessou, registrar o salário negociado e guardar o contato do recrutador.
+            </p>
+            <div className="mt-6 bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm text-slate-600 font-medium w-full text-left">
+              <p className="text-slate-800 font-bold mb-2">Como adicionar vagas aqui:</p>
+              <ol className="list-decimal pl-5 space-y-1.5">
+                <li>Vá até a página principal (Catálogo de Vagas).</li>
+                <li>Clique em qualquer vaga que achar interessante.</li>
+                <li>No rodapé da vaga, clique no botão <b>Ao quadro</b>.</li>
+              </ol>
+            </div>
+            <Link href="/" className="mt-8 inline-flex items-center gap-2 h-12 px-8 bg-indigo-600 text-white font-bold text-sm rounded-xl hover:bg-indigo-700 hover:shadow-lg hover:-translate-y-0.5 transition-all">
+              <ArrowLeftIcon className="h-4 w-4" /> Ir para o catálogo de vagas
             </Link>
           </div>
         ) : (

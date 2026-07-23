@@ -301,12 +301,13 @@ export default function VagaModal({ vaga, vagas = [], onClose, onOpen, onPrev, o
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
+      {/* Backdrop */}
       <div
         className={`absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`}
         onClick={() => handleOpenChange(false)}
       />
       {/* Dialog 100% */}
-      <div className={`relative z-10 w-full h-full bg-white flex flex-col overflow-hidden transition-all duration-200 ${open ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+      <div className={`relative z-10 w-full h-full sm:h-[90vh] sm:w-[90vw] md:max-w-4xl sm:rounded-2xl shadow-2xl bg-white flex flex-col overflow-hidden transition-all duration-200 ${open ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
 
         {/* Barra colorida topo */}
         <div className="h-1.5 w-full flex-shrink-0" style={{ backgroundColor: fonteCfg.accent }} />
@@ -470,7 +471,7 @@ export default function VagaModal({ vaga, vagas = [], onClose, onOpen, onPrev, o
                 )}
               </div>
 
-              <div className="grid grid-cols-5 gap-1.5">
+              <div className="grid grid-cols-5 sm:flex sm:flex-wrap gap-1.5">
                 {[
                   { acao: 'resumir',         icon: FileTextIcon,      label: 'Resumir',   color: 'blue'   },
                   { acao: 'redflags',        icon: AlertTriangleIcon, label: 'Red flags', color: 'rose'   },
@@ -494,7 +495,7 @@ export default function VagaModal({ vaga, vagas = [], onClose, onOpen, onPrev, o
                       onClick={() => chamarGemini(acao)}
                       disabled={aiLoading && aiAcao === acao}
                       title={label}
-                      className={`relative flex flex-col items-center gap-1 py-2.5 px-1 rounded-xl border bg-white text-[10px] font-semibold transition-all ${cls}`}
+                      className={`relative flex flex-col items-center gap-1 py-2.5 px-1 sm:px-3 sm:py-1.5 sm:flex-row rounded-xl border bg-white text-[10px] sm:text-xs font-semibold transition-all ${cls}`}
                     >
                       <Icon className="h-3.5 w-3.5" />
                       <span className="leading-none">{label}</span>
@@ -602,38 +603,38 @@ export default function VagaModal({ vaga, vagas = [], onClose, onOpen, onPrev, o
         </ScrollArea>
 
         {/* Rodapé */}
-        <div className="flex-shrink-0 border-t border-gray-100 bg-gray-50/80 px-5 py-4 flex flex-col gap-2">
-          <Button asChild className="w-full gap-2 h-11 font-semibold text-sm rounded-xl">
-            <a href={vaga.link} target="_blank" rel="noopener noreferrer">
-              Ver vaga no {fonteCfg.label}
-              <ExternalLinkIcon className="h-4 w-4" />
-            </a>
-          </Button>
-
-          <div className="flex gap-2">
+        <div className="flex-shrink-0 border-t border-gray-100 bg-gray-50/80 px-5 py-4 flex flex-col sm:flex-row sm:justify-end gap-3">
+          <div className="flex gap-2 w-full sm:w-auto sm:mr-auto">
             <button
               onClick={toggleFav}
-              className={`flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl border text-xs font-semibold transition-all ${
+              className={`flex-1 sm:flex-none sm:px-4 flex items-center justify-center gap-1.5 h-11 sm:h-9 rounded-xl border text-xs font-semibold transition-all ${
                 isFav ? 'bg-rose-50 border-rose-200 text-rose-600 hover:bg-rose-100' : 'bg-white border-gray-200 text-gray-500 hover:border-rose-200 hover:text-rose-500'
               }`}
             >
-              <HeartIcon className={`h-3.5 w-3.5 ${isFav ? 'fill-rose-500 text-rose-500' : ''}`} />
+              <HeartIcon className={`h-4 w-4 sm:h-3.5 sm:w-3.5 ${isFav ? 'fill-rose-500 text-rose-500' : ''}`} />
               {isFav ? 'Favoritado' : 'Favoritar'}
             </button>
 
             <button
               onClick={adicionarKanban}
               disabled={noKanban}
-              className={`flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl border text-xs font-semibold transition-all ${
+              className={`flex-1 sm:flex-none sm:px-4 flex items-center justify-center gap-1.5 h-11 sm:h-9 rounded-xl border text-xs font-semibold transition-all ${
                 noKanban ? 'bg-indigo-50 border-indigo-200 text-indigo-500 cursor-default' : 'bg-white border-gray-200 text-gray-500 hover:border-indigo-200 hover:text-indigo-600'
               }`}
             >
-              <KanbanIcon className="h-3.5 w-3.5" />
+              <KanbanIcon className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
               {noKanban ? 'No quadro ✓' : 'Ao quadro'}
             </button>
           </div>
 
-          <div className="flex gap-1.5 justify-center flex-wrap">
+          <Button asChild className="w-full sm:w-auto sm:px-6 gap-2 h-11 sm:h-9 font-semibold text-sm rounded-xl">
+            <a href={vaga.link} target="_blank" rel="noopener noreferrer">
+              Ver vaga no {fonteCfg.label}
+              <ExternalLinkIcon className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+            </a>
+          </Button>
+
+          <div className="hidden sm:flex gap-1.5 justify-center flex-wrap">
             <button onClick={compartilharWhatsApp} title="WhatsApp"
               className="flex items-center justify-center h-9 w-9 rounded-xl border border-gray-200 bg-white text-gray-500 hover:border-green-300 hover:text-green-600 transition-all">
               <Share2Icon className="h-4 w-4" />
