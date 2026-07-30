@@ -771,7 +771,6 @@ export default function PerfilPage() {
                     <option value="catho">Catho</option>
                   </select>
                 </div>
-                </div>
                 <div className="col-span-1 sm:col-span-2 lg:col-span-3">
                   <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Palavras-chave (Busca)</label>
                   <div className="flex flex-col gap-2">
