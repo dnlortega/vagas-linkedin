@@ -229,9 +229,8 @@ export default function Home() {
                  && !EXCLUDE_TI_REGEX.test(v.titulo) 
                  && !EXCLUDE_TI_REGEX.test(v.empresa || ''));
     
-    const matchTI     = !filtros.somenteTI || isTI;
-    return matchLoc && matchFonte && matchSen && matchMod && matchTech && matchWork && matchNova && matchNaoVis && matchEmp && matchTI && matchBusca(v, buscaDebounced) && matchPeriodo(v.data, filtros.periodo);
-  }), [estado.vagas, estado.ocultas, filtros.filtro, filtros.fonteFiltro, estado.favoritas, filtros.senioridade, filtros.modalidade, filtros.techFiltro, filtros.modoTrabalho, buscaDebounced, filtros.periodo, filtros.somenteNovas, filtros.naoVisitadas, estado.novasLinks, estado.visitadas, filtros.empresaBusca, filtros.somenteTI]);
+    return matchLoc && matchFonte && matchSen && matchMod && matchTech && matchWork && matchNova && matchNaoVis && matchEmp && matchBusca(v, buscaDebounced) && matchPeriodo(v.data, filtros.periodo);
+  }), [estado.vagas, estado.ocultas, filtros.filtro, filtros.fonteFiltro, estado.favoritas, filtros.senioridade, filtros.modalidade, filtros.techFiltro, filtros.modoTrabalho, buscaDebounced, filtros.periodo, filtros.somenteNovas, filtros.naoVisitadas, estado.novasLinks, estado.visitadas, filtros.empresaBusca]);
 
   const vagasOrdenadas = useMemo(() => {
     const sorted = [...vagasFiltradas].sort((a, b) => {
@@ -489,11 +488,7 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-2">
-            <button onClick={() => filtros.setSomenteTI(v => !v)}
-              className={`hidden sm:inline-flex items-center gap-1.5 h-8 px-3 rounded-xl text-xs font-bold border transition-all ${filtros.somenteTI ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm shadow-indigo-200' : 'bg-white dark:bg-white/10 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/20 hover:border-indigo-300'}`}>
-              <MonitorIcon className="h-3.5 w-3.5" />
-              Somente TI
-            </button>
+
 
             {estado.novosCount > 0 && !estado.loading && (
               <span className="relative hidden sm:flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 bg-green-100 text-green-700 border border-green-200 rounded-full">
@@ -581,11 +576,7 @@ export default function Home() {
             {renderFiltrosSidebar()}
           </SheetContent>
         </Sheet>
-        <button onClick={() => filtros.setSomenteTI(v => !v)}
-          className={`h-9 px-3 flex items-center gap-1 rounded-xl text-xs font-bold border transition-all shrink-0 ${filtros.somenteTI ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white dark:bg-white/10 text-slate-600 border-slate-200 dark:border-white/20'}`}>
-          <MonitorIcon className="h-3.5 w-3.5" />
-          <span className="hidden xs:inline">TI</span>
-        </button>
+
       </div>
 
       {/* ── Layout Principal ────────────────────────────── */}
