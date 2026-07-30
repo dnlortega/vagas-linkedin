@@ -383,6 +383,7 @@ export default function PerfilPage() {
   const [novaPref, setNovaPref] = useState('');
   const [novaBusca, setNovaBusca] = useState('');
   const [salvandoPref, setSalvandoPref] = useState(false);
+  const [salvandoFiltros, setSalvandoFiltros] = useState(false);
 
   useEffect(() => {
     if (session?.user) {
@@ -429,20 +430,25 @@ export default function PerfilPage() {
     atualizarFiltroPadrao('busca', novos.join(', '));
   }
 
-  async function atualizarFiltroPadrao(chave, valor) {
+  function atualizarFiltroPadrao(chave, valor) {
+    setFiltrosPadrao(prev => ({ ...prev, [chave]: valor }));
+  }
+
+  async function salvarFiltrosPadrao() {
     if (!session?.user) return mostrarMsg('erro', 'Faça login para salvar configurações');
-    const novosFiltros = { ...filtrosPadrao, [chave]: valor };
-    setFiltrosPadrao(novosFiltros);
+    setSalvandoFiltros(true);
     try {
       const res = await fetch('/api/perfil', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filtrosPadrao: novosFiltros })
+        body: JSON.stringify({ filtrosPadrao })
       });
-      if (res.ok) mostrarMsg('ok', 'Filtros padrão atualizados!');
+      if (res.ok) mostrarMsg('ok', 'Filtros padrão salvos com sucesso!');
       else mostrarMsg('erro', 'Erro ao salvar filtros');
     } catch {
       mostrarMsg('erro', 'Erro de conexão');
+    } finally {
+      setSalvandoFiltros(false);
     }
   }
 
@@ -644,9 +650,9 @@ export default function PerfilPage() {
               </button>
               <button
                 onClick={() => { setFormAberto(true); setEditando(null); setAbaImport(null); }}
-                className="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-xl transition-colors flex items-center gap-1.5 font-medium"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white p-2 rounded-xl transition-colors flex items-center justify-center" title="Adicionar Certificado"
               >
-                <PlusIcon className="h-3.5 w-3.5" /> Adicionar
+                <PlusIcon className="h-4 w-4" />
               </button>
             </div>
           </div>
@@ -685,9 +691,9 @@ export default function PerfilPage() {
                 <form onSubmit={addPref} className="flex gap-2 relative">
                   <input value={novaPref} onChange={e => setNovaPref(e.target.value)} disabled={salvandoPref} placeholder="Ex: React, Node.js, AWS..."
                     className="flex-1 text-sm border border-gray-200 dark:border-gray-600 rounded-xl px-3 py-2 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400 disabled:opacity-50" />
-                  <button type="submit" disabled={salvandoPref || !novaPref.trim()}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl px-4 py-2 transition-colors disabled:opacity-50">
-                    Adicionar
+                  <button type="submit" disabled={salvandoPref || !novaPref.trim()} title="Adicionar Preferência"
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center rounded-xl p-2.5 transition-colors disabled:opacity-50">
+                    <PlusIcon className="h-4 w-4" />
                   </button>
                 </form>
               </>
@@ -712,6 +718,7 @@ export default function PerfilPage() {
               Configure as opções que devem vir preenchidas automaticamente quando você abrir a tela inicial de Vagas.
             </p>
             {session?.user ? (
+              <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Localidade</label>
@@ -790,14 +797,21 @@ export default function PerfilPage() {
                         placeholder='Adicione palavras (ex: desenvolvedor)'
                         className="flex-1 text-sm border border-gray-200 dark:border-gray-600 rounded-xl px-3 py-2 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400" 
                       />
-                      <button type="submit" disabled={!novaBusca.trim()}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl px-4 py-2 transition-colors disabled:opacity-50">
-                        Adicionar
+                      <button type="submit" disabled={!novaBusca.trim()} title="Adicionar Palavra-chave"
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center rounded-xl p-2.5 transition-colors disabled:opacity-50">
+                        <PlusIcon className="h-4 w-4" />
                       </button>
                     </form>
                   </div>
                 </div>
               </div>
+              <div className="mt-4 flex justify-end">
+                <button onClick={salvarFiltrosPadrao} disabled={salvandoFiltros} title="Salvar Filtros Padrão"
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center rounded-xl p-2.5 transition-colors disabled:opacity-50">
+                  <CheckIcon className="h-5 w-5" />
+                </button>
+              </div>
+              </>
             ) : (
               <div className="p-3 rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-900/20 text-xs text-amber-800 dark:text-amber-200">
                 Faça login para configurar seus filtros padrão.
