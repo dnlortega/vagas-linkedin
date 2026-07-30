@@ -58,10 +58,19 @@ export default function Home() {
     if (session?.user) {
       fetch('/api/perfil').then(r => r.json()).then(data => {
         if (data.preferencias) setUserPreferencias(data.preferencias);
-        if (data.localidade) filtros.setFiltro(data.localidade);
+        if (data.filtrosPadrao) {
+          const fp = data.filtrosPadrao;
+          if (fp.filtro) filtros.setFiltro(fp.filtro);
+          if (fp.senioridade) filtros.setSenioridade(fp.senioridade);
+          if (fp.modalidade) filtros.setModalidade(fp.modalidade);
+          if (fp.modoTrabalho) filtros.setModoTrabalho(fp.modoTrabalho);
+          if (fp.periodo) filtros.setPeriodo(fp.periodo);
+          if (fp.fonteFiltro) filtros.setFonteFiltro(fp.fonteFiltro);
+        }
       }).catch(() => {});
     }
-  }, [session, filtros]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session]);
 
   const [darkMode, setDarkMode] = useState(false);
   const [silencioso, setSilencioso] = useState(false);

@@ -32,7 +32,7 @@ model Usuario {
   senha        String
   createdAt    DateTime      @default(now())
   preferencias String[]      @default([])
-  localidade   String        @default("todas")
+  filtrosPadrao Json?        @default("{}")
   candidaturas Candidatura[]
   vagasSalvas  VagaSalva[]
 }

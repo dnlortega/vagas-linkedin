@@ -13,14 +13,17 @@ export async function GET() {
   try {
     const user = await prisma.usuario.findUnique({
       where: { email: session.user.email },
-      select: { preferencias: true, localidade: true }
+      select: { preferencias: true, filtrosPadrao: true }
     });
 
     if (!user) {
       return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 });
     }
 
-    return NextResponse.json({ preferencias: user.preferencias || [], localidade: user.localidade || 'todas' });
+    return NextResponse.json({ 
+      preferencias: user.preferencias || [], 
+      filtrosPadrao: user.filtrosPadrao || {} 
+    });
   } catch (error) {
     console.error('[API Perfil] Erro no GET:', error);
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
@@ -38,7 +41,7 @@ export async function PUT(req) {
     const body = await req.json();
     const data = {};
     if (body.preferencias !== undefined) data.preferencias = Array.isArray(body.preferencias) ? body.preferencias : [];
-    if (body.localidade !== undefined) data.localidade = body.localidade;
+    if (body.filtrosPadrao !== undefined) data.filtrosPadrao = body.filtrosPadrao;
 
     const updatedUser = await prisma.usuario.update({
       where: { email: session.user.email },

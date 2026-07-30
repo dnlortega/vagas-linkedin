@@ -379,7 +379,7 @@ export default function PerfilPage() {
   
   const { data: session } = useSession();
   const [preferencias, setPreferencias] = useState([]);
-  const [localidade, setLocalidade] = useState('todas');
+  const [filtrosPadrao, setFiltrosPadrao] = useState({});
   const [novaPref, setNovaPref] = useState('');
   const [salvandoPref, setSalvandoPref] = useState(false);
 
@@ -387,7 +387,7 @@ export default function PerfilPage() {
     if (session?.user) {
       fetch('/api/perfil').then(r => r.json()).then(data => {
         if (data.preferencias) setPreferencias(data.preferencias);
-        if (data.localidade) setLocalidade(data.localidade);
+        if (data.filtrosPadrao) setFiltrosPadrao(data.filtrosPadrao);
       }).catch(e => console.error(e));
     }
   }, [session]);
@@ -411,17 +411,18 @@ export default function PerfilPage() {
     }
   }
 
-  async function salvarLocalidade(novaLoc) {
+  async function atualizarFiltroPadrao(chave, valor) {
     if (!session?.user) return mostrarMsg('erro', 'Faça login para salvar configurações');
-    setLocalidade(novaLoc);
+    const novosFiltros = { ...filtrosPadrao, [chave]: valor };
+    setFiltrosPadrao(novosFiltros);
     try {
       const res = await fetch('/api/perfil', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ localidade: novaLoc })
+        body: JSON.stringify({ filtrosPadrao: novosFiltros })
       });
-      if (res.ok) mostrarMsg('ok', 'Localidade principal atualizada!');
-      else mostrarMsg('erro', 'Erro ao salvar localidade');
+      if (res.ok) mostrarMsg('ok', 'Filtros padrão atualizados!');
+      else mostrarMsg('erro', 'Erro ao salvar filtros');
     } catch {
       mostrarMsg('erro', 'Erro de conexão');
     }
@@ -684,28 +685,78 @@ export default function PerfilPage() {
             )}
           </div>
           
-          {/* Seção de Localidade Principal */}
+          {/* Seção de Filtros Padrão */}
           <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-5 space-y-4">
             <h2 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              📍 Localidade Principal
+              ⚙️ Filtros Padrão de Busca
             </h2>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Escolha qual filtro de região deve ser carregado por padrão na tela inicial de Vagas.
+              Configure as opções que devem vir preenchidas automaticamente quando você abrir a tela inicial de Vagas.
             </p>
             {session?.user ? (
-              <select
-                value={localidade}
-                onChange={e => salvarLocalidade(e.target.value)}
-                className="w-full text-sm border border-gray-200 dark:border-gray-600 rounded-xl px-3 py-2 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              >
-                <option value="todas">Todas as Vagas</option>
-                <option value="bauru">Bauru, SP</option>
-                <option value="regiao">Bauru e Região</option>
-                <option value="remoto">Apenas Vagas Remotas</option>
-              </select>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Localidade</label>
+                  <select value={filtrosPadrao.filtro || 'todas'} onChange={e => atualizarFiltroPadrao('filtro', e.target.value)} className="w-full text-sm border border-gray-200 dark:border-gray-600 rounded-xl px-3 py-2 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                    <option value="todas">Todas as Vagas</option>
+                    <option value="bauru">Bauru, SP</option>
+                    <option value="regiao">Bauru e Região</option>
+                    <option value="remoto">Apenas Vagas Remotas</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Senioridade</label>
+                  <select value={filtrosPadrao.senioridade || 'todas'} onChange={e => atualizarFiltroPadrao('senioridade', e.target.value)} className="w-full text-sm border border-gray-200 dark:border-gray-600 rounded-xl px-3 py-2 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                    <option value="todas">Todas as Níveis</option>
+                    <option value="junior">Júnior / Estágio</option>
+                    <option value="pleno">Pleno</option>
+                    <option value="senior">Sênior / Especialista</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Modelo de Contratação</label>
+                  <select value={filtrosPadrao.modalidade || ''} onChange={e => atualizarFiltroPadrao('modalidade', e.target.value || null)} className="w-full text-sm border border-gray-200 dark:border-gray-600 rounded-xl px-3 py-2 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                    <option value="">Qualquer Modelo</option>
+                    <option value="clt">CLT</option>
+                    <option value="pj">PJ</option>
+                    <option value="estagio">Estágio</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Modo de Trabalho</label>
+                  <select value={filtrosPadrao.modoTrabalho || ''} onChange={e => atualizarFiltroPadrao('modoTrabalho', e.target.value || null)} className="w-full text-sm border border-gray-200 dark:border-gray-600 rounded-xl px-3 py-2 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                    <option value="">Qualquer Modo</option>
+                    <option value="remoto">100% Remoto</option>
+                    <option value="hibrido">Híbrido</option>
+                    <option value="presencial">Presencial</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Período de Busca</label>
+                  <select value={filtrosPadrao.periodo || '7d'} onChange={e => atualizarFiltroPadrao('periodo', e.target.value)} className="w-full text-sm border border-gray-200 dark:border-gray-600 rounded-xl px-3 py-2 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                    <option value="24h">Últimas 24 horas</option>
+                    <option value="3d">Últimos 3 dias</option>
+                    <option value="7d">Últimos 7 dias</option>
+                    <option value="15d">Últimos 15 dias</option>
+                    <option value="30d">Últimos 30 dias</option>
+                    <option value="todos">Qualquer data</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Fonte da Vaga</label>
+                  <select value={filtrosPadrao.fonteFiltro || 'todas'} onChange={e => atualizarFiltroPadrao('fonteFiltro', e.target.value)} className="w-full text-sm border border-gray-200 dark:border-gray-600 rounded-xl px-3 py-2 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                    <option value="todas">Todas as Fontes</option>
+                    <option value="linkedin">LinkedIn</option>
+                    <option value="vagasbauru">VagasBauru</option>
+                    <option value="indeed">Indeed</option>
+                    <option value="vagascom">Vagas.com</option>
+                    <option value="catho">Catho</option>
+                  </select>
+                </div>
+              </div>
             ) : (
               <div className="p-3 rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-900/20 text-xs text-amber-800 dark:text-amber-200">
-                Faça login para configurar sua localidade principal.
+                Faça login para configurar seus filtros padrão.
               </div>
             )}
           </div>
