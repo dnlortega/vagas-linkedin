@@ -355,7 +355,8 @@ export default function Candidaturas() {
                   className={`flex flex-col gap-3 transition-all duration-200 ${isDropTarget ? 'scale-[1.02]' : ''}`}
                   onDragOver={e => { e.preventDefault(); setDragOverCol(col.id); }}
                   onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget)) setDragOverCol(null); }}
-                  onDrop={() => {
+                  onDrop={e => {
+                    e.preventDefault();
                     if (dragLinkId) update(dragLinkId, { status: col.id });
                     setDragLinkId(null);
                     setDragOverCol(null);

@@ -54,12 +54,15 @@ export default function Home() {
   const filtros = useVagasFiltros();
 
   const [userPreferencias, setUserPreferencias] = useState([]);
+  const [filtrosSalvos, setFiltrosSalvos] = useState(null);
+
   useEffect(() => {
     if (session?.user) {
       fetch('/api/perfil').then(r => r.json()).then(data => {
         if (data.preferencias) setUserPreferencias(data.preferencias);
         if (data.filtrosPadrao) {
           const fp = data.filtrosPadrao;
+          setFiltrosSalvos(fp);
           if (fp.filtro) filtros.setFiltro(fp.filtro);
           if (fp.senioridade) filtros.setSenioridade(fp.senioridade);
           if (fp.modalidade) filtros.setModalidade(fp.modalidade);
@@ -206,7 +209,7 @@ export default function Home() {
 
   const vagasFiltradas = useMemo(() => estado.vagas.filter(v => {
     if (estado.ocultas.has(v.link)) return false;
-    const tipo = tipoLocalidade(v.local);
+    const tipo = tipoLocalidade(v.local, filtrosSalvos?.cidade);
     const matchLoc =
       filtros.filtro === 'todas'      ? true :
       filtros.filtro === 'favoritas'  ? estado.favoritas.has(v.link) :
@@ -282,182 +285,6 @@ export default function Home() {
     setSelectedVaga(vaga);
   }
 
-  const renderFiltrosSidebar = () => (
-    <div className="flex flex-col gap-5 py-2 px-1">
-      {/* Busca */}
-      <div className="relative">
-        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-        <Input
-          ref={searchRef}
-          placeholder="Buscar vagas, empresas..."
-          value={filtros.busca}
-          onChange={e => filtros.setBusca(e.target.value)}
-          className="pl-9 h-10 w-full bg-white dark:bg-slate-900"
-        />
-        {filtros.busca && (
-          <button onClick={() => filtros.setBusca('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700">
-            <XIcon className="h-3.5 w-3.5" />
-          </button>
-        )}
-      </div>
-
-      {/* Localidade */}
-      <div className="space-y-3">
-        <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wide">📍 Localidade</h3>
-        <div className="grid grid-cols-2 gap-2">
-          {[
-            { id: 'bauru',  label: 'Bauru', fn: v => tipoLocalidade(v.local) === 'bauru' },
-            { id: 'regiao', label: 'Região', fn: v => ['bauru','regiao'].includes(tipoLocalidade(v.local)) },
-            { id: 'remoto', label: 'Remoto', fn: v => tipoLocalidade(v.local) === 'remoto' },
-            { id: 'todas',  label: 'Todas',  fn: _ => true },
-          ].map(f => (
-            <Button
-              key={f.id}
-              variant={filtros.filtro === f.id ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => filtros.setFiltro(f.id)}
-              className="justify-between h-9 px-3 text-xs w-full shadow-sm"
-            >
-              {f.label}
-              <span className={`text-[10px] ml-1 ${filtros.filtro === f.id ? 'opacity-80' : 'text-slate-400'}`}>
-                {contar(f.fn)}
-              </span>
-            </Button>
-          ))}
-        </div>
-      </div>
-
-      {/* Nível */}
-      <div className="space-y-3">
-        <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wide">📈 Nível</h3>
-        <div className="flex flex-wrap gap-2">
-          {[{id:'junior',label:'Júnior'},{id:'pleno',label:'Pleno'},{id:'senior',label:'Sênior'}].map(s => (
-            <Button
-              key={s.id}
-              variant={filtros.senioridade === s.id ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => filtros.setSenioridade(p => p === s.id ? 'todas' : s.id)}
-              className={`h-8 text-xs rounded-full bg-white shadow-sm ${filtros.senioridade === s.id ? 'bg-violet-600 hover:bg-violet-700 text-white border-violet-600' : ''}`}
-            >
-              {s.label}
-            </Button>
-          ))}
-        </div>
-      </div>
-
-      {/* Regime e Contrato */}
-      <div className="space-y-3">
-        <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wide">🏢 Regime & Contrato</h3>
-        <div className="flex flex-wrap gap-2">
-          {[{id:'presencial',label:'Presencial', type:'modoTrabalho'},{id:'hibrido',label:'Híbrido', type:'modoTrabalho'},{id:'remoto',label:'Remoto', type:'modoTrabalho'}, {id:'clt',label:'CLT', type:'modalidade'},{id:'pj',label:'PJ', type:'modalidade'},{id:'estagio',label:'Estágio', type:'modalidade'}].map(m => (
-            <Button
-              key={m.id}
-              variant={(m.type === 'modoTrabalho' ? filtros.modoTrabalho : filtros.modalidade) === m.id ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => {
-                if(m.type === 'modoTrabalho') filtros.setModoTrabalho(p => p === m.id ? null : m.id);
-                else filtros.setModalidade(p => p === m.id ? null : m.id);
-              }}
-              className="h-8 text-xs rounded-full bg-white shadow-sm"
-            >
-              {m.label}
-            </Button>
-          ))}
-        </div>
-      </div>
-
-      {/* Fonte e Período (Dropdowns) */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-2">
-          <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wide">🌐 Fonte</h3>
-          <Select value={filtros.fonteFiltro} onValueChange={filtros.setFonteFiltro}>
-            <SelectTrigger className="w-full h-9 text-xs bg-white shadow-sm">
-              <SelectValue placeholder="Todas" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todas">Todas</SelectItem>
-              {Object.entries(FONTE_CONFIG).map(([k, v]) => (
-                <SelectItem key={k} value={k}>{v.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        
-        <div className="space-y-2">
-          <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wide">⏳ Período</h3>
-          <Select value={filtros.periodo} onValueChange={filtros.setPeriodo}>
-            <SelectTrigger className="w-full h-9 text-xs bg-white shadow-sm">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {PERIODOS.map(p => <SelectItem key={p.id} value={p.id} className="text-xs">{p.label}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      {/* Tecnologias */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wide">💻 Tecnologias</h3>
-          {filtros.techFiltro && (
-            <button onClick={() => filtros.setTechFiltro(null)} className="text-[10px] text-red-500 hover:underline">
-              Limpar
-            </button>
-          )}
-        </div>
-        <div className="flex flex-wrap gap-1.5">
-          {TECHS.map(t => {
-            const n = vagasFiltradas.filter(v => t.regex.test(v.titulo)).length;
-            if (n === 0 && !estado.loading) return null;
-            const on = filtros.techFiltro === t.label;
-            return (
-              <Badge 
-                key={t.label} 
-                variant={on ? 'default' : 'outline'}
-                onClick={() => filtros.setTechFiltro(p => p === t.label ? null : t.label)}
-                className={`cursor-pointer transition-all border shadow-sm ${on ? 'bg-indigo-600 text-white' : 'bg-white hover:bg-slate-50 text-slate-700'}`}
-              >
-                {t.label} {!estado.loading && <span className="ml-1 opacity-50 text-[9px]">{n}</span>}
-              </Badge>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Preferências */}
-      <div className="space-y-3">
-        <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wide">⚙️ Preferências</h3>
-        <div className="flex flex-col gap-2">
-          {[
-            { label: '✨ Apenas Novas',   active: filtros.somenteNovas,  fn: () => filtros.setSomenteNovas(v => !v) },
-            { label: '👁 Não Visitadas',   active: filtros.naoVisitadas,  fn: () => filtros.setNaoVisitadas(v => !v) },
-            { label: '❤️ Fixar Favoritas', active: filtros.pinarFavoritas, fn: () => filtros.setPinarFavoritas(v => !v) },
-          ].map(p => (
-            <Button
-              key={p.label}
-              variant={p.active ? 'secondary' : 'outline'}
-              onClick={p.fn}
-              className={`justify-start h-9 text-xs font-medium bg-white shadow-sm ${p.active ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : ''}`}
-            >
-              {p.label}
-            </Button>
-          ))}
-        </div>
-      </div>
-
-      {/* Limpar filtros */}
-      {(filtros.filtro !== 'bauru' || filtros.senioridade !== 'todas' || filtros.modalidade || filtros.techFiltro || filtros.modoTrabalho || filtros.busca || filtros.periodo !== '24h') && (
-        <Button 
-          variant="destructive" 
-          onClick={filtros.limparFiltros}
-          className="w-full mt-2 h-9 text-xs shadow-sm"
-        >
-          <FilterXIcon className="h-4 w-4 mr-2" /> Limpar todos os filtros
-        </Button>
-      )}
-    </div>
-  );
 
   return (
     <div className={`min-h-screen antialiased transition-colors ${darkMode ? 'dark bg-[#0d0d0d] text-white' : 'bg-[#f4f4f5] text-slate-900'}`}>
@@ -565,28 +392,12 @@ export default function Home() {
             className="w-full h-9 pl-9 pr-4 text-sm bg-white dark:bg-white/10 border border-slate-200 dark:border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all"
           />
         </div>
-        <Sheet>
-          <SheetTrigger className="h-9 w-9 flex items-center justify-center rounded-xl bg-white dark:bg-white/10 border border-slate-200 dark:border-white/20 text-slate-600 dark:text-slate-300 shrink-0">
-            <SlidersHorizontalIcon className="h-4 w-4" />
-          </SheetTrigger>
-          <SheetContent side="left" className="w-[310px] p-5 overflow-y-auto bg-white dark:bg-[#111] dark:border-white/10">
-            <SheetHeader className="mb-5">
-              <SheetTitle className="font-black text-base text-left">Filtros</SheetTitle>
-            </SheetHeader>
-            {renderFiltrosSidebar()}
-          </SheetContent>
-        </Sheet>
-
       </div>
 
       {/* ── Layout Principal ────────────────────────────── */}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-5 pb-24 md:pb-8">
         <div className="flex gap-6 items-start">
-          <aside className="hidden lg:flex shrink-0 w-64 flex-col gap-4 sticky top-20">
-            <div className="bg-white dark:bg-[#111] rounded-2xl border border-black/5 dark:border-white/10 p-4 shadow-sm max-h-[calc(100vh-6rem)] overflow-y-auto">
-              {renderFiltrosSidebar()}
-            </div>
-          </aside>
+
 
           <div className="flex-1 min-w-0 flex flex-col gap-4">
             <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-700 text-white p-5 sm:p-6 shadow-lg shadow-indigo-500/20">

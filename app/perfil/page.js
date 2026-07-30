@@ -721,13 +721,17 @@ export default function PerfilPage() {
               <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Localidade</label>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Localidade (Filtro)</label>
                   <select value={filtrosPadrao.filtro || 'todas'} onChange={e => atualizarFiltroPadrao('filtro', e.target.value)} className="w-full text-sm border border-gray-200 dark:border-gray-600 rounded-xl px-3 py-2 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400">
                     <option value="todas">Todas as Vagas</option>
-                    <option value="bauru">Bauru, SP</option>
-                    <option value="regiao">Bauru e Região</option>
+                    <option value="bauru">Minha Cidade</option>
+                    <option value="regiao">Minha Região</option>
                     <option value="remoto">Apenas Vagas Remotas</option>
                   </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Cidade Base do Perfil</label>
+                  <input type="text" value={filtrosPadrao.cidade || ''} onChange={e => atualizarFiltroPadrao('cidade', e.target.value)} placeholder="Ex: Bauru" className="w-full text-sm border border-gray-200 dark:border-gray-600 rounded-xl px-3 py-2 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Senioridade</label>
