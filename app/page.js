@@ -66,6 +66,7 @@ export default function Home() {
           if (fp.modoTrabalho) filtros.setModoTrabalho(fp.modoTrabalho);
           if (fp.periodo) filtros.setPeriodo(fp.periodo);
           if (fp.fonteFiltro) filtros.setFonteFiltro(fp.fonteFiltro);
+          if (fp.busca) filtros.setBusca(fp.busca);
         }
       }).catch(() => {});
     }

@@ -753,6 +753,16 @@ export default function PerfilPage() {
                     <option value="catho">Catho</option>
                   </select>
                 </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Palavra-chave (Busca)</label>
+                  <input 
+                    type="text" 
+                    value={filtrosPadrao.busca || ''} 
+                    onChange={e => atualizarFiltroPadrao('busca', e.target.value)} 
+                    placeholder='Ex: "desenvolvedor"'
+                    className="w-full text-sm border border-gray-200 dark:border-gray-600 rounded-xl px-3 py-2 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400" 
+                  />
+                </div>
               </div>
             ) : (
               <div className="p-3 rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-900/20 text-xs text-amber-800 dark:text-amber-200">
