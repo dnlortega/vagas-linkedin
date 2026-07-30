@@ -51,14 +51,17 @@ export default function Home() {
   const router = useRouter();
   const { data: session } = useSession();
 
+  const filtros = useVagasFiltros();
+
   const [userPreferencias, setUserPreferencias] = useState([]);
   useEffect(() => {
     if (session?.user) {
       fetch('/api/perfil').then(r => r.json()).then(data => {
         if (data.preferencias) setUserPreferencias(data.preferencias);
+        if (data.localidade) filtros.setFiltro(data.localidade);
       }).catch(() => {});
     }
-  }, [session]);
+  }, [session, filtros]);
 
   const [darkMode, setDarkMode] = useState(false);
   const [silencioso, setSilencioso] = useState(false);
@@ -66,8 +69,6 @@ export default function Home() {
   const [linkedinStatus, setLinkedinStatus] = useState('loading');
   const [selectedVaga, setSelectedVaga] = useState(null);
 
-  // Custom Hooks para Estado
-  const filtros = useVagasFiltros();
   const estado = useVagasEstado({ 
     silencioso, 
     setFiltro: filtros.setFiltro, 

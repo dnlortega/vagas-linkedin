@@ -379,6 +379,7 @@ export default function PerfilPage() {
   
   const { data: session } = useSession();
   const [preferencias, setPreferencias] = useState([]);
+  const [localidade, setLocalidade] = useState('todas');
   const [novaPref, setNovaPref] = useState('');
   const [salvandoPref, setSalvandoPref] = useState(false);
 
@@ -386,6 +387,7 @@ export default function PerfilPage() {
     if (session?.user) {
       fetch('/api/perfil').then(r => r.json()).then(data => {
         if (data.preferencias) setPreferencias(data.preferencias);
+        if (data.localidade) setLocalidade(data.localidade);
       }).catch(e => console.error(e));
     }
   }, [session]);
@@ -406,6 +408,22 @@ export default function PerfilPage() {
       mostrarMsg('erro', 'Erro de conexão');
     } finally {
       setSalvandoPref(false);
+    }
+  }
+
+  async function salvarLocalidade(novaLoc) {
+    if (!session?.user) return mostrarMsg('erro', 'Faça login para salvar configurações');
+    setLocalidade(novaLoc);
+    try {
+      const res = await fetch('/api/perfil', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ localidade: novaLoc })
+      });
+      if (res.ok) mostrarMsg('ok', 'Localidade principal atualizada!');
+      else mostrarMsg('erro', 'Erro ao salvar localidade');
+    } catch {
+      mostrarMsg('erro', 'Erro de conexão');
     }
   }
 
@@ -662,6 +680,32 @@ export default function PerfilPage() {
                 <Link href="/login" className="whitespace-nowrap px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold rounded-xl transition-colors">
                   Fazer Login Agora
                 </Link>
+              </div>
+            )}
+          </div>
+          
+          {/* Seção de Localidade Principal */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-5 space-y-4">
+            <h2 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              📍 Localidade Principal
+            </h2>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Escolha qual filtro de região deve ser carregado por padrão na tela inicial de Vagas.
+            </p>
+            {session?.user ? (
+              <select
+                value={localidade}
+                onChange={e => salvarLocalidade(e.target.value)}
+                className="w-full text-sm border border-gray-200 dark:border-gray-600 rounded-xl px-3 py-2 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              >
+                <option value="todas">Todas as Vagas</option>
+                <option value="bauru">Bauru, SP</option>
+                <option value="regiao">Bauru e Região</option>
+                <option value="remoto">Apenas Vagas Remotas</option>
+              </select>
+            ) : (
+              <div className="p-3 rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-900/20 text-xs text-amber-800 dark:text-amber-200">
+                Faça login para configurar sua localidade principal.
               </div>
             )}
           </div>

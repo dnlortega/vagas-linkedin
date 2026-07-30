@@ -21,6 +21,8 @@ model Vaga {
   competencias String[] @default([])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([createdAt(sort: Desc)])
 }
 
 model Usuario {
@@ -30,6 +32,7 @@ model Usuario {
   senha        String
   createdAt    DateTime      @default(now())
   preferencias String[]      @default([])
+  localidade   String        @default("todas")
   candidaturas Candidatura[]
   vagasSalvas  VagaSalva[]
 }
@@ -54,6 +57,7 @@ model Candidatura {
   updatedAt    DateTime @updatedAt
 
   @@unique([usuarioId, vagaLink])
+  @@index([usuarioId])
 }
 
 model VagaSalva {
@@ -66,4 +70,5 @@ model VagaSalva {
   createdAt DateTime @default(now())
 
   @@unique([usuarioId, vagaLink])
+  @@index([usuarioId])
 }

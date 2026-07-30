@@ -672,33 +672,35 @@ ${listaTitulos}`;
       }
     }
 
-    // 3. Salvar ou atualizar as vagas encontradas
-    for (const v of unicas) {
-      if (!v.link) continue;
-      
-      const isTIPersist = v.isTI !== undefined ? v.isTI : (vagasExistentesMap.has(v.link) ? vagasExistentesMap.get(v.link) : true);
+    // 3. Salvar ou atualizar as vagas encontradas em lotes
+    const validas = unicas.filter(v => v.link);
+    for (let i = 0; i < validas.length; i += 50) {
+      const lote = validas.slice(i, i + 50);
+      await Promise.all(lote.map(v => {
+        const isTIPersist = v.isTI !== undefined ? v.isTI : (vagasExistentesMap.has(v.link) ? vagasExistentesMap.get(v.link) : true);
 
-      await prisma.vaga.upsert({
-        where: { link: v.link },
-        update: {
-          titulo: v.titulo,
-          empresa: v.empresa,
-          local: v.local,
-          data: v.data || null,
-          ...(v.competencias ? { competencias: v.competencias } : {})
-        },
-        create: {
-          titulo: v.titulo,
-          empresa: v.empresa,
-          local: v.local,
-          data: v.data || null,
-          link: v.link,
-          termo: v.termo || 'geral',
-          fonte: v.fonte,
-          isTI: isTIPersist,
-          competencias: v.competencias || []
-        },
-      });
+        return prisma.vaga.upsert({
+          where: { link: v.link },
+          update: {
+            titulo: v.titulo,
+            empresa: v.empresa,
+            local: v.local,
+            data: v.data || null,
+            ...(v.competencias ? { competencias: v.competencias } : {})
+          },
+          create: {
+            titulo: v.titulo,
+            empresa: v.empresa,
+            local: v.local,
+            data: v.data || null,
+            link: v.link,
+            termo: v.termo || 'geral',
+            fonte: v.fonte,
+            isTI: isTIPersist,
+            competencias: v.competencias || []
+          },
+        });
+      }));
     }
   } catch (err) {
     console.error('[db] Erro ao gravar vagas no banco:', err.message);
