@@ -172,9 +172,13 @@ export default function VagaModal({ vaga, vagas = [], onClose, onOpen, onPrev, o
       const kb = JSON.parse(localStorage.getItem(LS_KANBAN) || '{}');
       if (!kb[vaga.link]) {
         kb[vaga.link] = {
-          link: vaga.link, titulo: vaga.titulo, empresa: vaga.empresa,
-          local: vaga.local, data: vaga.data, status: 'salvo', fonte: vaga.fonte,
+          vagaLink: vaga.link,
+          titulo: vaga?.titulo,
+          empresa: vaga?.empresa,
+          local: vaga?.local,
+          fonte: vaga?.fonte,
           adicionadoEm: new Date().toISOString(),
+          status: 'salvo'
         };
         localStorage.setItem(LS_KANBAN, JSON.stringify(kb));
         setNoKanban(true);

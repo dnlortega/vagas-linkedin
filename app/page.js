@@ -306,7 +306,7 @@ export default function Home() {
               variant={filtros.filtro === f.id ? 'default' : 'outline'}
               size="sm"
               onClick={() => filtros.setFiltro(f.id)}
-              className="justify-between h-9 px-3 text-xs w-full bg-white dark:bg-slate-900 border-slate-200 shadow-sm"
+              className="justify-between h-9 px-3 text-xs w-full shadow-sm"
             >
               {f.label}
               <span className={`text-[10px] ml-1 ${filtros.filtro === f.id ? 'opacity-80' : 'text-slate-400'}`}>
@@ -781,7 +781,7 @@ export default function Home() {
       </div>
 
       <footer className="border-t border-black/5 dark:border-white/10 py-8 text-center text-xs text-slate-400 dark:text-slate-600">
-        Vagas de TI em Bauru · Atualização automática a cada 10 min ·{' '}
+        Vagas de TI em Bauru ·{' '}
         <a href="https://www.linkedin.com/in/daniel-op/" target="_blank" rel="noopener noreferrer"
           className="hover:text-indigo-500 transition-colors font-medium">
           Daniel Ortega Pereira

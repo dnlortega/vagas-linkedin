@@ -156,18 +156,28 @@ export default function Candidaturas() {
         const localData = JSON.parse(localStorage.getItem(LS_KANBAN) || '{}');
         if (Object.keys(localData).length > 0) {
            toast.info('Sincronizando dados locais para a nuvem...');
+           
+           const payload = Object.entries(localData).map(([link, v]) => ({
+             ...v,
+             vagaLink: v.vagaLink || v.link || link
+           }));
+
            await fetch('/api/kanban', {
              method: 'POST',
              headers: { 'Content-Type': 'application/json' },
-             body: JSON.stringify(Object.values(localData))
+             body: JSON.stringify(payload)
            });
-           localStorage.removeItem(LS_KANBAN);
            
            // Recarrega apos sync
            const res2 = await fetch('/api/kanban');
-           if (res2.ok) setKanban(await res2.json());
+           if (res2.ok) {
+             const serverData = await res2.json();
+             setKanban(serverData);
+             localStorage.setItem(LS_KANBAN, JSON.stringify(serverData));
+           }
         } else {
            setKanban(data);
+           localStorage.setItem(LS_KANBAN, JSON.stringify(data));
         }
       }
     } catch (e) {
@@ -178,6 +188,7 @@ export default function Candidaturas() {
 
   function save(next) {
     setKanban(next);
+    localStorage.setItem(LS_KANBAN, JSON.stringify(next));
   }
 
   async function update(link, patch) {
