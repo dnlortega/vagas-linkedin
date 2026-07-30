@@ -381,6 +381,7 @@ export default function PerfilPage() {
   const [preferencias, setPreferencias] = useState([]);
   const [filtrosPadrao, setFiltrosPadrao] = useState({});
   const [novaPref, setNovaPref] = useState('');
+  const [novaBusca, setNovaBusca] = useState('');
   const [salvandoPref, setSalvandoPref] = useState(false);
 
   useEffect(() => {
@@ -405,10 +406,27 @@ export default function PerfilPage() {
       if (res.ok) mostrarMsg('ok', 'Preferências salvas com sucesso!');
       else mostrarMsg('erro', 'Erro ao salvar preferências');
     } catch {
-      mostrarMsg('erro', 'Erro de conexão');
+      mostrarMsg('erro', 'Erro de conexão ao salvar preferências');
     } finally {
       setSalvandoPref(false);
     }
+  }
+
+  function addBusca(e) {
+    e.preventDefault();
+    if (!novaBusca.trim()) return;
+    const word = novaBusca.trim();
+    const atuais = (filtrosPadrao.busca || '').split(',').map(x => x.trim()).filter(Boolean);
+    if (!atuais.includes(word)) {
+      atualizarFiltroPadrao('busca', [...atuais, word].join(', '));
+    }
+    setNovaBusca('');
+  }
+
+  function remBusca(word) {
+    const atuais = (filtrosPadrao.busca || '').split(',').map(x => x.trim()).filter(Boolean);
+    const novos = atuais.filter(w => w !== word);
+    atualizarFiltroPadrao('busca', novos.join(', '));
   }
 
   async function atualizarFiltroPadrao(chave, valor) {
@@ -753,15 +771,32 @@ export default function PerfilPage() {
                     <option value="catho">Catho</option>
                   </select>
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Palavra-chave (Busca)</label>
-                  <input 
-                    type="text" 
-                    value={filtrosPadrao.busca || ''} 
-                    onChange={e => atualizarFiltroPadrao('busca', e.target.value)} 
-                    placeholder='Ex: desenvolvedor, react'
-                    className="w-full text-sm border border-gray-200 dark:border-gray-600 rounded-xl px-3 py-2 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400" 
-                  />
+                </div>
+                <div className="col-span-1 sm:col-span-2 lg:col-span-3">
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Palavras-chave (Busca)</label>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex flex-wrap gap-2">
+                      {((filtrosPadrao.busca || '').split(',').map(x => x.trim()).filter(Boolean)).map((word, idx) => (
+                        <span key={idx} className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-xs font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1.5 border border-indigo-200 dark:border-indigo-800/50">
+                          <SearchIcon className="h-3 w-3" /> {word}
+                          <button type="button" onClick={() => remBusca(word)} className="hover:text-rose-500 transition-colors ml-1"><XIcon className="h-3 w-3" /></button>
+                        </span>
+                      ))}
+                    </div>
+                    <form onSubmit={addBusca} className="flex gap-2">
+                      <input 
+                        type="text" 
+                        value={novaBusca} 
+                        onChange={e => setNovaBusca(e.target.value)} 
+                        placeholder='Adicione palavras (ex: desenvolvedor)'
+                        className="flex-1 text-sm border border-gray-200 dark:border-gray-600 rounded-xl px-3 py-2 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400" 
+                      />
+                      <button type="submit" disabled={!novaBusca.trim()}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl px-4 py-2 transition-colors disabled:opacity-50">
+                        Adicionar
+                      </button>
+                    </form>
+                  </div>
                 </div>
               </div>
             ) : (
