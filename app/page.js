@@ -55,6 +55,7 @@ export default function Home() {
 
   const [userPreferencias, setUserPreferencias] = useState([]);
   const [filtrosSalvos, setFiltrosSalvos] = useState(null);
+  const [mostrarStatusFontes, setMostrarStatusFontes] = useState(true);
 
   useEffect(() => {
     if (session?.user) {
@@ -63,6 +64,7 @@ export default function Home() {
         if (data.filtrosPadrao) {
           const fp = data.filtrosPadrao;
           setFiltrosSalvos(fp);
+          setMostrarStatusFontes(fp.mostrarStatusFontes !== false);
           if (fp.senioridade) filtros.setSenioridade(fp.senioridade);
           if (fp.modalidade) filtros.setModalidade(fp.modalidade);
           if (fp.modoTrabalho) filtros.setModoTrabalho(fp.modoTrabalho);
@@ -416,6 +418,43 @@ export default function Home() {
                 </div>
               </div>
             </div>
+            {mostrarStatusFontes && (
+              <div className="flex flex-wrap gap-2" aria-label="Status das fontes de vagas">
+                {[
+                  ['linkedin', 'LinkedIn'],
+                  ['vagasbauru', 'VagasBauru'],
+                  ['indeed', 'Indeed'],
+                  ['vagascom', 'Vagas.com'],
+                  ['ciee', 'CIEE'],
+                  ['catho', 'Catho'],
+                  ['empregoscom', 'Empregos.com.br'],
+                ].map(([fonte, nome]) => {
+                  const resultado = estado.fonteStatus[fonte];
+                  const status = resultado?.status || 'pending';
+                  const estilos = {
+                    success: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800',
+                    error: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800',
+                    partial: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800',
+                    cached: 'bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-700',
+                    pending: 'bg-slate-50 text-slate-500 border-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:border-slate-700',
+                  };
+                  const descricoes = {
+                    success: resultado?.quantidade ? `${resultado.quantidade} vagas` : 'Consultada · sem vagas',
+                    error: 'Falha na consulta',
+                    partial: `Consulta parcial · ${resultado?.quantidade || 0} vagas`,
+                    cached: `Em cache · ${resultado?.quantidade || 0} vagas`,
+                    pending: 'Aguardando consulta',
+                  };
+                  return (
+                    <span key={fonte} title={resultado?.erro || undefined}
+                      className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] font-medium ${estilos[status] || estilos.pending}`}>
+                      <span className={`h-1.5 w-1.5 rounded-full ${status === 'success' ? 'bg-emerald-500' : status === 'error' ? 'bg-rose-500' : status === 'partial' ? 'bg-amber-500' : 'bg-slate-400'}`} />
+                      {nome}: {descricoes[status] || descricoes.pending}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
 
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <div className="flex items-center gap-2 flex-wrap">

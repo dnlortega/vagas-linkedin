@@ -13,6 +13,7 @@ Agregador de vagas de emprego para Bauru (SP) e região, incluindo oportunidades
 - **Filtros de modalidade**: CLT, PJ, Estágio, Trainee
 - **Filtros de modo de trabalho**: Presencial, Híbrido, Remoto (detecção automática)
 - **Filtro por fonte** de cada plataforma
+- **Status por fonte** — mostra consultas concluídas, fontes sem vagas e falhas; pode ser ativado ou desativado nas preferências do perfil
 - **Filtro por tecnologia** — pills clicáveis com top 10 techs detectadas
 - **Filtros rápidos**: Somente Novas, Não Visitadas, Favoritas
 - **Período**: 24h / 3, 7, 15, 30 ou 90 dias / Todas as datas, selecionável no catálogo (todas as datas ficam selecionadas por padrão)

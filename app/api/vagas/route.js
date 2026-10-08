@@ -19,6 +19,12 @@ const CIDADES = ['bauru', 'guarulhos', 'são paulo', 'sp'];
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+function registrarFalhaFonte(falhas, fonte, err) {
+  if (!falhas[fonte]) falhas[fonte] = [];
+  falhas[fonte].push(err.message || 'Erro desconhecido');
+  console.error(`[${fonte}]`, err.message);
+}
+
 function naRegiao(local) {
   const l = (local || '').toLowerCase();
   return CIDADES.some(c => l.includes(c)) || l.includes('remot') || l.includes('híbrid') || l.includes('hibrido');
@@ -63,7 +69,7 @@ async function linkedinPagina(keyword, start) {
   return vagas;
 }
 
-async function fetchLinkedIn() {
+async function fetchLinkedIn(falhasFontes) {
   const todas = [];
   for (const termo of TERMOS_LINKEDIN) {
     try {
@@ -85,7 +91,7 @@ async function fetchLinkedIn() {
         }
       }
     } catch (err) {
-      console.error(`[linkedin] "${termo}":`, err.message);
+      registrarFalhaFonte(falhasFontes, 'linkedin', err);
     }
     await sleep(400);
   }
@@ -94,7 +100,7 @@ async function fetchLinkedIn() {
 
 // ─── VagasBauru ──────────────────────────────────────────────────────────────
 
-async function fetchVagasBauru() {
+async function fetchVagasBauru(falhasFontes = {}) {
   const todas = [];
   try {
     const resp = await axios.get('https://vagasbauru.com.br/api/vagas', {
@@ -122,7 +128,7 @@ async function fetchVagasBauru() {
       });
     }
   } catch (err) {
-    console.error('[vagasbauru]', err.message);
+    registrarFalhaFonte(falhasFontes, 'vagasbauru', err);
   }
   return todas;
 }
@@ -131,7 +137,7 @@ async function fetchVagasBauru() {
 
 const TERMOS_INDEED = [''];
 
-async function fetchIndeed() {
+async function fetchIndeed(falhasFontes) {
   const todas = [];
   for (const termo of TERMOS_INDEED) {
     try {
@@ -163,7 +169,7 @@ async function fetchIndeed() {
       });
       await sleep(500);
     } catch (err) {
-      if (!err.response || err.response.status !== 403) console.error(`[indeed] "${termo}":`, err.message);
+      registrarFalhaFonte(falhasFontes, 'indeed', err);
     }
   }
   return todas;
@@ -171,7 +177,7 @@ async function fetchIndeed() {
 
 // ─── Vagas.com.br ────────────────────────────────────────────────────────────
 
-async function fetchVagasCom() {
+async function fetchVagasCom(falhasFontes) {
   const todas = [];
   const termos = [''];
   for (const termo of termos) {
@@ -196,7 +202,7 @@ async function fetchVagasCom() {
       });
       await sleep(400);
     } catch (err) {
-      if (!err.response || ![403, 404].includes(err.response.status)) console.error(`[vagascom] "${termo}":`, err.message);
+      registrarFalhaFonte(falhasFontes, 'vagascom', err);
     }
   }
   return todas;
@@ -204,7 +210,7 @@ async function fetchVagasCom() {
 
 // ─── Empregos.com.br ─────────────────────────────────────────────────────────
 
-async function fetchEmpregosCom() {
+async function fetchEmpregosCom(falhasFontes) {
   const todas = [];
   const termos = [''];
   for (const termo of termos) {
@@ -228,7 +234,7 @@ async function fetchEmpregosCom() {
       });
       await sleep(400);
     } catch (err) {
-      if (!err.response || ![403, 404].includes(err.response.status)) console.error(`[empregos.com] "${termo}":`, err.message);
+      registrarFalhaFonte(falhasFontes, 'empregoscom', err);
     }
   }
   return todas;
@@ -238,7 +244,7 @@ async function fetchEmpregosCom() {
 
 const TERMOS_CATHO = [''];
 
-async function fetchCatho() {
+async function fetchCatho(falhasFontes) {
   const todas = [];
   for (const termo of TERMOS_CATHO) {
     try {
@@ -285,7 +291,7 @@ async function fetchCatho() {
       }
       await sleep(500);
     } catch (err) {
-      if (!err.response || ![403, 404].includes(err.response.status)) console.error(`[catho] "${termo}":`, err.message);
+      registrarFalhaFonte(falhasFontes, 'catho', err);
     }
   }
   return todas;
@@ -293,7 +299,7 @@ async function fetchCatho() {
 
 // ─── CIEE ─────────────────────────────────────────────────────────────────────
 
-async function fetchCIEE() {
+async function fetchCIEE(falhasFontes) {
   const todas = [];
   try {
     const resp = await axios.get('https://portal.ciee.org.br/vagas/estagio-e-aprendiz/', {
@@ -313,7 +319,7 @@ async function fetchCIEE() {
       }
     });
   } catch (err) {
-    if (!err.response || ![403, 404].includes(err.response.status)) console.error('[ciee]', err.message);
+    registrarFalhaFonte(falhasFontes, 'ciee', err);
   }
   return todas;
 }
@@ -488,20 +494,35 @@ const TTL_FRESCO  = 60 * 60 * 1000; // 1 hora: serve direto do cache, sem refres
 const TTL_VALIDO  = 60 * 60 * 1000; // 1 hora: expira o cache após esse tempo
 
 async function buildData() {
+  const falhasFontes = {};
   const [linkedin, vagasbauru, indeed, vagascom, ciee, catho, empregoscom, querovagastech, agilebauru, programathor, infojobs, trabalhabrasil] = await Promise.allSettled([
-    fetchLinkedIn(),
-    fetchVagasBauru(),
-    fetchIndeed(),
-    fetchVagasCom(),
-    fetchCIEE(),
-    fetchCatho(),
-    fetchEmpregosCom(),
+    fetchLinkedIn(falhasFontes),
+    fetchVagasBauru(falhasFontes),
+    fetchIndeed(falhasFontes),
+    fetchVagasCom(falhasFontes),
+    fetchCIEE(falhasFontes),
+    fetchCatho(falhasFontes),
+    fetchEmpregosCom(falhasFontes),
     fetchQueroVagasTech(),
     fetchAgileBauru(),
     fetchProgramathor(),
     fetchInfoJobs(),
     fetchTrabalhaBrasil(),
   ]);
+
+  [
+    ['linkedin', linkedin],
+    ['vagasbauru', vagasbauru],
+    ['indeed', indeed],
+    ['vagascom', vagascom],
+    ['ciee', ciee],
+    ['catho', catho],
+    ['empregoscom', empregoscom],
+  ].forEach(([fonte, resultado]) => {
+    if (resultado.status === 'rejected') {
+      registrarFalhaFonte(falhasFontes, fonte, resultado.reason);
+    }
+  });
 
   const FONTES_LOCAIS = new Set(['vagasbauru', 'indeed', 'vagascom', 'ciee', 'catho', 'empregoscom', 'querovagastech', 'agilebauru', 'programathor', 'infojobs', 'trabalhabrasil']);
 
@@ -542,6 +563,18 @@ async function buildData() {
     infojobs:       unicas.filter(v => v.fonte === 'infojobs').length,
     trabalhabrasil: unicas.filter(v => v.fonte === 'trabalhabrasil').length,
   };
+
+  const fonteStatus = Object.fromEntries(
+    ['linkedin', 'vagasbauru', 'indeed', 'vagascom', 'ciee', 'catho', 'empregoscom'].map(fonte => {
+      const erros = falhasFontes[fonte] || [];
+      const quantidade = fontes[fonte];
+      return [fonte, {
+        status: erros.length ? (quantidade ? 'partial' : 'error') : 'success',
+        quantidade,
+        erro: erros[0] || null,
+      }];
+    })
+  );
 
   console.log(`[vagas] ${unicas.length} únicas | LinkedIn:${fontes.linkedin} VagasBauru:${fontes.vagasbauru} TrabalhaBrasil:${fontes.trabalhabrasil} Catho:${fontes.catho} QueroVagasTech:${fontes.querovagastech}`);
 
@@ -715,7 +748,7 @@ ${listaTitulos}`;
     console.error('[db] Erro ao gravar vagas no banco:', err.message);
   }
 
-  return { gerado_em: new Date().toISOString(), total: unicas.length, fontes, vagas: unicas, cached: false };
+  return { gerado_em: new Date().toISOString(), total: unicas.length, fontes, fonteStatus, vagas: unicas, cached: false };
 }
 
 export async function GET(req) {
@@ -735,12 +768,31 @@ export async function GET(req) {
 
     // Include the live VagasBauru feed instead of relying on a background refresh
     // that may be stopped after the cached response is returned.
-    const vagasBauruAoVivo = await fetchVagasBauru();
+    const falhasFontes = {};
+    const vagasBauruAoVivo = await fetchVagasBauru(falhasFontes);
     const vagasPorLink = new Map(vagasDb.map(vaga => [vaga.link, vaga]));
     for (const vaga of vagasBauruAoVivo) {
       vagasPorLink.set(vaga.link, { ...vagasPorLink.get(vaga.link), ...vaga });
     }
     const vagasAtualizadas = [...vagasPorLink.values()];
+    const fonteStatus = Object.fromEntries(
+      ['linkedin', 'vagasbauru', 'indeed', 'vagascom', 'ciee', 'catho', 'empregoscom'].map(fonte => {
+        if (fonte === 'vagasbauru') {
+          const erros = falhasFontes[fonte] || [];
+          const quantidade = vagasBauruAoVivo.length;
+          return [fonte, {
+            status: erros.length ? (quantidade ? 'partial' : 'error') : 'success',
+            quantidade,
+            erro: erros[0] || null,
+          }];
+        }
+        return [fonte, {
+          status: 'cached',
+          quantidade: vagasDb.filter(vaga => vaga.fonte === fonte).length,
+          erro: null,
+        }];
+      })
+    );
 
     // Calcular estatísticas com base no que está no banco
     const fontes = {
@@ -758,6 +810,7 @@ export async function GET(req) {
       gerado_em: new Date().toISOString(),
       total: vagasAtualizadas.length,
       fontes,
+      fonteStatus,
       vagas: vagasAtualizadas,
       cached: true
     };

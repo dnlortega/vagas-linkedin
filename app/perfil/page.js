@@ -782,6 +782,18 @@ export default function PerfilPage() {
                     <option value="catho">Catho</option>
                   </select>
                 </div>
+                <label className="col-span-1 sm:col-span-2 lg:col-span-3 flex items-start gap-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 p-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={filtrosPadrao.mostrarStatusFontes !== false}
+                    onChange={e => atualizarFiltroPadrao('mostrarStatusFontes', e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <span>
+                    <span className="block text-sm font-medium text-gray-800 dark:text-gray-200">Mostrar status das fontes</span>
+                    <span className="block text-xs text-gray-500 dark:text-gray-400">Exibe se LinkedIn, VagasBauru, Indeed, Vagas.com, CIEE, Catho e Empregos.com.br foram consultados, não encontraram vagas ou falharam.</span>
+                  </span>
+                </label>
                 <div className="col-span-1 sm:col-span-2 lg:col-span-3">
                   <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Palavras-chave (Busca)</label>
                   <div className="flex flex-col gap-2">
