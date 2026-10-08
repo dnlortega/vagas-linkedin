@@ -177,7 +177,7 @@ export default function Home() {
     });
     const blob = new Blob(['﻿' + [header, ...rows].join('\n')], { type: 'text/csv;charset=utf-8;' });
     const url  = URL.createObjectURL(blob);
-    Object.assign(document.createElement('a'), { href: url, download: `vagas-ti-bauru-${new Date().toISOString().split('T')[0]}.csv` }).click();
+    Object.assign(document.createElement('a'), { href: url, download: `vagas-bauru-${new Date().toISOString().split('T')[0]}.csv` }).click();
     URL.revokeObjectURL(url);
     toast.success('CSV exportado!');
   }
@@ -225,13 +225,6 @@ export default function Home() {
     const matchNova   = !filtros.somenteNovas  || estado.novasLinks.has(v.link);
     const matchNaoVis = !filtros.naoVisitadas  || !estado.visitadas.has(v.link);
     const matchEmp    = !filtros.empresaBusca  || (v.empresa || '').toLowerCase().includes(filtros.empresaBusca.toLowerCase());
-    
-    const TI_REGEX    = /\b(desenvolvedor|programador|software|fullstack|full[- ]?stack|front[- ]?end|back[- ]?end|devops|sre|cloud|dados|data|bi\b|power\s?bi|analista.*(sistemas?|t\.?i\.?|dados|suporte|infra|seguran[çc]a)|engenheiro.*(software|dados|cloud)|arquiteto.*(t\.?i\.?|software|solu)|dba|suporte.*(t\.?i\.?|t[ée]cnico)|help.*desk|service.*desk|infra|segurança|cyber|tecnologia|tech|sistemas?|computação|c#|java|python|php|javascript|typescript|node)/i;
-    const EXCLUDE_TI_REGEX = /\b(fiscal|cont[áa]bil|contabilidade|financeiro|rh|recursos humanos|departamento pessoal|vendas|comercial|marketing|faturamento|tribut[áa]rio|cobran[çc]a|telemarketing|atendimento)\b/i;
-    const isTI = v.isTI !== false && ((TI_REGEX.test(v.titulo) || detectarTechs(v.titulo).length > 0) 
-                 && !EXCLUDE_TI_REGEX.test(v.titulo) 
-                 && !EXCLUDE_TI_REGEX.test(v.empresa || ''));
-    
     return matchLoc && matchFonte && matchSen && matchMod && matchTech && matchWork && matchNova && matchNaoVis && matchEmp && matchBusca(v, buscaDebounced) && matchPeriodo(v.data, filtros.periodo);
   }), [estado.vagas, estado.ocultas, filtros.filtro, filtros.fonteFiltro, estado.favoritas, filtros.senioridade, filtros.modalidade, filtros.techFiltro, filtros.modoTrabalho, buscaDebounced, filtros.periodo, filtros.somenteNovas, filtros.naoVisitadas, estado.novasLinks, estado.visitadas, filtros.empresaBusca]);
 
@@ -298,7 +291,7 @@ export default function Home() {
               <BriefcaseIcon className="h-4 w-4 text-white" />
             </div>
             <div className="hidden sm:flex flex-col leading-none">
-              <span className="text-sm font-black text-slate-900 dark:text-white">Vagas TI</span>
+              <span className="text-sm font-black text-slate-900 dark:text-white">Vagas</span>
               <span className="text-[10px] text-indigo-500 font-bold tracking-wide">Bauru & Região</span>
             </div>
           </Link>
@@ -404,7 +397,7 @@ export default function Home() {
               <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNCI+PHBhdGggZD0iTTM2IDM0djZoNnYtNmgtNnptNiA2djZoNnYtNmgtNnptLTEyIDBoNnY2aC02di02em0xMiAwaDZ2Nmgtdi02eiIvPjwvZz48L2c+PC9zdmc+')] opacity-60" />
               <div className="relative flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
                 <div>
-                  <h1 className="text-xl sm:text-2xl font-black tracking-tight">Catálogo de Vagas TI</h1>
+                  <h1 className="text-xl sm:text-2xl font-black tracking-tight">Catálogo de Vagas</h1>
                   <p className="text-indigo-200 text-xs mt-1">
                     {estado.loading ? <>Buscando em todos os portais<LoadingDots /></> : hora ? `Atualizado ${hora} · ${estado.vagas.length} vagas no banco` : 'Pronto'}
                   </p>
@@ -482,7 +475,7 @@ export default function Home() {
               <div className="flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-2xl">
                 <SparklesIcon className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-blue-900 dark:text-blue-300 mb-0.5">Bem-vindo ao Vagas TI Bauru! 👋</p>
+                  <p className="text-sm font-bold text-blue-900 dark:text-blue-300 mb-0.5">Bem-vindo ao Vagas Bauru! 👋</p>
                   <p className="text-xs text-blue-700 dark:text-blue-400">Pressione <kbd className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded text-[10px] font-mono border border-blue-200 dark:border-blue-800">/</kbd> para buscar. Use <code className="bg-blue-100 dark:bg-blue-900 px-1 rounded text-[10px]">-palavra</code> para excluir termos.</p>
                 </div>
                 <button onClick={() => { setOnboarding(false); localStorage.setItem('onboarding_done', '1'); }}
@@ -594,7 +587,7 @@ export default function Home() {
       </div>
 
       <footer className="border-t border-black/5 dark:border-white/10 py-8 text-center text-xs text-slate-400 dark:text-slate-600">
-        Vagas de TI em Bauru ·{' '}
+        Vagas em Bauru e região ·{' '}
         <a href="https://www.linkedin.com/in/daniel-op/" target="_blank" rel="noopener noreferrer"
           className="hover:text-indigo-500 transition-colors font-medium">
           Daniel Ortega Pereira

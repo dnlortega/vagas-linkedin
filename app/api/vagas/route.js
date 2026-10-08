@@ -37,6 +37,7 @@ async function fetchHtml(targetUrl, options = {}) {
 // ─── LinkedIn ────────────────────────────────────────────────────────────────
 
 const TERMOS_LINKEDIN = [
+  '',
   'desenvolvedor',        'programador',          'suporte técnico',
   'devops',               'engenheiro software',  'analista de sistemas',
   'QA testes',            'segurança da informação', 'cloud computing',
@@ -57,7 +58,7 @@ async function linkedinPagina(keyword, start) {
     const local   = $(el).find('span.job-search-card__location').text().trim() || 'N/A';
     const data    = $(el).find('time.job-search-card__listdate').attr('datetime') || null;
     const link    = ($(el).find('a.base-card__full-link').attr('href') || '').split('?')[0];
-    if (titulo && link) vagas.push({ titulo, empresa, local, data, link, termo: keyword, fonte: 'linkedin' });
+    if (titulo && link) vagas.push({ titulo, empresa, local, data, link, termo: keyword || 'geral', fonte: 'linkedin' });
   });
   return vagas;
 }
@@ -125,13 +126,17 @@ async function fetchVagasBauru() {
 
 // ─── Indeed ──────────────────────────────────────────────────────────────────
 
-const TERMOS_INDEED = ['desenvolvedor', 'programador', 'analista sistemas', 'suporte técnico'];
+const TERMOS_INDEED = [''];
 
 async function fetchIndeed() {
   const todas = [];
   for (const termo of TERMOS_INDEED) {
     try {
-      const url = `https://br.indeed.com/empregos?q=${encodeURIComponent(termo)}&l=${encodeURIComponent('Bauru, SP')}&fromage=30&sort=date`;
+      const url = new URL('https://br.indeed.com/empregos');
+      if (termo) url.searchParams.set('q', termo);
+      url.searchParams.set('l', 'Bauru, SP');
+      url.searchParams.set('fromage', '30');
+      url.searchParams.set('sort', 'date');
       const resp = await fetchHtml(url, {
         headers: {
           'User-Agent': UA,
@@ -150,7 +155,7 @@ async function fetchIndeed() {
         const href    = $(el).find('h2.jobTitle a, a[id^="job_"]').first().attr('href') || '';
         const link    = href.startsWith('http') ? href : `https://br.indeed.com${href}`;
         if (titulo && href) {
-          todas.push({ titulo, empresa, local, data: null, link: link.split('?')[0], termo, fonte: 'indeed' });
+          todas.push({ titulo, empresa, local, data: null, link: link.split('?')[0], termo: termo || 'geral', fonte: 'indeed' });
         }
       });
       await sleep(500);
@@ -165,10 +170,12 @@ async function fetchIndeed() {
 
 async function fetchVagasCom() {
   const todas = [];
-  const termos = ['desenvolvedor', 'programador', 'analista', 'suporte-tecnico'];
+  const termos = [''];
   for (const termo of termos) {
     try {
-      const url = `https://www.vagas.com.br/vagas-de-${termo}-em-bauru-sp`;
+      const url = termo
+        ? `https://www.vagas.com.br/vagas-de-${termo}-em-bauru-sp`
+        : 'https://www.vagas.com.br/vagas-em-bauru-sp';
       const resp = await fetchHtml(url, {
         headers: { ...HEADERS_HTML, Referer: 'https://www.vagas.com.br/' },
         timeout: 12000,
@@ -181,7 +188,7 @@ async function fetchVagasCom() {
         const href    = $(el).find('h2.opportunity-title a, a.job-shortdescription__title').attr('href') || '';
         const link    = href.startsWith('http') ? href : `https://www.vagas.com.br${href}`;
         if (titulo && href) {
-          todas.push({ titulo, empresa, local, data: null, link, termo, fonte: 'vagascom' });
+          todas.push({ titulo, empresa, local, data: null, link, termo: termo || 'geral', fonte: 'vagascom' });
         }
       });
       await sleep(400);
@@ -196,10 +203,13 @@ async function fetchVagasCom() {
 
 async function fetchEmpregosCom() {
   const todas = [];
-  const termos = ['desenvolvedor', 'programador', 'suporte-tecnico', 'analista'];
+  const termos = [''];
   for (const termo of termos) {
     try {
-      const resp = await axios.get(`https://www.empregos.com.br/empregos/${termo}/bauru-sp`, {
+      const url = termo
+        ? `https://www.empregos.com.br/empregos/${termo}/bauru-sp`
+        : 'https://www.empregos.com.br/empregos/bauru-sp';
+      const resp = await axios.get(url, {
         headers: { ...HEADERS_HTML, Referer: 'https://www.empregos.com.br/' },
         timeout: 12000,
       });
@@ -210,7 +220,7 @@ async function fetchEmpregosCom() {
         const href    = $(el).find('a').first().attr('href') || '';
         const link    = href.startsWith('http') ? href : `https://www.empregos.com.br${href}`;
         if (titulo && href) {
-          todas.push({ titulo, empresa, local: 'Bauru, SP', data: null, link: link.split('?')[0], termo, fonte: 'empregoscom' });
+          todas.push({ titulo, empresa, local: 'Bauru, SP', data: null, link: link.split('?')[0], termo: termo || 'geral', fonte: 'empregoscom' });
         }
       });
       await sleep(400);
@@ -223,13 +233,15 @@ async function fetchEmpregosCom() {
 
 // ─── Catho ───────────────────────────────────────────────────────────────────
 
-const TERMOS_CATHO = ['desenvolvedor', 'programador', 'analista', 'suporte+tecnico'];
+const TERMOS_CATHO = [''];
 
 async function fetchCatho() {
   const todas = [];
   for (const termo of TERMOS_CATHO) {
     try {
-      const url = `https://www.catho.com.br/vagas/?q=${encodeURIComponent(termo)}&l=bauru-sp`;
+      const url = new URL('https://www.catho.com.br/vagas/');
+      if (termo) url.searchParams.set('q', termo);
+      url.searchParams.set('l', 'bauru-sp');
       const resp = await fetchHtml(url, {
         headers: {
           ...HEADERS_HTML,
@@ -251,7 +263,7 @@ async function fetchCatho() {
             const local   = job.jobLocation?.address?.addressLocality || 'Bauru, SP';
             const link    = job.url || '';
             if (titulo && link) {
-              todas.push({ titulo, empresa, local: `${local}, SP`, data: null, link: link.split('?')[0], termo, fonte: 'catho' });
+              todas.push({ titulo, empresa, local: `${local}, SP`, data: null, link: link.split('?')[0], termo: termo || 'geral', fonte: 'catho' });
             }
           });
         } catch (_) {}
@@ -264,7 +276,7 @@ async function fetchCatho() {
           const href    = $(el).find('a').first().attr('href') || '';
           const link    = href.startsWith('http') ? href : `https://www.catho.com.br${href}`;
           if (titulo && href) {
-            todas.push({ titulo, empresa, local: 'Bauru, SP', data: null, link: link.split('?')[0], termo, fonte: 'catho' });
+            todas.push({ titulo, empresa, local: 'Bauru, SP', data: null, link: link.split('?')[0], termo: termo || 'geral', fonte: 'catho' });
           }
         });
       }
@@ -282,7 +294,7 @@ async function fetchCIEE() {
   const todas = [];
   try {
     const resp = await axios.get('https://portal.ciee.org.br/vagas/estagio-e-aprendiz/', {
-      params: { estado: 'SP', cidade: 'Bauru', area: 'tecnologia-da-informacao' },
+      params: { estado: 'SP', cidade: 'Bauru' },
       headers: { ...HEADERS_HTML, Referer: 'https://portal.ciee.org.br/' },
       timeout: 12000,
     });
@@ -305,8 +317,6 @@ async function fetchCIEE() {
 
 // ─── Quero Vagas Tech ────────────────────────────────────────────────────────
 
-const TERMOS_TI_REGEX = /\b(desenvolvedor|programador|software|fullstack|full[- ]?stack|front[- ]?end|back[- ]?end|devops|sre|cloud|dados|data|bi\b|power\s?bi|analista.*(?:sistema|ti|dados|suporte)|engenheiro.*(?:software|dados|cloud)|arquiteto.*(?:ti|software|solu)|dba|banco.*dados|infraestrutura.*ti|segurança.*informação|cibersegurança|machine learning|inteligência artificial|\bai\b|\bia\b|qa|teste.*software|scrum|agile|product.*owner|\bpo\b|tech lead|\bux\b|\bui\b|designer.*(?:ux|ui|produto)|mobile|android|ios|flutter|react|angular|vue|node|python|java(?!script)|javascript|typescript|\bc#|csharp|\.net|dotnet|php|ruby|golang|rust|kotlin|swift|sql|nosql|mongo|postgres|mysql|redis|kafka|docker|kubernetes|terraform|aws|azure|gcp|linux|redes|telecom|suporte.*(?:ti|técnico)|help.*desk|service.*desk|field.*service|\bti\b|\bit\b|tecnologia|tech|\berp\b|\bsap\b|\btotvs\b|\bcrm\b|salesforce|\brpa\b|automação|iot|embedded|firmware|\bvlsi\b|hardware|\bpcb\b|fpga|microcontrolador)\b/i;
-
 async function fetchQueroVagasTech() {
   const todas = [];
   const MAX_PAGES = 7; // até ~210 vagas
@@ -323,9 +333,6 @@ async function fetchQueroVagasTech() {
 
       for (const job of items) {
         const titulo = job.title || '';
-        // Filtra apenas vagas relacionadas a TI
-        if (!TERMOS_TI_REGEX.test(titulo)) continue;
-
         const local = job.location || 'Brasil';
         const dataPost = job.postedAt ? job.postedAt.split('T')[0] : null;
         todas.push({
@@ -420,7 +427,7 @@ async function fetchProgramathor() {
 async function fetchTrabalhaBrasil() {
   const todas = [];
   try {
-    const resp = await axios.get('https://www.trabalhabrasil.com.br/vagas-empregos-em-bauru-sp/tecnologia-da-informacao', { headers: HEADERS_HTML, timeout: 12000 });
+    const resp = await axios.get('https://www.trabalhabrasil.com.br/vagas-empregos-em-bauru-sp', { headers: HEADERS_HTML, timeout: 12000 });
     const $ = cheerio.load(resp.data);
     $('.job-vacancy').each((_, el) => {
       const titulo = $(el).find('.job-vacancy-title, h2, h3').text().trim();
@@ -433,7 +440,7 @@ async function fetchTrabalhaBrasil() {
           local: 'Bauru, SP',
           data: null,
           link: href.startsWith('http') ? href : `https://www.trabalhabrasil.com.br${href}`,
-          termo: 'ti',
+          termo: 'geral',
           fonte: 'trabalhabrasil',
         });
       }
@@ -449,7 +456,7 @@ async function fetchTrabalhaBrasil() {
 async function fetchInfoJobs() {
   const todas = [];
   try {
-    const resp = await axios.get('https://www.infojobs.com.br/vagas-de-emprego-ti-em-bauru,-sp.aspx', { headers: HEADERS_HTML, timeout: 10000 });
+    const resp = await axios.get('https://www.infojobs.com.br/vagas-de-emprego-em-bauru,-sp.aspx', { headers: HEADERS_HTML, timeout: 10000 });
     const $ = cheerio.load(resp.data);
     $('.js_jobVacancy').each((_, el) => {
       const titulo = $(el).find('.js_vacancyTitle').text().trim() || $(el).find('h2').text().trim();

@@ -1,6 +1,6 @@
-# 🖥️ Vagas de TI — Bauru
+# 🖥️ Vagas de Emprego — Bauru
 
-Agregador de vagas de tecnologia para Bauru (SP) e região. Busca automaticamente em 7 fontes e apresenta tudo em uma interface moderna com filtros avançados, kanban de candidaturas e muito mais.
+Agregador de vagas de emprego para Bauru (SP) e região, incluindo oportunidades de todas as áreas, não apenas Tecnologia. Busca automaticamente em várias fontes e apresenta tudo em uma interface moderna com filtros avançados, kanban de candidaturas e muito mais.
 
 ## ✨ Funcionalidades
 
@@ -8,14 +8,14 @@ Agregador de vagas de tecnologia para Bauru (SP) e região. Busca automaticament
 - **7 fontes de vagas** simultâneas: LinkedIn, VagasBauru, Indeed, Vagas.com, CIEE, Catho e Empregos.com.br
 - **Busca inteligente** com exclusão de termos (`-palavra`), histórico e sugestões
 - **Busca por empresa** — campo dedicado na barra de filtros
-- **Filtros de localidade**: Todas, Bauru, Região, Remoto
+- **Filtros de localidade**: Todas, Bauru, Região, Remoto (Bauru e região ficam selecionados por padrão)
 - **Filtros de senioridade**: Júnior, Pleno, Sênior (detecção automática no título)
 - **Filtros de modalidade**: CLT, PJ, Estágio, Trainee
 - **Filtros de modo de trabalho**: Presencial, Híbrido, Remoto (detecção automática)
 - **Filtro por fonte** de cada plataforma
 - **Filtro por tecnologia** — pills clicáveis com top 10 techs detectadas
 - **Filtros rápidos**: Somente Novas, Não Visitadas, Favoritas
-- **Período**: Últimas 24h / Semana / Mês / 3 meses / Todas as datas
+- **Período**: Últimas 24h / Semana / Mês / 3 meses / Todas as datas (todas as datas ficam selecionadas por padrão)
 - **Limpar filtros** com um clique
 - **Salvar filtros** — até 6 combinações nomeadas salvas no navegador
 
