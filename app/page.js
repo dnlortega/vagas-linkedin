@@ -63,11 +63,9 @@ export default function Home() {
         if (data.filtrosPadrao) {
           const fp = data.filtrosPadrao;
           setFiltrosSalvos(fp);
-          if (fp.filtro) filtros.setFiltro(fp.filtro);
           if (fp.senioridade) filtros.setSenioridade(fp.senioridade);
           if (fp.modalidade) filtros.setModalidade(fp.modalidade);
           if (fp.modoTrabalho) filtros.setModoTrabalho(fp.modoTrabalho);
-          if (fp.periodo) filtros.setPeriodo(fp.periodo);
           if (fp.fonteFiltro) filtros.setFonteFiltro(fp.fonteFiltro);
           if (fp.busca) filtros.setBusca(fp.busca);
         }
