@@ -15,7 +15,7 @@ Agregador de vagas de emprego para Bauru (SP) e região, incluindo oportunidades
 - **Filtro por fonte** de cada plataforma
 - **Filtro por tecnologia** — pills clicáveis com top 10 techs detectadas
 - **Filtros rápidos**: Somente Novas, Não Visitadas, Favoritas
-- **Período**: Últimas 24h / Semana / Mês / 3 meses / Todas as datas (todas as datas ficam selecionadas por padrão)
+- **Período**: 24h / 3, 7, 15, 30 ou 90 dias / Todas as datas, selecionável no catálogo (todas as datas ficam selecionadas por padrão)
 - **Limpar filtros** com um clique
 - **Salvar filtros** — até 6 combinações nomeadas salvas no navegador
 

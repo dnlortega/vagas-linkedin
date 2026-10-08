@@ -447,6 +447,18 @@ export default function Home() {
                     </button>
                   ))}
                 </div>
+                <Select value={filtros.periodo} onValueChange={filtros.setPeriodo}>
+                  <SelectTrigger className="h-8 text-xs w-[140px] border-slate-200 dark:border-white/10 rounded-xl bg-white dark:bg-white/5 shadow-none">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PERIODOS.map(periodo => (
+                      <SelectItem key={periodo.id} value={periodo.id} className="text-xs">
+                        {periodo.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <Select value={filtros.ordem} onValueChange={filtros.setOrdem}>
                   <SelectTrigger className="h-8 text-xs w-[130px] border-slate-200 dark:border-white/10 rounded-xl bg-white dark:bg-white/5 shadow-none">
                     <SelectValue />
