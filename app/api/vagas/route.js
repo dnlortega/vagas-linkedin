@@ -102,7 +102,10 @@ async function fetchVagasBauru() {
       headers: HEADERS_JSON,
       timeout: 10000,
     });
-    const jobs = resp.data?.dados || [];
+    if (!Array.isArray(resp.data?.dados)) {
+      throw new Error('Resposta inesperada da API de vagas.');
+    }
+    const jobs = resp.data.dados.filter(job => !job.status || job.status === 'ativa');
     for (const job of jobs) {
       const titulo = job.titulo || 'Vaga';
       const cidade = job.cidade_vizinha || job.cidade || 'Bauru';
@@ -360,7 +363,6 @@ async function fetchQueroVagasTech() {
 
 let cacheData = null;
 let cacheTs   = 0;
-let refreshing = false;
 
 // ─── Agile Bauru ──────────────────────────────────────────────────────────────
 async function fetchAgileBauru() {
@@ -731,37 +733,34 @@ export async function GET(req) {
       return NextResponse.json(dados);
     }
 
+    // Include the live VagasBauru feed instead of relying on a background refresh
+    // that may be stopped after the cached response is returned.
+    const vagasBauruAoVivo = await fetchVagasBauru();
+    const vagasPorLink = new Map(vagasDb.map(vaga => [vaga.link, vaga]));
+    for (const vaga of vagasBauruAoVivo) {
+      vagasPorLink.set(vaga.link, { ...vagasPorLink.get(vaga.link), ...vaga });
+    }
+    const vagasAtualizadas = [...vagasPorLink.values()];
+
     // Calcular estatísticas com base no que está no banco
     const fontes = {
-      linkedin:       vagasDb.filter(v => v.fonte === 'linkedin').length,
-      vagasbauru:     vagasDb.filter(v => v.fonte === 'vagasbauru').length,
-      indeed:         vagasDb.filter(v => v.fonte === 'indeed').length,
-      vagascom:       vagasDb.filter(v => v.fonte === 'vagascom').length,
-      ciee:           vagasDb.filter(v => v.fonte === 'ciee').length,
-      catho:          vagasDb.filter(v => v.fonte === 'catho').length,
-      empregoscom:    vagasDb.filter(v => v.fonte === 'empregoscom').length,
-      querovagastech: vagasDb.filter(v => v.fonte === 'querovagastech').length,
+      linkedin:       vagasAtualizadas.filter(v => v.fonte === 'linkedin').length,
+      vagasbauru:     vagasAtualizadas.filter(v => v.fonte === 'vagasbauru').length,
+      indeed:         vagasAtualizadas.filter(v => v.fonte === 'indeed').length,
+      vagascom:       vagasAtualizadas.filter(v => v.fonte === 'vagascom').length,
+      ciee:           vagasAtualizadas.filter(v => v.fonte === 'ciee').length,
+      catho:          vagasAtualizadas.filter(v => v.fonte === 'catho').length,
+      empregoscom:    vagasAtualizadas.filter(v => v.fonte === 'empregoscom').length,
+      querovagastech: vagasAtualizadas.filter(v => v.fonte === 'querovagastech').length,
     };
 
     const payload = {
       gerado_em: new Date().toISOString(),
-      total: vagasDb.length,
+      total: vagasAtualizadas.length,
       fontes,
-      vagas: vagasDb,
+      vagas: vagasAtualizadas,
       cached: true
     };
-
-    // Atualização em background (simples, sempre que consultar dispara se não tiver refresh recente em memória)
-    // Para simplificar, vou confiar no uso prático do usuário de que se houver acesso será retornado o que está no banco, 
-    // e caso queira forçar a busca, basta enviar '?refresh=1'.
-    // Mas se quiser que atualize, vou disparar o buildData sem aguardar, para popular para as próximas requisições.
-    if (!refreshing) {
-      refreshing = true;
-      buildData()
-        .then(() => { console.log('[bg] Banco de dados atualizado com novas vagas.'); })
-        .catch(e => console.error('[cache] erro no refresh background:', e))
-        .finally(() => { refreshing = false; });
-    }
 
     return NextResponse.json(payload);
   } catch (err) {
