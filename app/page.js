@@ -6,7 +6,7 @@ import {
   DownloadIcon, XIcon, SparklesIcon,
   FilterXIcon, MonitorIcon, KanbanIcon,
   LayersIcon, InfoIcon, AwardIcon, LogOutIcon, SlidersHorizontalIcon,
-  LayoutGridIcon, ListIcon, BriefcaseIcon, EyeOffIcon
+  LayoutGridIcon, ListIcon, BriefcaseIcon, EyeOffIcon, HeartIcon, GlobeIcon, MapPinIcon
 } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
@@ -23,7 +23,7 @@ import VagaModal from './components/VagaModal';
 
 // Constants
 import {
-  PERIODOS, FONTE_CONFIG, TECHS,
+  PERIODOS, FONTE_CONFIG, TECHS, FILTROS_PADRAO_DEFAULT,
   detectarTechs, detectarModalidade, detectarModoTrabalho, matchBusca,
   tipoLocalidade, matchPeriodo, detectSenioridade, formatTempo
 } from '@/lib/constants';
@@ -54,24 +54,32 @@ export default function Home() {
   const filtros = useVagasFiltros();
 
   const [userPreferencias, setUserPreferencias] = useState([]);
-  const [filtrosSalvos, setFiltrosSalvos] = useState(null);
+  const [filtrosSalvos, setFiltrosSalvos] = useState(FILTROS_PADRAO_DEFAULT);
   const [mostrarStatusFontes, setMostrarStatusFontes] = useState(true);
 
   useEffect(() => {
     if (session?.user) {
-      fetch('/api/perfil').then(r => r.json()).then(data => {
+      fetch('/api/perfil').then(r => {
+        if (!r.ok) throw new Error(`Erro HTTP ${r.status}`);
+        return r.json();
+      }).then(data => {
         if (data.preferencias) setUserPreferencias(data.preferencias);
         if (data.filtrosPadrao) {
-          const fp = data.filtrosPadrao;
+          const fp = { ...FILTROS_PADRAO_DEFAULT, ...data.filtrosPadrao };
           setFiltrosSalvos(fp);
           setMostrarStatusFontes(fp.mostrarStatusFontes !== false);
-          if (fp.senioridade) filtros.setSenioridade(fp.senioridade);
-          if (fp.modalidade) filtros.setModalidade(fp.modalidade);
-          if (fp.modoTrabalho) filtros.setModoTrabalho(fp.modoTrabalho);
-          if (fp.fonteFiltro) filtros.setFonteFiltro(fp.fonteFiltro);
-          if (fp.busca) filtros.setBusca(fp.busca);
+          filtros.setFiltro(fp.filtro);
+          filtros.setSenioridade(fp.senioridade);
+          filtros.setModalidade(fp.modalidade);
+          filtros.setModoTrabalho(fp.modoTrabalho);
+          filtros.setPeriodo(fp.periodo);
+          filtros.setFonteFiltro(fp.fonteFiltro);
+          filtros.setBusca(fp.busca);
         }
-      }).catch(() => {});
+      }).catch(error => {
+        console.error('[Busca] Erro ao carregar filtros padrão:', error);
+        toast.error('Não foi possível carregar seus filtros padrão.');
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
@@ -207,10 +215,34 @@ export default function Home() {
     }
   }, [session, router, estado]);
 
+  const contadoresLocalidade = useMemo(() => {
+    const list = estado.vagas.filter(v => !estado.ocultas.has(v.link));
+    let todas = list.length;
+    let bauru = 0;
+    let regiao = 0;
+    let remoto = 0;
+    let fav = 0;
+
+    for (const v of list) {
+      const tipo = tipoLocalidade(v.local, filtrosSalvos?.cidade, v.titulo);
+      if (tipo === 'bauru') bauru++;
+      if (tipo === 'bauru' || tipo === 'regiao') regiao++;
+      if (tipo === 'remoto') remoto++;
+      if (estado.favoritas.has(v.link)) fav++;
+    }
+
+    return { todas, bauru, regiao, remoto, favoritas: fav };
+  }, [estado.vagas, estado.ocultas, estado.favoritas, filtrosSalvos?.cidade]);
+
   const vagasFiltradas = useMemo(() => estado.vagas.filter(v => {
     if (estado.ocultas.has(v.link)) return false;
-    const tipo = tipoLocalidade(v.local, filtrosSalvos?.cidade);
+    const tipo = tipoLocalidade(v.local, filtrosSalvos?.cidade, v.titulo);
+
+    // Se a busca textual digitar explicitamente "remoto" ou "home office", permite que apareça mesmo em filtro de região
+    const buscaQuerRemoto = /remot[oa]|home\s*office/i.test(buscaDebounced);
+
     const matchLoc =
+      buscaQuerRemoto ? true :
       filtros.filtro === 'todas'      ? true :
       filtros.filtro === 'favoritas'  ? estado.favoritas.has(v.link) :
       filtros.filtro === 'bauru'      ? tipo === 'bauru' :
@@ -226,7 +258,7 @@ export default function Home() {
     const matchNaoVis = !filtros.naoVisitadas  || !estado.visitadas.has(v.link);
     const matchEmp    = !filtros.empresaBusca  || (v.empresa || '').toLowerCase().includes(filtros.empresaBusca.toLowerCase());
     return matchLoc && matchFonte && matchSen && matchMod && matchTech && matchWork && matchNova && matchNaoVis && matchEmp && matchBusca(v, buscaDebounced) && matchPeriodo(v.data, filtros.periodo);
-  }), [estado.vagas, estado.ocultas, filtros.filtro, filtros.fonteFiltro, estado.favoritas, filtros.senioridade, filtros.modalidade, filtros.techFiltro, filtros.modoTrabalho, buscaDebounced, filtros.periodo, filtros.somenteNovas, filtros.naoVisitadas, estado.novasLinks, estado.visitadas, filtros.empresaBusca]);
+  }), [estado.vagas, estado.ocultas, filtros.filtro, filtros.fonteFiltro, estado.favoritas, filtros.senioridade, filtros.modalidade, filtros.techFiltro, filtros.modoTrabalho, buscaDebounced, filtros.periodo, filtros.somenteNovas, filtros.naoVisitadas, estado.novasLinks, estado.visitadas, filtros.empresaBusca, filtrosSalvos?.cidade]);
 
   const vagasOrdenadas = useMemo(() => {
     const sorted = [...vagasFiltradas].sort((a, b) => {
@@ -423,11 +455,13 @@ export default function Home() {
                 {[
                   ['linkedin', 'LinkedIn'],
                   ['vagasbauru', 'VagasBauru'],
+                  ['agilebauru', 'Agile Bauru'],
                   ['indeed', 'Indeed'],
                   ['vagascom', 'Vagas.com'],
                   ['ciee', 'CIEE'],
                   ['catho', 'Catho'],
                   ['empregoscom', 'Empregos.com.br'],
+                  ['querovagastech', 'QueroVagas Tech'],
                 ].map(([fonte, nome]) => {
                   const resultado = estado.fonteStatus[fonte];
                   const status = resultado?.status || 'pending';
@@ -455,6 +489,72 @@ export default function Home() {
                 })}
               </div>
             )}
+
+            {/* ── Abas de Localidade & Filtros Rápidos ── */}
+            <div className="flex flex-col gap-3 bg-white dark:bg-[#111] p-3 sm:p-4 rounded-2xl border border-black/5 dark:border-white/10 shadow-sm">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-white/5 rounded-xl border border-black/5 dark:border-white/10 overflow-x-auto max-w-full">
+                  {[
+                    { id: 'todas', label: 'Todas as Vagas', count: contadoresLocalidade.todas },
+                    { id: 'bauru', label: filtrosSalvos?.cidade || 'Minha Cidade', count: contadoresLocalidade.bauru, icon: MapPinIcon },
+                    { id: 'regiao', label: 'Região', count: contadoresLocalidade.regiao },
+                    { id: 'remoto', label: 'Remoto', count: contadoresLocalidade.remoto, icon: GlobeIcon, isRemote: true },
+                    { id: 'favoritas', label: 'Favoritas', count: contadoresLocalidade.favoritas, icon: HeartIcon },
+                  ].map(tab => {
+                    const active = filtros.filtro === tab.id;
+                    const Icon = tab.icon;
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => filtros.setFiltro(tab.id)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 ${
+                          active
+                            ? tab.isRemote
+                              ? 'bg-emerald-600 text-white shadow-sm'
+                              : 'bg-indigo-600 text-white shadow-sm'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-white/10'
+                        }`}
+                      >
+                        {Icon && <Icon className={`h-3.5 w-3.5 ${active ? 'text-white' : tab.isRemote ? 'text-emerald-500' : 'text-slate-400'}`} />}
+                        <span>{tab.label}</span>
+                        <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                          active
+                            ? 'bg-white/20 text-white'
+                            : tab.isRemote && tab.count > 0
+                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
+                            : 'bg-slate-200/80 dark:bg-white/10 text-slate-600 dark:text-slate-400'
+                        }`}>
+                          {tab.count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Seletor de Modo de Trabalho */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider hidden sm:inline">Modo:</span>
+                  {[
+                    { id: null, label: 'Todos' },
+                    { id: 'remoto', label: '100% Remoto' },
+                    { id: 'hibrido', label: 'Híbrido' },
+                    { id: 'presencial', label: 'Presencial' },
+                  ].map(m => (
+                    <button
+                      key={String(m.id)}
+                      onClick={() => filtros.setModoTrabalho(p => p === m.id ? null : m.id)}
+                      className={`h-7 px-2.5 rounded-lg text-xs font-semibold border transition-all ${
+                        filtros.modoTrabalho === m.id
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800'
+                          : 'border-slate-200 dark:border-white/10 text-slate-500 hover:border-slate-300 hover:text-slate-800 dark:hover:text-white'
+                      }`}
+                    >
+                      {m.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
 
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <div className="flex items-center gap-2 flex-wrap">

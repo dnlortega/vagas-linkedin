@@ -25,9 +25,9 @@ function registrarFalhaFonte(falhas, fonte, err) {
   console.error(`[${fonte}]`, err.message);
 }
 
-function naRegiao(local) {
-  const l = (local || '').toLowerCase();
-  return CIDADES.some(c => l.includes(c)) || l.includes('remot') || l.includes('híbrid') || l.includes('hibrido');
+function naRegiao(local, titulo = '') {
+  const l = `${local || ''} ${titulo || ''}`.toLowerCase();
+  return CIDADES.some(c => l.includes(c)) || l.includes('remot') || l.includes('híbrid') || l.includes('hibrido') || l.includes('home office') || l.includes('teletrabalho');
 }
 
 async function fetchHtml(targetUrl, options = {}) {
@@ -342,7 +342,12 @@ async function fetchQueroVagasTech() {
 
       for (const job of items) {
         const titulo = job.title || '';
-        const local = job.location || 'Brasil';
+        let local = job.location || 'Brasil';
+        if (job.workMode === 'Remote' || /remot[oa]|home\s*office|anywhere/i.test(titulo)) {
+          local = 'Remoto';
+        } else if (job.workMode === 'Hybrid' || /h[ií]brid/i.test(titulo)) {
+          local = `${local} (Híbrido)`;
+        }
         const dataPost = job.postedAt ? job.postedAt.split('T')[0] : null;
         todas.push({
           titulo,
@@ -365,38 +370,55 @@ async function fetchQueroVagasTech() {
   return todas;
 }
 
-// ─── Cache com stale-while-revalidate ────────────────────────────────────────
-
-let cacheData = null;
-let cacheTs   = 0;
-
 // ─── Agile Bauru ──────────────────────────────────────────────────────────────
-async function fetchAgileBauru() {
+async function fetchAgileBauru(falhasFontes = {}) {
   const todas = [];
   try {
-    const resp = await axios.get('https://agile-bauru.hera.app.br/vagas', { headers: HEADERS_HTML, timeout: 10000 });
+    const resp = await axios.get('https://agile-bauru.hera.app.br/vagas', {
+      headers: HEADERS_HTML,
+      timeout: 15000,
+    });
     const $ = cheerio.load(resp.data);
     
-    // Tentativa genérica de buscar cards de vaga
-    $('a').each((_, el) => {
-      const link = $(el).attr('href') || '';
-      if (link.includes('/vagas/') || link.includes('/job')) {
-        const titulo = $(el).text().trim().replace(/\s+/g, ' ');
-        if (titulo.length > 5) {
-          todas.push({
-            titulo: titulo.substring(0, 80),
-            empresa: 'Agile Bauru',
-            local: 'Bauru, SP',
-            data: null,
-            link: link.startsWith('http') ? link : `https://agile-bauru.hera.app.br${link}`,
-            termo: 'agilebauru',
-            fonte: 'agilebauru',
-          });
-        }
+    $('a[href*="/vagas/detalhar/"]').each((_, el) => {
+      const href = $(el).attr('href') || '';
+      const link = href.startsWith('http') ? href : `https://agile-bauru.hera.app.br${href}`;
+      const titulo = $(el).find('.card-title, h1, h2, h3, h4, .fw-bold').first().text().trim().replace(/\s+/g, ' ');
+      
+      const cardText = $(el).text();
+      const dataMatch = cardText.match(/Data de publicação:\s*(\d{2}\/\d{2}\/\d{4})/i);
+      let dataIso = null;
+      if (dataMatch) {
+        const [dia, mes, ano] = dataMatch[1].split('/');
+        dataIso = `${ano}-${mes}-${dia}`;
+      }
+
+      const items = [];
+      $(el).find('li').each((_, li) => {
+        items.push($(li).text().trim());
+      });
+
+      let local = 'Bauru, SP';
+      if (/Home\s*office|Remoto/i.test(cardText)) {
+        local = 'Remoto';
+      } else if (items.length > 0 && items[0]) {
+        local = items[0];
+      }
+
+      if (titulo && link) {
+        todas.push({
+          titulo,
+          empresa: 'Agile Bauru',
+          local,
+          data: dataIso,
+          link,
+          termo: 'agilebauru',
+          fonte: 'agilebauru',
+        });
       }
     });
   } catch (err) {
-    console.error('[agilebauru]', err.message);
+    registrarFalhaFonte(falhasFontes, 'agilebauru', err);
   }
   return todas;
 }
@@ -504,7 +526,7 @@ async function buildData() {
     fetchCatho(falhasFontes),
     fetchEmpregosCom(falhasFontes),
     fetchQueroVagasTech(),
-    fetchAgileBauru(),
+    fetchAgileBauru(falhasFontes),
     fetchProgramathor(),
     fetchInfoJobs(),
     fetchTrabalhaBrasil(),
@@ -513,6 +535,7 @@ async function buildData() {
   [
     ['linkedin', linkedin],
     ['vagasbauru', vagasbauru],
+    ['agilebauru', agilebauru],
     ['indeed', indeed],
     ['vagascom', vagascom],
     ['ciee', ciee],
@@ -529,17 +552,17 @@ async function buildData() {
   const todas = [
     ...(linkedin.status       === 'fulfilled' ? linkedin.value       : []),
     ...(vagasbauru.status     === 'fulfilled' ? vagasbauru.value     : []),
+    ...(agilebauru.status     === 'fulfilled' ? agilebauru.value     : []),
     ...(indeed.status         === 'fulfilled' ? indeed.value         : []),
     ...(vagascom.status       === 'fulfilled' ? vagascom.value       : []),
     ...(ciee.status           === 'fulfilled' ? ciee.value           : []),
     ...(catho.status          === 'fulfilled' ? catho.value          : []),
     ...(empregoscom.status    === 'fulfilled' ? empregoscom.value    : []),
     ...(querovagastech.status === 'fulfilled' ? querovagastech.value : []),
-    ...(agilebauru.status     === 'fulfilled' ? agilebauru.value     : []),
     ...(programathor.status   === 'fulfilled' ? programathor.value   : []),
     ...(infojobs.status       === 'fulfilled' ? infojobs.value       : []),
     ...(trabalhabrasil.status === 'fulfilled' ? trabalhabrasil.value : []),
-  ].filter(v => naRegiao(v.local) || !v.local || v.local === 'N/A' || FONTES_LOCAIS.has(v.fonte));
+  ].filter(v => naRegiao(v.local, v.titulo) || !v.local || v.local === 'N/A' || FONTES_LOCAIS.has(v.fonte));
 
   // Deduplicar por link
   const vistas = new Set();
@@ -552,22 +575,22 @@ async function buildData() {
   const fontes = {
     linkedin:       unicas.filter(v => v.fonte === 'linkedin').length,
     vagasbauru:     unicas.filter(v => v.fonte === 'vagasbauru').length,
+    agilebauru:     unicas.filter(v => v.fonte === 'agilebauru').length,
     indeed:         unicas.filter(v => v.fonte === 'indeed').length,
     vagascom:       unicas.filter(v => v.fonte === 'vagascom').length,
     ciee:           unicas.filter(v => v.fonte === 'ciee').length,
     catho:          unicas.filter(v => v.fonte === 'catho').length,
     empregoscom:    unicas.filter(v => v.fonte === 'empregoscom').length,
     querovagastech: unicas.filter(v => v.fonte === 'querovagastech').length,
-    agilebauru:     unicas.filter(v => v.fonte === 'agilebauru').length,
     programathor:   unicas.filter(v => v.fonte === 'programathor').length,
     infojobs:       unicas.filter(v => v.fonte === 'infojobs').length,
     trabalhabrasil: unicas.filter(v => v.fonte === 'trabalhabrasil').length,
   };
 
   const fonteStatus = Object.fromEntries(
-    ['linkedin', 'vagasbauru', 'indeed', 'vagascom', 'ciee', 'catho', 'empregoscom'].map(fonte => {
+    ['linkedin', 'vagasbauru', 'agilebauru', 'indeed', 'vagascom', 'ciee', 'catho', 'empregoscom', 'querovagastech'].map(fonte => {
       const erros = falhasFontes[fonte] || [];
-      const quantidade = fontes[fonte];
+      const quantidade = fontes[fonte] || 0;
       return [fonte, {
         status: erros.length ? (quantidade ? 'partial' : 'error') : 'success',
         quantidade,
@@ -766,20 +789,34 @@ export async function GET(req) {
       return NextResponse.json(dados);
     }
 
-    // Include the live VagasBauru feed instead of relying on a background refresh
-    // that may be stopped after the cached response is returned.
+    // Include live local feeds (VagasBauru & AgileBauru)
     const falhasFontes = {};
-    const vagasBauruAoVivo = await fetchVagasBauru(falhasFontes);
+    const [vagasBauruAoVivo, agileBauruAoVivo] = await Promise.all([
+      fetchVagasBauru(falhasFontes),
+      fetchAgileBauru(falhasFontes),
+    ]);
     const vagasPorLink = new Map(vagasDb.map(vaga => [vaga.link, vaga]));
     for (const vaga of vagasBauruAoVivo) {
       vagasPorLink.set(vaga.link, { ...vagasPorLink.get(vaga.link), ...vaga });
     }
+    for (const vaga of agileBauruAoVivo) {
+      vagasPorLink.set(vaga.link, { ...vagasPorLink.get(vaga.link), ...vaga });
+    }
     const vagasAtualizadas = [...vagasPorLink.values()];
     const fonteStatus = Object.fromEntries(
-      ['linkedin', 'vagasbauru', 'indeed', 'vagascom', 'ciee', 'catho', 'empregoscom'].map(fonte => {
+      ['linkedin', 'vagasbauru', 'agilebauru', 'indeed', 'vagascom', 'ciee', 'catho', 'empregoscom', 'querovagastech'].map(fonte => {
         if (fonte === 'vagasbauru') {
           const erros = falhasFontes[fonte] || [];
           const quantidade = vagasBauruAoVivo.length;
+          return [fonte, {
+            status: erros.length ? (quantidade ? 'partial' : 'error') : 'success',
+            quantidade,
+            erro: erros[0] || null,
+          }];
+        }
+        if (fonte === 'agilebauru') {
+          const erros = falhasFontes[fonte] || [];
+          const quantidade = agileBauruAoVivo.length;
           return [fonte, {
             status: erros.length ? (quantidade ? 'partial' : 'error') : 'success',
             quantidade,
@@ -794,16 +831,20 @@ export async function GET(req) {
       })
     );
 
-    // Calcular estatísticas com base no que está no banco
+    // Calcular estatísticas com base no que está no banco e ao vivo
     const fontes = {
       linkedin:       vagasAtualizadas.filter(v => v.fonte === 'linkedin').length,
       vagasbauru:     vagasAtualizadas.filter(v => v.fonte === 'vagasbauru').length,
+      agilebauru:     vagasAtualizadas.filter(v => v.fonte === 'agilebauru').length,
       indeed:         vagasAtualizadas.filter(v => v.fonte === 'indeed').length,
       vagascom:       vagasAtualizadas.filter(v => v.fonte === 'vagascom').length,
       ciee:           vagasAtualizadas.filter(v => v.fonte === 'ciee').length,
       catho:          vagasAtualizadas.filter(v => v.fonte === 'catho').length,
       empregoscom:    vagasAtualizadas.filter(v => v.fonte === 'empregoscom').length,
       querovagastech: vagasAtualizadas.filter(v => v.fonte === 'querovagastech').length,
+      programathor:   vagasAtualizadas.filter(v => v.fonte === 'programathor').length,
+      infojobs:       vagasAtualizadas.filter(v => v.fonte === 'infojobs').length,
+      trabalhabrasil: vagasAtualizadas.filter(v => v.fonte === 'trabalhabrasil').length,
     };
 
     const payload = {

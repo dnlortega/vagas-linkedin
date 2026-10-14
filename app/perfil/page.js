@@ -13,6 +13,7 @@ import {
   FileTextIcon, EyeIcon, ZapIcon, PrinterIcon, Trash2Icon, BriefcaseIcon, TagIcon
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
+import { FILTROS_PADRAO_DEFAULT } from '@/lib/constants';
 
 const LS_CERTS = 'vagas_certificados';
 
@@ -379,7 +380,7 @@ export default function PerfilPage() {
   
   const { data: session } = useSession();
   const [preferencias, setPreferencias] = useState([]);
-  const [filtrosPadrao, setFiltrosPadrao] = useState({});
+  const [filtrosPadrao, setFiltrosPadrao] = useState(FILTROS_PADRAO_DEFAULT);
   const [novaPref, setNovaPref] = useState('');
   const [novaBusca, setNovaBusca] = useState('');
   const [salvandoPref, setSalvandoPref] = useState(false);
@@ -389,7 +390,9 @@ export default function PerfilPage() {
     if (session?.user) {
       fetch('/api/perfil').then(r => r.json()).then(data => {
         if (data.preferencias) setPreferencias(data.preferencias);
-        if (data.filtrosPadrao) setFiltrosPadrao(data.filtrosPadrao);
+        if (data.filtrosPadrao) {
+          setFiltrosPadrao({ ...FILTROS_PADRAO_DEFAULT, ...data.filtrosPadrao });
+        }
       }).catch(e => console.error(e));
     }
   }, [session]);
@@ -749,6 +752,7 @@ export default function PerfilPage() {
                     <option value="clt">CLT</option>
                     <option value="pj">PJ</option>
                     <option value="estagio">Estágio</option>
+                    <option value="trainee">Trainee / Aprendiz</option>
                   </select>
                 </div>
                 <div>
@@ -777,9 +781,16 @@ export default function PerfilPage() {
                     <option value="todas">Todas as Fontes</option>
                     <option value="linkedin">LinkedIn</option>
                     <option value="vagasbauru">VagasBauru</option>
+                    <option value="agilebauru">Agile Bauru</option>
                     <option value="indeed">Indeed</option>
                     <option value="vagascom">Vagas.com</option>
+                    <option value="ciee">CIEE</option>
                     <option value="catho">Catho</option>
+                    <option value="empregoscom">Empregos.com.br</option>
+                    <option value="querovagastech">QueroVagas Tech</option>
+                    <option value="programathor">Programathor</option>
+                    <option value="trabalhabrasil">Trabalha Brasil</option>
+                    <option value="infojobs">InfoJobs</option>
                   </select>
                 </div>
                 <label className="col-span-1 sm:col-span-2 lg:col-span-3 flex items-start gap-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 p-3 cursor-pointer">

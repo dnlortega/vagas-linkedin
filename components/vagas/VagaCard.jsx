@@ -10,7 +10,7 @@ import {
 import { Highlight } from './SharedUI';
 
 export function VagaCard({ vaga, isNovo, isFavorita, ehDuplicata, foiVisitada, noKanban, onOpen, onToggleFav, onOcultar, onEmpresaClick, onTechClick, onKanban, onReport, busca = '', vista = 'grade', tamanho = 'normal', index = 0, userPreferencias = [] }) {
-  const tipo     = tipoLocalidade(vaga.local);
+  const tipo     = tipoLocalidade(vaga.local, 'bauru', vaga.titulo);
   const loc      = LOCALIDADE_CONFIG[tipo];
   const fonteCfg = FONTE_CONFIG[vaga.fonte] || { label: vaga.fonte, color: 'bg-gray-100 text-gray-600 border-gray-200' };
   const dataRel  = formatData(vaga.data);
