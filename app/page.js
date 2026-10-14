@@ -462,6 +462,7 @@ export default function Home() {
                   ['catho', 'Catho'],
                   ['empregoscom', 'Empregos.com.br'],
                   ['querovagastech', 'QueroVagas Tech'],
+                  ['nerdin', 'Nerdin'],
                 ].map(([fonte, nome]) => {
                   const resultado = estado.fonteStatus[fonte];
                   const status = resultado?.status || 'pending';

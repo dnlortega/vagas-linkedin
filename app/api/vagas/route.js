@@ -511,13 +511,66 @@ async function fetchInfoJobs() {
   return todas;
 }
 
+// ─── Nerdin ───────────────────────────────────────────────────────────────────
+async function fetchNerdin(falhasFontes = {}) {
+  const todas = [];
+  // Busca vagas de TI: Home Office (remotas) + busca local por Bauru
+  const urls = [
+    'https://nerdin.com.br/vagas-home-office.php',
+    'https://nerdin.com.br/vagas.php?busca_local=Bauru',
+  ];
+  for (const url of urls) {
+    try {
+      const resp = await axios.get(url, {
+        headers: { ...HEADERS_HTML, Referer: 'https://nerdin.com.br/' },
+        timeout: 12000,
+      });
+      const $ = cheerio.load(resp.data);
+      // Os cards de vaga têm h3 com título e link em <a href="/vaga_emprego/...">
+      $('h3').each((_, el) => {
+        const h3 = $(el);
+        // O container do card é o elemento pai ascendente com o link
+        const cardLink = h3.closest('a[href*="/vaga_emprego/"]');
+        const href = cardLink.attr('href') || h3.find('a').attr('href') || '';
+        const titulo = h3.text().trim().replace(/\s*Nova\s*$/i, '').trim();
+
+        if (!titulo || !href) return;
+
+        const link = href.startsWith('http') ? href : `https://nerdin.com.br${href}`;
+        // Texto do card para extrair modo de trabalho
+        const cardText = (cardLink.length ? cardLink.text() : h3.parent().text()).toLowerCase();
+        let local = 'Brasil';
+        if (/home\s*office|remot[oa]/i.test(cardText)) local = 'Remoto';
+        else if (/h[ií]brid[oa]/i.test(cardText)) local = 'Híbrido';
+        else if (/bauru/i.test(cardText)) local = 'Bauru, SP';
+
+        todas.push({
+          titulo,
+          empresa: 'N/A',
+          local,
+          data: null,
+          link,
+          termo: 'nerdin',
+          fonte: 'nerdin',
+        });
+      });
+    } catch (err) {
+      registrarFalhaFonte(falhasFontes, 'nerdin', err);
+    }
+    await sleep(400);
+  }
+  // Deduplicar por link dentro da própria fonte
+  const seen = new Set();
+  return todas.filter(v => { if (seen.has(v.link)) return false; seen.add(v.link); return true; });
+}
+
 // ─── Cache com stale-while-revalidate ────────────────────────────────────────
 const TTL_FRESCO  = 60 * 60 * 1000; // 1 hora: serve direto do cache, sem refresh
 const TTL_VALIDO  = 60 * 60 * 1000; // 1 hora: expira o cache após esse tempo
 
 async function buildData() {
   const falhasFontes = {};
-  const [linkedin, vagasbauru, indeed, vagascom, ciee, catho, empregoscom, querovagastech, agilebauru, programathor, infojobs, trabalhabrasil] = await Promise.allSettled([
+  const [linkedin, vagasbauru, indeed, vagascom, ciee, catho, empregoscom, querovagastech, agilebauru, programathor, infojobs, trabalhabrasil, nerdin] = await Promise.allSettled([
     fetchLinkedIn(falhasFontes),
     fetchVagasBauru(falhasFontes),
     fetchIndeed(falhasFontes),
@@ -530,6 +583,7 @@ async function buildData() {
     fetchProgramathor(),
     fetchInfoJobs(),
     fetchTrabalhaBrasil(),
+    fetchNerdin(falhasFontes),
   ]);
 
   [
@@ -547,7 +601,7 @@ async function buildData() {
     }
   });
 
-  const FONTES_LOCAIS = new Set(['vagasbauru', 'indeed', 'vagascom', 'ciee', 'catho', 'empregoscom', 'querovagastech', 'agilebauru', 'programathor', 'infojobs', 'trabalhabrasil']);
+  const FONTES_LOCAIS = new Set(['vagasbauru', 'indeed', 'vagascom', 'ciee', 'catho', 'empregoscom', 'querovagastech', 'agilebauru', 'programathor', 'infojobs', 'trabalhabrasil', 'nerdin']);
 
   const todas = [
     ...(linkedin.status       === 'fulfilled' ? linkedin.value       : []),
@@ -562,6 +616,7 @@ async function buildData() {
     ...(programathor.status   === 'fulfilled' ? programathor.value   : []),
     ...(infojobs.status       === 'fulfilled' ? infojobs.value       : []),
     ...(trabalhabrasil.status === 'fulfilled' ? trabalhabrasil.value : []),
+    ...(nerdin.status         === 'fulfilled' ? nerdin.value         : []),
   ].filter(v => naRegiao(v.local, v.titulo) || !v.local || v.local === 'N/A' || FONTES_LOCAIS.has(v.fonte));
 
   // Deduplicar por link
@@ -585,10 +640,11 @@ async function buildData() {
     programathor:   unicas.filter(v => v.fonte === 'programathor').length,
     infojobs:       unicas.filter(v => v.fonte === 'infojobs').length,
     trabalhabrasil: unicas.filter(v => v.fonte === 'trabalhabrasil').length,
+    nerdin:         unicas.filter(v => v.fonte === 'nerdin').length,
   };
 
   const fonteStatus = Object.fromEntries(
-    ['linkedin', 'vagasbauru', 'agilebauru', 'indeed', 'vagascom', 'ciee', 'catho', 'empregoscom', 'querovagastech'].map(fonte => {
+    ['linkedin', 'vagasbauru', 'agilebauru', 'indeed', 'vagascom', 'ciee', 'catho', 'empregoscom', 'querovagastech', 'nerdin'].map(fonte => {
       const erros = falhasFontes[fonte] || [];
       const quantidade = fontes[fonte] || 0;
       return [fonte, {
