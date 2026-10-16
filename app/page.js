@@ -151,12 +151,12 @@ export default function Home() {
     return () => window.removeEventListener('keydown', handler);
   }, [selectedVaga, filtros]);
 
-  const prevFiltroRef = useRef({ filtro: filtros.filtro, senioridade: filtros.senioridade, periodo: filtros.periodo, busca: filtros.busca, modalidade: filtros.modalidade, techFiltro: filtros.techFiltro });
+  const prevFiltroRef = useRef({ filtro: filtros.filtro, senioridade: filtros.senioridade, periodo: filtros.periodo, busca: filtros.busca, modalidade: filtros.modalidade, techFiltro: filtros.techFiltro, modoTrabalho: filtros.modoTrabalho });
   useEffect(() => {
     const p = prevFiltroRef.current;
-    if (p.filtro !== filtros.filtro || p.senioridade !== filtros.senioridade || p.periodo !== filtros.periodo || p.busca !== filtros.busca || p.modalidade !== filtros.modalidade || p.techFiltro !== filtros.techFiltro) {
+    if (p.filtro !== filtros.filtro || p.senioridade !== filtros.senioridade || p.periodo !== filtros.periodo || p.busca !== filtros.busca || p.modalidade !== filtros.modalidade || p.techFiltro !== filtros.techFiltro || p.modoTrabalho !== filtros.modoTrabalho) {
       estado.setGridKey(k => k + 1);
-      prevFiltroRef.current = { filtro: filtros.filtro, senioridade: filtros.senioridade, periodo: filtros.periodo, busca: filtros.busca, modalidade: filtros.modalidade, techFiltro: filtros.techFiltro };
+      prevFiltroRef.current = { filtro: filtros.filtro, senioridade: filtros.senioridade, periodo: filtros.periodo, busca: filtros.busca, modalidade: filtros.modalidade, techFiltro: filtros.techFiltro, modoTrabalho: filtros.modoTrabalho };
     }
   }, [filtros, estado]);
 
@@ -308,6 +308,29 @@ export default function Home() {
     }
     estado.marcarVisitada(vaga.link);
     setSelectedVaga(vaga);
+  }
+
+  function alterarModoTrabalho(novoModo) {
+    if (novoModo === null) {
+      filtros.setModoTrabalho(null);
+      if (filtros.filtro === 'remoto') {
+        filtros.setFiltro('todas');
+      }
+      return;
+    }
+
+    const estaAtivo = filtros.modoTrabalho === novoModo || (novoModo === 'remoto' && filtros.filtro === 'remoto');
+    if (estaAtivo) {
+      filtros.setModoTrabalho(null);
+      if (filtros.filtro === 'remoto') {
+        filtros.setFiltro('todas');
+      }
+    } else {
+      filtros.setModoTrabalho(novoModo);
+      if (filtros.filtro === 'remoto' && novoModo !== 'remoto') {
+        filtros.setFiltro('todas');
+      }
+    }
   }
 
 
@@ -507,7 +530,14 @@ export default function Home() {
                     return (
                       <button
                         key={tab.id}
-                        onClick={() => filtros.setFiltro(tab.id)}
+                        onClick={() => {
+                          filtros.setFiltro(tab.id);
+                          if (tab.id === 'remoto') {
+                            filtros.setModoTrabalho('remoto');
+                          } else if (tab.id === 'todas') {
+                            filtros.setModoTrabalho(null);
+                          }
+                        }}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 ${
                           active
                             ? tab.isRemote
@@ -535,24 +565,30 @@ export default function Home() {
                 {/* Seletor de Modo de Trabalho */}
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider hidden sm:inline">Modo:</span>
-                  {[
-                    { id: null, label: 'Todos' },
-                    { id: 'remoto', label: '100% Remoto' },
-                    { id: 'hibrido', label: 'Híbrido' },
-                    { id: 'presencial', label: 'Presencial' },
-                  ].map(m => (
-                    <button
-                      key={String(m.id)}
-                      onClick={() => filtros.setModoTrabalho(p => p === m.id ? null : m.id)}
-                      className={`h-7 px-2.5 rounded-lg text-xs font-semibold border transition-all ${
-                        filtros.modoTrabalho === m.id
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800'
-                          : 'border-slate-200 dark:border-white/10 text-slate-500 hover:border-slate-300 hover:text-slate-800 dark:hover:text-white'
-                      }`}
-                    >
-                      {m.label}
-                    </button>
-                  ))}
+                  {(() => {
+                    const modoAtivo = filtros.filtro === 'remoto' ? 'remoto' : filtros.modoTrabalho;
+                    return [
+                      { id: null, label: 'Todos' },
+                      { id: 'remoto', label: '100% Remoto' },
+                      { id: 'hibrido', label: 'Híbrido' },
+                      { id: 'presencial', label: 'Presencial' },
+                    ].map(m => {
+                      const isSelected = m.id === null ? modoAtivo === null : modoAtivo === m.id;
+                      return (
+                        <button
+                          key={String(m.id)}
+                          onClick={() => alterarModoTrabalho(m.id)}
+                          className={`h-7 px-2.5 rounded-lg text-xs font-semibold border transition-all ${
+                            isSelected
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800'
+                              : 'border-slate-200 dark:border-white/10 text-slate-500 hover:border-slate-300 hover:text-slate-800 dark:hover:text-white'
+                          }`}
+                        >
+                          {m.label}
+                        </button>
+                      );
+                    });
+                  })()}
                 </div>
               </div>
             </div>

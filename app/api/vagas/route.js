@@ -106,7 +106,7 @@ async function fetchVagasBauru(falhasFontes = {}) {
     const resp = await axios.get('https://vagasbauru.com.br/api/vagas', {
       params: { limit: 500 },
       headers: HEADERS_JSON,
-      timeout: 10000,
+      timeout: 5000,
     });
     if (!Array.isArray(resp.data?.dados)) {
       throw new Error('Resposta inesperada da API de vagas.');
@@ -376,7 +376,7 @@ async function fetchAgileBauru(falhasFontes = {}) {
   try {
     const resp = await axios.get('https://agile-bauru.hera.app.br/vagas', {
       headers: HEADERS_HTML,
-      timeout: 15000,
+      timeout: 6000,
     });
     const $ = cheerio.load(resp.data);
     
